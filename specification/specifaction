@@ -1,0 +1,73 @@
+================================================================
+==    HIGH LEVEL BINARY LANGUAGE SPECIFICATION VERSION 0.1    ==
+================================================================
+
+----
+I. PREFACE
+  I think it's import that I start this document with a brief explanation of some
+  sorts. First and foremeost: I have no business writing this document. I am an
+  experienced hobbyist programmer and basically have no idea what I'm doing here.
+  If this language ever picks up steam (which I sincerely doubyt), maybe I could
+  get this peer reviewed and fix the flaws in my language design and terminology.
+  The sole reason that this project exists is I had some ideas one day that
+  required a computer to be able to interpret any sequencce of randomly generated
+  bytes as a valid program and nothing to my knowledge existed that could do
+  that, so I decided to write my own language that could. From here on out, I will
+  try to keep things as professional as possible (within the constraints of my
+  abilities).
+
+----
+II. TABLE OF CONTENTS
+  I. PREFACE
+  II. TABLE OF CONTENTS 
+  III. LANGUAGE OVERVIEW
+    A. PURPOSE
+    B. BIT PROCESSING
+    C. BIT GROUPING AMBIGUITY
+    D. FREEDOM OF INTERPRETATION
+  IV. PROGRAM STRUCTURE
+    A. GLOBAL NOTATION
+      1. NAMES
+      2. TYPES
+    B. EMBEDDED CONSTRUCTS
+      1. VARIABLES
+        a. DECLARATION
+        b. REFERENCING
+        c. ASSIGNMENT
+      2. STATEMENTS
+        a. OPERATORS
+        b. NESTING
+        c. EVALUATION
+          i. NESTED EVALUATION
+    C. FUNCTIONS
+      1. DECLARATION
+        a. PARAMETERS
+      2. REFERENCING
+      3. INVOCATION
+        a. SPECIFYING PARAMETERS
+        b. RETURNED VALUE
+      4. VALID EMBEDDED CONSTRUCTS
+        a. RETURNING A VALUE
+    D. CLASSES
+      1. DECLARATION
+        a. HIERARCHY
+      2. INSTANTIATION
+      3. VALID EMBEDDED CONSTRUCTS
+      4. REFERENCING
+        a. REFERENCING EMBEDDED CONSTRUCTS
+    E. SCOPE
+      1. GARBAGE COLLECTION
+      2. NAME UNIQUENESS
+    F. CONFLICTS
+      1. TYPE CONFLICTS (VARIABLES)
+      2. NAME CONFLICTS
+        a. FUNCTIONS
+        b. CLASSES
+    G. PROGRAM STATE
+      1. ENTRY POINT
+      2. EXIT POINT
+        a. RETURNED VALUE
+      3. EXCEPTIONS
+      4. ERRORS
+----
+III. LANGUAGE OVERVIEW
