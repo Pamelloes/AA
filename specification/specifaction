@@ -36,10 +36,9 @@ II. TABLE OF CONTENTS
     A. TYPES
     B. NAMES
   V. FUNCTIONS
-  VI. FUNCTIONAL STATEMENTS
-  VII. CONTROL STATEMENTS
-  VIII. CLASSES
-  IX. SCOPE
+  VI. FUNCTIONAL COMMANDS
+  VII. CLASSES
+  VII. SCOPE
 
 ----
 III. LANGUAGE OVERVIEW
@@ -72,13 +71,22 @@ IV. VARIABLES
           10    |     1      | INSTANCE | SECOND
           11    |     1      |   CLASS  | FIRST
 
-    The four types can be split into first and second order types. First order types
-    represent constructs that the program can be interacted with but not changed. Second
-    order types can be both interacted with and manipulated. In some parts of a program
+    The four types can be split into first and second order types. In some parts of a program
     only one order of types is allowed. In that case, then the one bit code is used to
     identify a type. If both type orders are valid, then the two bit code is used. In a
     limited set of situations, the type is implied and no type will be expressed. In such
     situations, the lack of type codes will be explicitly stated and elucidated upon.
+
+    First and second order types have several key differences. First and foremost, a first
+    order type can be created when type declarations are restricted to first order types
+    only. In addition, there is no explicit command for assigning a value to a variable with
+    a first order type. Instead the assignation is implicit with the declaration of the
+    variable's existence and is assumed to immediately follow. While technically legal,
+    assigning a new value to a first order variable is considered very bad form. Finally,
+    first order variables have special scope considerations (see `SCOPE`). Second order
+    type variables can be created whenever they are allowed. Values are assigned to second
+    order variables via the assignment command and changing of their value is encouraged.
+    Second order variables have no special scope considerations.
 
   B. NAMES
     All variables are assigned a name. Names can have one of the following formats:
@@ -90,6 +98,28 @@ IV. VARIABLES
     specifying sixteen bits that composite the name. Alternatively, a name can be
     prefaced by a 1 allowing for the name to be made of thirty two bits. Note that sixteen
     bit names and thirty two bit names are independent of each other. One cannot refer to
-    a sixteen bit name with a sixteen bit name. This means it is possible to specify a bit
+    a sixteen bit name with a sixteen bit name. This means it is possible to specify slightly
     more than four billion names (4,295,032,832 to be exact).
+
+----
+V. FUNCTIONS
+  A function is the unit in HLB. Functions are the only location where actual code can be written.
+  Functions are invoked either directly by the interpreter to start the program or by another
+  function. Functions are first order variables and therefore have special rules to their use. A
+  more detailed comparison between first order and second order variables can be found in IV.A. A
+  function can only have a value assigned to it when the valid variable types are restricted to
+  first order types only. It bears noting that it is very bad form to reassign a function's
+  value. Functions are assigned as follows:
+
+    [VARIABLE]XXXX[FUNCTIONAL COMMAND LIST][UNAMBIGUOUS RETURN]
+
+  The assignation of a function has three parts. First the function variable is stated determining
+  what function variable is being assigned to. Following the variable declaration are four bits
+  constituting an unsigned integer with a value from 0 to 15. This number is how many parameters
+  are passed to the function on invocation. Subsequently, the functional commands that constitute
+  the function are listed. Functional commands are discussed in depth in `FUNCTIONAL COMMANDS`.
+  Note that within the functional command list both first and second order types are permitted.
+  The function assignation ends with an unambiguous return command. An unambiguous return command
+  is a return command not within an if command and therefore must be executed if all previous
+  commands finish execution.
     
