@@ -170,17 +170,13 @@ B. Operational Expressions
 
   EXO [opcode] EXPR EXPR
 
-  The first four opcodes that can be used in an operational expression are the standard arithmetic operations: addition, subtraction, multiplication, and division. They are represented by the ADD (000), SUB (001), MULT (010), and DIV (011) opcodes respectively. The ADD opcode and MULT opcode add and multiply the two EXPRs' values respectively. The SUB opcode subtracts the second EXPR's value from the first EXPR's value and the DIV opcode divides the first EXPR's value by the second EXPR's value.
+  The first four opcodes that can be used in an operational expression are the standard arithmetic operations: addition, subtraction, multiplication, and division. They are represented by the ADD (000), SUB (001), MULT (010), and DIV (011) opcodes respectively. The ADD opcode and MULT opcode add and multiply the two EXPRs' values respectively. The SUB opcode subtracts the second EXPR's value from the first EXPR's value and the DIV opcode divides the first EXPR's value by the second EXPR's value. If the second EXPR's value is zero, then the result of division is undefined. To avoid errors, the expression will evaluate to zero.
 
-  The next five opcodes that can be used in an operational expression are bitwise operations: bitwise and, bitwise or, bitwise xor, bitshift left, and bitshift right.
-& 1 0 0 
-| 1 0 1 0
-^ 1 0 1 1
-<< 1 1 00
->> 1 1 01
+  The next three opcodes that can be used in an operational expression are the basic bitwise operations: bitwise and, bitwise or, and bitwise xor. They are represented by the BTAND (100), BTOR (1010), and BTXOR (1011) opcodes respectively. In a bitwise operations between two integers, corresponding bits in the two integers are compared appropriately and then the resulting value is used in the corresponding bit in the resulting integer. Note that corresponding bits means bits with the same value so bits with a value of 2 are compared and bits with a value of 4 are compared but a bit with a value of 2 in one integer is never compared to a bit with a value of 4 in another integer. In cases where one integer is longer than the other, leading 0 bits are assumed to allow for the integers to have the same length. Similarly, when bitwise operations are performed on two decimals, corresponding bits are compared and 0 bits are assumed when a bit is missing. It is important to note, however, that corresponding bits in a decimal are based on the bits VALUE not on its location. This means that the exponent is not compared in bitwise operations with decimals but is instead used to figure out which bits in the significand correspond between the two. Finally, in cases when an integer and a decimal are being used in bitwise operations, the integer is converted into a decimal of equivalent value and then the operation is performed as if with two decimals.
 
-%  1 1 10
-** 1 1 11
+  The last two bitwise opcodes are BTLFT (1100) and BTRT(1101) which are used for left bit shifts and right bit shifts respectively. The first argument for the bit shift is the number being shifted and the second argument is the number of bits to shift the number. The second number must be an integer, so if a decimal is provided it will be converted into the largest integer less than or equal to the decimal. If the second number is negative, then the expression is interpreted as a bit shift in the opposite direction. In a left bit shift, the second number is used to determine how many 0 bits will be appended to the first number effectively multiplying the number by 2 raised to the power of the second number. If the first number is a decimal, the zeroes will be appended to the significand not the exponent. In a right bit shift, the second number determines how many bits will be removed from the end of the number. While this is similar to dividing by 2 raised to the power of the second number, it is important to distinguish the two because in a right bit shift, the remainder is discarded. Furthermore, if the first number is a decimal the changes are applied to the significand leading to parts of the decimal being lost. Finally, if a right shift can not remove more bits than exist in the number. If the second number is larger then the length of the first number, this expression will evaluate to 0.
+
+  The last two opcodes are MOD (1110) and EXP (1111) which are used to perform modulus and exponentiation respectively. The modulus operation evaluates to the difference between the largest multiple of the second number smaller than the first number and the first number. When both numbers are integers this is equivalent to calculating the remainder of the euclidean division of the first integer by the second integer. If the second number is zero, than the expression is undefined. To avoid errors, the expression will still evaluate to zero. The exponentiation operation evaluates to the first number raised to the power of the second number. Under certain circumstances (like negative one being raised to the one half power) the result of this operation may be undefined or imaginary. To avoid errors, the expression will simply evaluate to zero.
 
 ----
 VII. Statements
@@ -253,6 +249,13 @@ ADD                000
 SUB                001
 MULT               010
 DIV                011
+BTAND              100
+BTOR               1010
+BTXOR              1011
+BTLFT              1100
+BTRT               1101
+MOD                1110
+EXP                1111
 
 ----
 Appendix B. Special Variables
