@@ -1,20 +1,23 @@
 ================================================================
-==    HIGH LEVEL BINARY LANGUAGE SPECIFICATION VERSION 0.3    ==
+==    ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.4    ==
 ================================================================
 
 ----
 I. Preface
 
+  Advanced Assembly is a programming language roughly resembling an assembly programming languages. However, unlike standard assembly languages, Advanced Assembly is not designed to be run on a specific processor. Instead, it has been designed so that any series of bits--any combination of "1" and "0"--is a valid program.
+  A key design element of Advanced Assembly is that it discards the standard grouping of eight bits into a byte--this allows Advanced Assembly to be able to interpret any series of bits as a program but also makes it impossible to run directly on a processor. Instead, Advanced Assembly code must be run via an interpreter, ostensibly on a virtual machine.
+  During earlier stages of development, Advanced Assembly was called High Level Binary, and, in addition to being able to interpret any series of bits as a program, was intended to be able to express a myriad of high-level programming features reminiscent of programming languages like C++ or Python. However, as development progressed, it became apparent that in order to implement many features the syntax of the language would become incredibly complicated and that they could be replicated in code within a simpler language. As such, the language was rapidly simplified until by the time the first complete language specification was planned out, High Level Binary no longer represented the "high level" programming languages it was originally intended to emulate; instead, the programming language appeared to be a permutation of a typical assembly language. Therefore, the decision was made to rename the language Advanced Assembly to indicate that it facilitated a different feature set than standard assembly languages while distancing the association with so-called high level programming languages.
+  The simplification of Advanced Assembly has led to several features that were believed to be very important to no longer directly included in the programming language. These features, such as the Object Oriented Programming paradigm, will therefore be provided as "extensions." Separate specification documents will be drafted that define how these features are to work and a reference implementation of them shall be created solely using Advanced Assembly code. Therefore in a program where one of these features is desired, the extension can be used by invoking the extension as one of the first actions of a program. All subsequent statements will than have access to the now-loaded extension's feature set. As of the writing of this document, no extensions have been drafted or implemented.
+  
 ----
 II. Table of Contents
 
   I.             Preface
   II.            Table of Contents
   III.           Notation
+   A.             Opcodes
   IV.            Strings
-   A.             Fixed Length Strings
-   B.             Variable Length Strings
-   C.             Names
   V.             Structure Types
    A.             Primitives
    B.             Objects
@@ -35,35 +38,34 @@ II. Table of Contents
 
 
   Appendix A.    Opcodes
-  Appendix B.    Special Variables
-  Appendix C.    Implicit Values and Conversion
+  Appendix B.    Conceptual Opcodes
 
 ----
 III. Notation
 
-  High Level Binary is a language expressed explicitly in strings of binary, a one or zero. Throughout this document it is understood that a "1" represents a binary one and a "0" represents a binary 0. All other arabic numerals are understood to not be referring to binary. In the event that "1" or "0" is used in conjunction with other arabic numerals, it is understood that they will not be referring to binary numbers. In places where the use of "1" and "0" as a base ten number or as a binary string is ambiguous, the symbols "1" and "0" will be used to refer to a binary string and the number will be written out. For instance "10" means a binary string of 1 followed by 0 and "ten" refers to the number ten. "10" will never refer to ten and "ten" will never refer to 10. Furthermore the number 170 can be assumed to be referring to the number one hundred seventy because "7" is not a valid binary symbol.
+  Advanced Assembly, as a quasi-assembly language, is programmed by specifying the value of a series of bits. A bit is the smallest unit of memory within a computer and can either have a value of "0" or "1." Throughout this document it is understood that "1" and "0" do not refer to their numerical value. Instead, "1" represents a single bit with a value of one and "0" represents a single bit with a value of zero. All other arabic numerals are understood to be referring to their numeric value. In the event that "1" or "0" is used in conjunction with other arabic numerals, it is understood that the "1" or "0" will not be representing their numeric value and not a computer bit.
+  Under some circumstances, expressing numbers (such as one hundred) in arabic numerals will only use the symbols "1" and "0". In such cases, the number will be written out "one hundred." Therefore, if "100" is encountered it is understood that "100" is referring to three, sequential bits with values of one, zero, and zero respectively.
 
-  Due to the difficulty of distinguishing various binary strings, often times binary strings will be assigned two to four letter opcodes (for instance FN refers to the binary string "010"). After an opcode is defined, it will be used instead of its corresponding binary string. A list of all opcodes and their definitions is available at the end of this document. It is important to note that codes are not exclusive; an opcode always refers to a specific binary string, but that binary string does not always refer to the opcode.
+Examples:
+     0  Refers to a single bit with a value of zero
+     8  Refers to the number eight
+    10  Refers to two, sequential bits with values of one and zero respectively
+    15  Refers to the number fifteen
+  1425  Refers to the number one thousand, four hundred, twenty-five
+  1000  Refers to four, sequential bits with values of one, zero, zero, and zero respectively
+
+NOTE: In many documents strings of bits may be grouped into sets of four and expressed in hexadecimal--allowing two hexadecimal digits to express the value of a byte. However, since Advanced Assembly does not group bits into larger groups of regular size, this notation will not be used. Whenever strings of bits are to be expressed, they will be expressed using the previously outlined "1" and "0" notation.
+
+A. Opcodes
+
+  While the Advanced Assembly programming language is made up of series of 1's and 0's, such notation can be difficult for humans to read. Furthermore, the character "1" is not equal to a single bit a value of one. Instead, characters are made up of groups of 8 bits so rendering an Advanced Assembly program as text would produce gibberish.
+  In order to solve this problem and allow for easier programming, the various aspects of Advanced Assembly are defined through mnemonics--several character abbreviations that directly transfer to a specific series of bits. A separate program can then be used to turn a text file consisting of these mnemonics into their corresponding bits. These mnemonics are collectively referred to as "opcodes" and are defined throughout the specification. A complete list of all the defined opcodes in Advanced Assembly and their corresponding values can be found in Appendix A.
+  In Advanced Assembly, groups of opcodes are used in conjunction with arbitrary series of bits in predictable patterns to express more complex concepts than a set of opcodes that directly correspond with a series of bits. These concepts, such as strings, often come up in multiple places throughout the specification where it is more meaningful to refer to them by a short mnemonic that can be associated with the concept instead of by copying the series of opcodes and arbitrary bits express. These mnemonics are referred to as "Conceptual Opcodes" because they refer to concepts instead of a specific series of bits. Conceptual Opcodes are only used within the specification for the sake of convenience and cannot be used by a programmer to write Advanced Assembly code. Conceptual Opcodes are defined throughout the specification and a complete list of all Conceptual Opcodes and what they represent can be found in Appendix B.
 
 ----
 IV. Strings
 
-  Unlike most high level languages, a string within High Level Binary does not refer to a series of characters. In High Level Binary, a string refers to a series of bits. Strings come in two basic types: fixed length and variable length.
-
-A. Fixed Length Strings
-
-  Fixed length strings are referred to by the opcode STRING[L] where L is a decimal number indicating how many bits long the string will be. For instance, a 7 bit, fixed length string would be expressed using the opcode STRING[7] and a ten bit string would be referred to by the opcode STRING[ten]. Note that, the arabic numeral form of ten is indistinguishable from the binary string 10 so ten must be written out verbatim to avoid ambiguity.
-
-  Fixed length strings are simply a series of bits without qualification. For instance STRING[4] would simply refer to four arbitrary bits and STRING[9] would refer to nine arbitrary bits. Some example strings:
-
-  STRING[1]: 1
-  STRING[2]: 01
-  STRING[7]: 0010100
-  STRING[22]: 0010101011111010101100
-
-B. Variable Length Strings
-
-  In many cases, the length of a string is arbitrary in which case a variable length string is used. Variable length strings are defined by the opcode STRING. Variable length strings can be expressed either in short form or long form. Short form strings are qualified by the SF opcode (0) followed by a STRING[8]. Note that while the length of a variable length string is not fixed, a short form variable length string will always have a length of 8. Some example strings:
+  In Advanced Assembly, a string refers to a series of bits. Strings come in two basic types: fixed length and variable length. The length of a string is arbitrary in which case a variable length string is used. Variable length strings are defined by the opcode STRING. Variable length strings can be expressed either in short form or long form. Short form strings are qualified by the SF opcode (0) followed by a STRING[8]. Note that while the length of a variable length string is not fixed, a short form variable length string will always have a length of 8. Some example strings:
 
   SF 00000000
   SF 11111111
