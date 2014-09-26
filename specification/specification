@@ -60,41 +60,17 @@ A. Opcodes
 
   While the Advanced Assembly programming language is made up of series of 1's and 0's, such notation can be difficult for humans to read. Furthermore, the character "1" is not equal to a single bit a value of one. Instead, characters are made up of groups of 8 bits so rendering an Advanced Assembly program as text would produce gibberish.
   In order to solve this problem and allow for easier programming, the various aspects of Advanced Assembly are defined through mnemonics--several character abbreviations that directly transfer to a specific series of bits. A separate program can then be used to turn a text file consisting of these mnemonics into their corresponding bits. These mnemonics are collectively referred to as "opcodes" and are defined throughout the specification. A complete list of all the defined opcodes in Advanced Assembly and their corresponding values can be found in Appendix A.
-  In Advanced Assembly, groups of opcodes are used in conjunction with arbitrary series of bits in predictable patterns to express more complex concepts than a set of opcodes that directly correspond with a series of bits. These concepts, such as strings, often come up in multiple places throughout the specification where it is more meaningful to refer to them by a short mnemonic that can be associated with the concept instead of by copying the series of opcodes and arbitrary bits express. These mnemonics are referred to as "Conceptual Opcodes" because they refer to concepts instead of a specific series of bits. Conceptual Opcodes are only used within the specification for the sake of convenience and cannot be used by a programmer to write Advanced Assembly code. Conceptual Opcodes are defined throughout the specification and a complete list of all Conceptual Opcodes and what they represent can be found in Appendix B.
+  In Advanced Assembly, groups of opcodes are used in conjunction with arbitrary series of bits in predictable patterns to express more complex concepts than a set of opcodes that directly correspond with a series of bits. These concepts, such as strings, often come up in multiple places throughout the specification where it is more meaningful to refer to them by a short mnemonic that can be associated with the concept instead of by copying the series of opcodes and arbitrary bits express. These mnemonics are referred to as "Conceptual Opcodes" because they refer to concepts instead of a specific series of bits. Conceptual opcodes are only used within the specification for the sake of convenience and cannot be used by a programmer to write Advanced Assembly code. Conceptual Opcodes are defined throughout the specification and a complete list of all conceptual opcodes and what they represent can be found in Appendix B.
 
 ----
 IV. Strings
 
-  In Advanced Assembly, a string refers to a series of bits. Strings come in two basic types: fixed length and variable length. The length of a string is arbitrary in which case a variable length string is used. Variable length strings are defined by the opcode STRING. Variable length strings can be expressed either in short form or long form. Short form strings are qualified by the SF opcode (0) followed by a STRING[8]. Note that while the length of a variable length string is not fixed, a short form variable length string will always have a length of 8. Some example strings:
+  In Advanced Assembly, a string refers to a series of bits. A string is the fundamental structure of Advanced Assembly and is notated using the conceptual opcode "STRING." A string is made of several groups of the opcode CS (1) followed by four arbitrary bits, ultimately terminated by the opcode ES (0). Each group of CS followed by four arbitrary bits adds the value of the four arbitrary bits to the string's value. So the value of a string with one CS group will have four bits, while a string with four CS groups will have 16 bits. When writing out a string's value, the value will extend until the ES opcode is reached. Therefore, theoretically, a string can have an infinite length though implementation details will probably impose an upper limit. A string consisting solely of an ES opcode will have a length of zero and no defined value.
 
-  SF 00000000
-  SF 11111111
-  SF 01010101
-
-  Long form names can be used to express strings with a length that is a multiple of four. Long form names are qualified by the LF opcode (1) followed by groups of STRING[4]. After every STRING[4], either an ES opcode (0) will be reached indicating that the end of the variable length string has been reached or a CS opcode (1) will be reached indicating that 4 more bits will be specified. For instance, a 4 bit name would be expressed as follows:
-
-  LF STRING[4] EN
-
-Or a 12 bit name:
-
-  LF STRING[4] CN STRING[4] CN STRING[4] EN
-
-  It is important to understand that while short form and long form variable length strings can be used interchangeably, they are only equivalent at eight bit lengths. A long form string with any length other than eight will never be equal to a short form variable length string. This includes long form strings of length four!
-
-  It is important to note that short and long form names are interchangeable. The first four bits of a long form name correspond with the first half of a short form name. Similarly, the second eight bits of a long form name correspond with the second half of a short form name. Note that in any name, trailing zeroes are ignored so each of the following pairs of names are equivalent:
-
-  SF 00010000
-  LF 0001 EN
-
-  SF 01010101
-  LF 0101 CN 0101 EN
-
-  SF 01010100
-  LF 0101 CN 0100 CN 0000 CN 0000 EN
-
-C. Names
-
-  A special subset of Strings are names. A name is used to identify various structures within High Level Binary. A name is identical in form to a variable length string. The opcode NAME will be used to refer to names indicating that the variable length string in this context will be used to name a structure.
+Examples:
+  ES                                      A string with a length of zero and no defined value
+  CS 1001 ES                              A string with a length of four and a value of 1001
+  CS 0001 CS 0010 CS 0100 CS 1000 ES      A string with a length of 16 and a value of 0001001001001000
 
 ----
 V. Structure Types
@@ -211,56 +187,10 @@ IX. Classes
 Appendix A. Opcodes
 
   Strings
-STRING[L]          A fixed length string of length L. Note that L is a decimal number.
-STRING             A string with an arbitrary length.
-NAME               Equivalent to STRING. Indicates that the STRING is naming a structure.
-SF                 0
-LF                 1
 ES                 0
 CS                 1
 
-  Types
-TYPE               A fully qualified structure type.
-TYPE[P]            An arbitrary primitive type.
-PT                 0
-INT                0
-DEC                1
-TYPE[O]            An arbitrary object type.
-OT                 1
-FUN                00
-CLS                01
-ARR                10
-INST               11
-
-  Variables
-VAR                An arbitrary variable.
-VAR[P]             An arbitrary variable with a primitive type.
-VAR[O]             An arbitrary variable with an object type.
-
-  Expressions
-EXPR               An arbitrary expression.
-EXPR[N]            A numerical expression.
-EXN                0
-LINT               00
-LDEC               01
-BTWN               10
-EVAR               11
-EXPR[O]            An operational expression
-EXO                1
-ADD                000
-SUB                001
-MULT               010
-DIV                011
-BTAND              100
-BTOR               1010
-BTXOR              1011
-BTLFT              1100
-BTRT               1101
-MOD                1110
-EXP                1111
-
 ----
-Appendix B. Special Variables
+Appendix B. Conceptual Opcodes
 
-----
-Appendix C. Implicit Values and Conversion
+  STRING             Represents a string. Consists of an arbitrary amount of CS opcodes (each followed by four arbitrary bits) terminated by an ES opcode.
