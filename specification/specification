@@ -18,10 +18,10 @@ II. Table of Contents
   III.           Notation
    A.             Opcodes
   IV.            Strings
-  V.             Structure Types
-   A.             Primitives
-   B.             Objects
-  VI.            Variables
+  V.             Data Types
+   A.             Integers
+   B.             Floats
+  VI.            Namespaces
   VII.           Expressions
   VII.           Statements
    A.             Global Statements
@@ -65,7 +65,7 @@ A. Opcodes
 ----
 IV. Strings
 
-  In Advanced Assembly, a string refers to a series of bits. A string is the fundamental structure of Advanced Assembly and is notated using the conceptual opcode "STRING." A string is made of several groups of the opcode CS (1) followed by four arbitrary bits, ultimately terminated by the opcode ES (0). Each group of CS followed by four arbitrary bits adds the value of the four arbitrary bits to the string's value. So the value of a string with one CS group will have four bits, while a string with four CS groups will have 16 bits. When writing out a string's value, the value will extend until the ES opcode is reached. Therefore, theoretically, a string can have an infinite length though implementation details will probably impose an upper limit. A string consisting solely of an ES opcode will have a length of zero and no defined value.
+  In Advanced Assembly, a string refers to a series of bits with a length of zero or a positive multiple of four. A string is the fundamental structure of Advanced Assembly and is notated using the conceptual opcode "STRING." A string consists of the opcode CS (1) followed by four arbitrary bits. This pattern is repeated as many times as necessary in order to convey the desired string. The end of a string is indicated by the opcode ES (0) after the CS opcode and four bits pattern.  A string consisting solely of an ES opcode will have a length of zero and no defined value. It is important to note that a string refers to the collection of bits notated and does not include the CS and ES - the opcodes are used for notating a string literally within a program. However, when a program manipulates a string the manipulation refers to the notated bits and if a statement evaluates to a string, the string does not include the CS and ES opcodes.
 
 Examples:
   ES                                      A string with a length of zero and no defined value
@@ -73,32 +73,41 @@ Examples:
   CS 0001 CS 0010 CS 0100 CS 1000 ES      A string with a length of 16 and a value of 0001001001001000
 
 ----
-V. Structure Types
+V. Data Types
 
-  There are a variety of different types of structures within High Level Binary. These structures can be broken down into two categories: primitives and objects. A fully qualified type is represented by the opcode TYPE.
+  All data within Advanced Assembly can be grouped into three data types: strings, integers, and floats. Several aspects of the program, such as the program's code and namespaces (see section VI) are stored as strings and can be manipulated as such. Numerical data is typically stored as either an integer or a float. Note that strings, integers, and floats are fully interchangeable.
 
-A. Primitives
+A. Integer
 
-  A primitive type is a form of number. Primitive types are collectively referred to by the opcode TYPE[P]. When a primitive type is identified by a TYPE opcode, it must be qualified by the PT opcode (0). However, when a primitive type is identified by TYPE[P] the PT qualification is omitted since only primitive types are accepted.
+  An integer is just what it sounds like: an integer. It is represented by the conceptual opcode INT. An integer consists of one bit followed by a string. The string represents the integer's value and is interpreted in a little-endian style. Therefore, the first group of four bits represents the eight, four, two, and one place values respectively; the second group of four bits represents the one hundred twenty-eight, sixty-four, thirty-two, and sixteen place values respectively; and so on and so forth. The first bit (before the STRING) is the sign bit. If it is 0, then the string integer value is determined as previously outlined. If it is 1, then the integer is negative, and the string integer value is its two's compliment: the positive value of the integer is calculated by replacing every 1 with 0 and vice versa and then incrementing the resulting integer.
+  When converting a string to an integer, the first bit of the string is used as the sign bit and all subsequent bits are interpreted as the string. If the interpreted string's length is not a multiple of four, then a 0 is added to the string in the location where it would be the most significant bit. This is repeated until the string's length is a multiple of four. When converting an integer to a string, the sign bit is prepended to integer's string component and the resulting string is considered the integer's string value.
 
-  The two principle primitive types are integer and decimal. Integers are identified by the opcode INT (0) and decimals by the opcode DEC (1). Therefore a fully qualified integer and decimal, respectively, would be as follows:
+Examples:
+  0 ES                                       An integer with a value of one
+  0 CS 1001 CS 0001 ES                       An integer with a value of 25
+  0 CS 0000 CS 0000 CS 0000 CS 0010 ES       An integer with a value of 8192
+  1 ES                                       An integer with a value of negative one
+  1 CS 1110 ES                               An integer with a value of negative two
+  1 CS 1111 CS 1000 ES                       An integer with a value of negative 113
 
-  PT INT
-  PT DEC
+B. Float
 
-B. Objects
+  A float is used to represent numbers that are not integers. A float is represented by the conceptual opcode FLOAT. A float consists of two integers, known as the "mantissa" and "exponent" respectively. The value of a float is determined by multiplying the mantissa by two raised to the power of the exponent. The sign of the mantissa determines the sign of the float while the sign of the exponent helps determine the magnitude of the float.
+  When converting a float to an integer, the sign bit of the mantissa is used as the integer's sign bit. The integer's string component consists of the exponent's string component appended to the exponent's sign bit appended to the mantissa's string component. When converting a float to a string, the float is first converted to an integer and then the integer is converted to a string.
+  When converting a string into a float, the string is divided in two. The first half of the string becomes the mantissa and the second half becomes the exponent; each string is converted to an integer via the process outlined in Section IV.B. If the string's length is odd, then the it is divided into two such that the exponent's section is one bit longer than the mantissa's section. When converting an integer to a float, the integer is first converted to a string and then the string is converted to a float.
 
-  An object type is any structure whose data is not numerical in nature. Object types are referred to collectively by the opcode TYPE[O]. When an object type is identified by a TYPE opcode, it must be qualified by the OT opcode (1). However, when a type is identified by TYPE[O] the OT qualification is omitted since only object types are accepted.
-
-  The four object types are as follows: function, class, array, and instance. These types are identified by the FUN (00), CLS (01), ARR (10), and INST (11) opcodes respectively. Therefore the four types, fully qualified would be as follows:
-
-  OT FUN
-  OT CLS
-  OT ARR
-  OT INST
+Examples:
+  0 ES 0 ES                      A float with a value of zero
+  0 CS 0001 ES 0 CS 1000 ES      A float with a value of 256
+  1 CS 1111 ES 0 ES              A float with a value of negative one
+  1 CS 0000 ES 0 CS 1010 ES      A float with a value of negative 16384
+  0 CS 1010 ES 1 CS 1110 ES      A float with a value of 2.5
+  0 CS 0101 ES 1 CS 1000 ES      A float with a value of 0.01953125
+  1 CS 1010 ES 1 CS 1101 ES      A float with a value of negative 0.625
+  1 CS 0011 ES 1 CS 1100 ES      A float with a value of negative 0.1875
 
 ----
-VI. Variables
+VI. Namespaces
 
   Variables are used to store states throughout the course of the program. Variables are identified by the VAR opcode and consist of a TYPE followed by a NAME. In certain cases a variable might be restricted to TYPE[O] or TYPE[P] in which case the opcode VAR[O] and VAR[P] will be used respectively. Therefore, a VAR, VAR[O], and VAR[P] would look like:
 
@@ -193,4 +202,6 @@ CS                 1
 ----
 Appendix B. Conceptual Opcodes
 
-  STRING             Represents a string. Consists of an arbitrary amount of CS opcodes (each followed by four arbitrary bits) terminated by an ES opcode.
+  STRING             Represents a string. See Section IV
+  INT                Represents an integer. See Section V.A
+  FLOAT              Represents a float. See Section V.B
