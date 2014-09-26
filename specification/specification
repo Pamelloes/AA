@@ -22,23 +22,14 @@ II. Table of Contents
    A.             Integers
    B.             Floats
   VI.            Namespaces
-  VII.           Expressions
   VII.           Statements
-   A.             Global Statements
-    1.             Set Variable
-    2.             Invoke Function
-   B.             Restricted Statements
-    1.             If Else
-    2.             Switch
-    3.             While
-    4.             For
-    5.             Return
-  VIII.          Functions
-  IX.            Classes
-
+  VIII.          Actions
+  IX.            Program Control Flow
 
   Appendix A.    Opcodes
   Appendix B.    Conceptual Opcodes
+  Appendix C.    Compiler Notes
+  Appendix D.    Memory Management Notes
 
 ----
 III. Notation
@@ -109,13 +100,30 @@ Examples:
 ----
 VI. Namespaces
 
-  Variables are used to store states throughout the course of the program. Variables are identified by the VAR opcode and consist of a TYPE followed by a NAME. In certain cases a variable might be restricted to TYPE[O] or TYPE[P] in which case the opcode VAR[O] and VAR[P] will be used respectively. Therefore, a VAR, VAR[O], and VAR[P] would look like:
+  Namespaces are a hierarchical structure--namespaces are grouped via parent-child relationships--used for storing data. A namespace is represented by the conceptual opcode NMSP. Every namespace has a name, a value, and a parent namespace. A namespace's name and parent uniquely identify it. At the top of namespace hierarchy is the Global Namespace; all other namespaces either have the Global Namespace as a parent or as a more distant ancestor. Under certain circumstances, the parent of the Global Namespace may be referenced: the Global Namespace is the parent of the Global namespace.
+  Initially, every namespace has a value of an empty string; however, throughout a program's execution, a namespace may be assigned another value. A namespace will maintain the value it is assigned in the form it is assigned (so if a namespace is assigned a float value, the namespace will have the value of the float--the float will not be converted to another type), however any namespace may be interpreted as any type. If a namespace is interpreted as a type other than the type of its current value, the value will be converted to the appropriate type.
+  Since all statements within an Advanced Assembly program are expressed as a series of bits, a program's code is stored in a namespace as a string. Therefore, any namespace can be interpreted as a fully functional Advanced Assembly program and run as such. If a namespace is run as a program and its value is not a string, then the namespace's value is converted to a string before being run. Because of this, the Global Namespace, unlike all other namespaces, does not start with an initial value of an empty string. Instead, the Global Namespace starts with a string value that contains the currently run program. When actions in Advanced Assembly are executed, the namespace that contains the binary string being interpreted as the action is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed as a program and special cases that may arise, see *Section VII.
+  Namespaces can be written in two formats: absolute and relative. Absolute namespaces are prefaced by the opcode AN (0). Then the namespace consists of groups of the CN (1) opcode and a STRING. After an arbitrary amount of groups, the EN (0) opcode is encountered indicating the end of the namespace definition. After the AN opcode, the Global Namespace is referenced. Each subsequent group references the child namespace of the previously referenced namespace with the specified STRING as its name. When the EN opcode is encountered, the last referenced namespace is the namespace being referenced by the NMSP statement. Note that by including no CN and STRING groups, the Global Namespace can be referenced.
 
-  TYPE NAME
-  TYPE[O] NAME
-  TYPE[P] NAME
+Examples:
+  AN EN                                         References the Global Namespace
+  AN CN CS 0000 ES EN                           References a child of the Global Namespace called "0000"
+  AN CN CS 0101 ES CN CS 0000 CS 1111 ES EN     References the Global Namespace's child "0101"'s child "00001111"
 
-  It is important to note that unlike many languages, all variables within High Level Binary are of global scope so once once a variable is set anywhere in the program it will retain its value until it is changed somewhere else in the program. Note that while whenever a variable is addressed, it is referenced by both a TYPE and a NAME, but the variable itself is identified solely by its NAME. This can lead to situations where a variable consisting of one value type is called upon to have another type. Through a process called Implicit Conversion, any type can be converted to any other type. See Appendix C. Implicit Values and Conversion for details on how this process works.
+  Alternatively, a namespace can be referenced by its relation to the Current Namespace. Relative namespaces are prefaced by the opcode RN (1). The the namespace consists of groups of the CN (1) opcode and a STRING, or the PN (01) opcode. After an arbitrary amount of groups, the ERN (00) opcode is encountered indicating the end of the namespace definition. After an RN opcode, the Current Namespace is identified. Each subsequent group of CN and STRING encountered references the child namespace of the previously referenced namespace with the specified STRING as its name. Alternatively, the PN opcode may be encountered in which case the parent of the last referenced namespace is referenced. When the ERN opcode is encountered the last referenced namespace is the namespace being referenced by the NMSP statement. Note that by only including the RN and ERN opcodes, the Current Namespace can be referenced.
+  While absolute namespaces and relative namespaces can be used interchangeably under most circumstances, relative namespaces that are a direct child of the Current Namespace are a special case and are a separate entity from the homophonic namespace--the namespace with the same name and parent--that would be referred to absolutely. These namespaces are called "temporary namespaces." Note that the child of a child of the Current Namespace (or a more distant child) is NOT a temporary namespace. Note that before a value is assigned to a temporary namespace, references to the temporary namespace will be referred to the homophonic namespace (e.g. if a temporary namespace 0000 has not had a value assigned to it, but the homophonic namespace 0000's value is a string with the value "0101", then references to the value of the temporary namespace will evaluate to the value of the homophonic namespace: "0101" and not evaluate to the value of an unassigned namespace--an empty string; of course, if neither the temporary namespace nor the homophonic namespace have a value assigned then the value of the temporary namespace will evaluate to an empty string).
+  Once a value is assigned to a temporary namespace, the value can only be accessed from the namespace that assigned the value. Not only is this value unique to the namespace that assigned it, but it is also unique to the version of the namespace that assigned it: thus allowing for recursion. For example: given the program is in the Current Namespace 0000 and the program stores a string with the value "1" in the temporary namespace 0001 (a child of namespace 0000). Then, if the program recurses and transfers execution to the beginning of namespace 0000 the new context means that the temporary namespace 0001 will have a value of an empty string (the default value) and not "1." When execution returns to namespace 0000 in the original context, the temporary namespace 0001 will regain its former value of "1." 
+
+Examples:
+  RN ERN                                  References the Current Namespace
+  RN PN ERN                               References the Current Namespace's parent
+  RN PN CN CS 0000 ES ERN                 References the child "0000" of the Current Namespace's parent. If the current namespace's name is "0000" then this would be referencing the Current Namespace
+  RN PN CN CS 1010 ES CN CS 1111 ES ERN   References the Current Namespace's parent's child "1010"'s child "1111." If the current namespace's name is "1010," then this is referencing the temporary namespace "1111"
+  RN CN CS 0101 ES ERN                    References the Current Namespace's child "0101"
+  RN CN CS 1010 ES CN CS 1111 ES ERN      References the Current Namespace's child "1010"'s child "1111"
+
+
+
 
 ----
 VII. Expressions
@@ -198,10 +206,17 @@ Appendix A. Opcodes
   Strings
 ES                 0
 CS                 1
-
+  Namespaces
+AN                 0
+RN                 1
+EN                 0
+CN                 1
+ERN                00
+PN                 01
 ----
 Appendix B. Conceptual Opcodes
 
   STRING             Represents a string. See Section IV
   INT                Represents an integer. See Section V.A
   FLOAT              Represents a float. See Section V.B
+  NMSP               Represents a namespace. See Section VI
