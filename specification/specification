@@ -146,6 +146,17 @@ B. Functional Statements
 
 1. Namespace Statements
 
+  Namespace statements are the most complex statements and involve manipulating namespaces. They are also the most important section of any program and are what allow an Advanced Assembly program to make changes to the program's state. After the FS opcode, all namespace statements have the NS (0) opcode. After the NS opcode, there are three possible types of namespace statements.
+  The first two types of namespace statement are relatively simple and directly manipulate the value of a namespace. An assign statement can be made using the AS (00) opcode followed by two additional statements. The first of these statements' value is converted to a string (if it is not a string already) and is then interpreted as a namespace. This namespace's value is then set to be whatever the second statement evaluates to. An assign statement evaluates to the value assigned to the namespace. The other simple namespace statement is a read statement which consists of the RS (01) opcode followed by one additional statement. This statement's value is then interpreted as a namespace (via a string). The read statement then evaluates to the value of the designated namespace.
+  The final type of namespace statement is the evaluate statement. The evaluate statement is used to transfer a program's control to another namespace. The evaluate statement starts with the ES (1) opcode followed by a varying amount of statements greater than one. The value of the first statement is interpreted as a namespace (via a string). The contents of this namespace are then interpreted as a program (via a string) which will be executed. As outlined in *Section IX, the amount of inputs to be sent to the program is derived. For each of these inputs, another statement is evaluated and the value of the current input is set to the value of the statement. Therefore, if an evaluate statement's first input indicates a namespace that contains a program with zero inputs, the evaluate statement will only consist of FS NS ES STMT. However, if the evaluate statement's first input denotes a namespace that contains a program with four inputs, the evaluate statement will consist of FS NS ES STMT STMT STMT STMT STMT. Note that there are five statements: one to identify the program and then one for each input for the program.
+
+Examples:
+  FS NS AS LS LT nbsp LS LI 0 CS 0001 ES              Assigns an int with a value of one to the namespace nmsp*. Evaluates to an int with a value of one.
+  FS NS RS LS LT nmsp                                 Evaluates to namespace nmsp*'s value.
+  FS NS ES LS LT nbsp LS LT ES LS LT ES LS LT ES      Executes the program at namespace nmsp* that has three arguments. Each argument is set to an empty string. The statement evaluates to the result of the program at nmsp*.
+
+*For simplicity's sake, rather than writing out a string that denotes a namespace verbatim, the acronym nmsp is used to denote a string that contains an arbitrary namespace. 
+ 
 2. Mathematical Statements
 
   Operational expressions are expressions that evaluate two arguments to a single result. Operational expressions are qualified by the opcode EXO (1) and are referred to collectively by the opcode EXPR[O]. When an operational expression is denoted by the opcode EXPR[O], the EXO qualification is omitted. All operational expressions are identical consisting of the EXO qualifier followed by an opcode indicating which operation will be performed and then two EXPRs that represent the first and second value being used by the operation. Therefore, all operational expression look like the following (where [opcode] represents one of the eleven opcodes that will be discussed later in this section):
@@ -208,6 +219,10 @@ LT                 0
 LI                 10
 LF                 11
 FS                 1
+NS                 0
+AS                 00
+RS                 01
+ES                 1
 
 ----
 Appendix B. Conceptual Opcodes
