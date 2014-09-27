@@ -23,6 +23,10 @@ II. Table of Contents
    B.             Floats
   VI.            Namespaces
   VII.           Statements
+   A.             Literal Statements
+   B.             Functional Statements
+    1.             Namespace Statements
+    2.             Mathematical Statements
   VIII.          Actions
   IX.            Program Control Flow
 
@@ -102,7 +106,7 @@ VI. Namespaces
 
   Namespaces are a hierarchical structure--namespaces are grouped via parent-child relationships--used for storing data. A namespace is represented by the conceptual opcode NMSP. Every namespace has a name, a value, and a parent namespace. A namespace's name and parent uniquely identify it. At the top of namespace hierarchy is the Global Namespace; all other namespaces either have the Global Namespace as a parent or as a more distant ancestor. Under certain circumstances, the parent of the Global Namespace may be referenced: the Global Namespace is the parent of the Global namespace.
   Initially, every namespace has a value of an empty string; however, throughout a program's execution, a namespace may be assigned another value. A namespace will maintain the value it is assigned in the form it is assigned (so if a namespace is assigned a float value, the namespace will have the value of the float--the float will not be converted to another type), however any namespace may be interpreted as any type. If a namespace is interpreted as a type other than the type of its current value, the value will be converted to the appropriate type.
-  Since all statements within an Advanced Assembly program are expressed as a series of bits, a program's code is stored in a namespace as a string. Therefore, any namespace can be interpreted as a fully functional Advanced Assembly program and run as such. If a namespace is run as a program and its value is not a string, then the namespace's value is converted to a string before being run. Because of this, the Global Namespace, unlike all other namespaces, does not start with an initial value of an empty string. Instead, the Global Namespace starts with a string value that contains the currently run program. When actions in Advanced Assembly are executed, the namespace that contains the binary string being interpreted as the action is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed as a program and special cases that may arise, see *Section VII.
+  Since all statements within an Advanced Assembly program are expressed as a series of bits, a program's code is stored in a namespace as a string. When stored as a string, the string's value includes the opcodes used for describing a namespace's structure (outlined below). Any namespace can be interpreted as a fully functional Advanced Assembly program and run as such. If a namespace is run as a program and its value is not a string, then the namespace's value is converted to a string before being run. Because of this, the Global Namespace, unlike all other namespaces, does not start with an initial value of an empty string. Instead, the Global Namespace starts with a string value that contains the currently run program. When actions in Advanced Assembly are executed, the namespace that contains the binary string being interpreted as the action is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed as a program and special cases that may arise, see *Section VII.
   Namespaces can be written in two formats: absolute and relative. Absolute namespaces are prefaced by the opcode AN (0). Then the namespace consists of groups of the CN (1) opcode and a STRING. After an arbitrary amount of groups, the EN (0) opcode is encountered indicating the end of the namespace definition. After the AN opcode, the Global Namespace is referenced. Each subsequent group references the child namespace of the previously referenced namespace with the specified STRING as its name. When the EN opcode is encountered, the last referenced namespace is the namespace being referenced by the NMSP statement. Note that by including no CN and STRING groups, the Global Namespace can be referenced.
 
 Examples:
@@ -122,44 +126,27 @@ Examples:
   RN CN CS 0101 ES ERN                    References the Current Namespace's child "0101"
   RN CN CS 1010 ES CN CS 1111 ES ERN      References the Current Namespace's child "1010"'s child "1111"
 
-
-
-
 ----
-VII. Expressions
+VII. Statements
 
-  Expressions are combinable statements that evaluate to a number and are used to perform mathematical operations. Expressions come in two forms: numerical and operational. All operations are referred to collectively by the opcode EXPR.
+  A statement consists of one or more operations that evaluate to a value: either an int, float or string (strings may be used to represent namespaces; see Section VI). A complete statement is represented by the conceptual opcode STMT. Statements are broken up into two types: literal statements which evaluate to the literal value of their contents, and functional statements which evaluate to a value derived from one or more other statements.
 
-A. Numerical Expressions
+A. Literal Statements
 
-  Numerical expressions are expressions that evaluate a single argument to a single result. Numerical expressions are qualified by the opcode EXN (0) and are referred to collectively by the opcode EXPR[N]. When a numerical expression is denoted by the opcode EXPR[N], the EXN qualification is omitted. There are four numerical expression types: integer literal, decimal literal, bitwise not, and variable.
+  Literal statements are statements that have a single input and evaluate to the literal value of that input. All literal statements start with the opcode LS (0). After the LS opcode, their are three options. The first is a string literal statement which consists of the opcode LT (0) followed by a STRING. The second option is the opcode LI (10) followed by an INT. The final option is the opcode LF (11) followed by a FLOAT. Each type of literal statement evaluates to the value delineated within the statement.
 
-  The integer literal numerical expression consists of the opcode LINT (00) followed by a STRING. The integer literal interprets the STRING as an n-bit, two's compliment integer allowing for the full range of integers to be expressed. For example, a fully qualified integer literals that would evaluate to 16, -32, and 27 respectively would be as follows:
+Examples:
+  LS LT CS 0000 ES                    Evaluates to a string with a value of "0000"
+  LS LI 0 CS 0001 ES                  Evaluates to an int with a value of 1
+  LS LF 0 CS 0001 ES 1 CS 1111 ES     Evaluates to a float with a value of 0.5
 
-  EXN LINT LF 0001 CS 0000 ES
-  EXN LINT SF 11100000
-  EXN LINT LF 0001 CS 1011 ES
+B. Functional Statements
 
-  The decimal literal expression consists of the opcode LDEC (01) followed by two STRINGs. The first STRING represents the significand and the second STRING represents the exponent. Both STRINGs will be interpreted as n-bit, two's compliment integers allowing for the full range of real numbers to be expressed. For example, a fully qualified decimal literal that would evaluate to 2.75, 31.375 and 4.9375 respectively would be as follows:
+  Functional statements are statements that have one or more inputs and evaluate to a value derived from them. All functional statements start with the opcode FS (1). Functional statements can be further divided into two categories: namespace statements which derive their value from manipulating namespaces, and mathematical statements which derive their value from a mathematical manipulation of one or more inputs.
 
-  EXN LDEC SF 00001011 LF 1110 ES
-The first STRING evaluates to eleven and the second STRING evaluates to -2. Eleven * 2^(-2) = Eleven/4 = 2.75
-  EXN LDEC LF 0000 CS 1111 CS 1011 ES LF 1101 ES
-The first STRING evaluates to 251 and the second STRING evaluates to -3. 251*2^(-3) = 251/8 = 31.375
-  EXN LDEC SF 01001111 LF 1100 ES
-The first STRING evaluates to 79 and the second STRING evaluates to -4. 79*2^(-4) = 79/16 = 4.9375
+1. Namespace Statements
 
-  A bitwise not expression consists of the opcode BTWN (10) followed by an EXPR. The value of the embedded OPER will be inverted (each 0 will become 1 and vice versa). Therefore a fully qualified bitwise not expression is simply:
-
-  EXN BTWN EXPR
-
-  Finally, the variable expression is used to retrieve the value of a variable. A variable expression consists of the EVAR opcode (11) followed by a VAR[P]. Note that in some cases the retrieval of a variable's value requires additional parameters to be passed (e.g. if the variable holds a function). Each necessary additional parameter will be expressed as an EXPR following the VAR[P]. For instance, a variable expression with zero, three, and four additional parameters respectively would be as follows:
-
-  EXN EVAR VAR[P]
-  EXN EVAR VAR[P] EXPR EXPR EXPR
-  EXN EVAR VAR[P] EXPR EXPR EXPR EXPR
-
-B. Operational Expressions
+2. Mathematical Statements
 
   Operational expressions are expressions that evaluate two arguments to a single result. Operational expressions are qualified by the opcode EXO (1) and are referred to collectively by the opcode EXPR[O]. When an operational expression is denoted by the opcode EXPR[O], the EXO qualification is omitted. All operational expressions are identical consisting of the EXO qualifier followed by an opcode indicating which operation will be performed and then two EXPRs that represent the first and second value being used by the operation. Therefore, all operational expression look like the following (where [opcode] represents one of the eleven opcodes that will be discussed later in this section):
 
@@ -174,7 +161,7 @@ B. Operational Expressions
   The last two opcodes are MOD (1110) and EXP (1111) which are used to perform modulus and exponentiation respectively. The modulus operation evaluates to the difference between the largest multiple of the second number smaller than the first number and the first number. When both numbers are integers this is equivalent to calculating the remainder of the euclidean division of the first integer by the second integer. If the second number is zero, than the expression is undefined. To avoid errors, the expression will still evaluate to zero. The exponentiation operation evaluates to the first number raised to the power of the second number. Under certain circumstances (like negative one being raised to the one half power) the result of this operation may be undefined or imaginary. To avoid errors, the expression will simply evaluate to zero.
 
 ----
-VII. Statements
+VII. Actions
 
 A. Global Statements
 
@@ -206,6 +193,7 @@ Appendix A. Opcodes
   Strings
 ES                 0
 CS                 1
+
   Namespaces
 AN                 0
 RN                 1
@@ -213,6 +201,14 @@ EN                 0
 CN                 1
 ERN                00
 PN                 01
+
+  Statements
+LS                 0
+LT                 0
+LI                 10
+LF                 11
+FS                 1
+
 ----
 Appendix B. Conceptual Opcodes
 
@@ -220,3 +216,4 @@ Appendix B. Conceptual Opcodes
   INT                Represents an integer. See Section V.A
   FLOAT              Represents a float. See Section V.B
   NMSP               Represents a namespace. See Section VI
+  STMT               Represents a complete statement. See Section VII
