@@ -1,9 +1,9 @@
-# High Level Binary (HLB)
+# Advanced Assembly
 
-High Level Binaray (HLB) is a flexible high-level programming language that supports both the functional
-and object oriented paradigms. What makes HLB unique is that the entire programming language is written
-in pure binary and that every possible sequence of binary longer than a certain length [this length will
-be determined once the specification is written] is a valid program that can be executed to produce some
-sort of output. HLB code is run in an interpreter [that will most likely be written in Python]. The purpose
-of HLB is twofold: to be able to concisely express high-level programming concepts in raw binary and to
-be able to interpret and run any sequence of binary to easily facilitate randomly generated programs.
+Advanced Assembly is a programming language roughly resembling an assembly programming languages. However, unlike standard assembly languages, Advanced Assembly is not designed to be run on a specific processor. Instead, it has been designed so that any series of bits--any combination of "1" and "0"--is a valid program.
+
+A key design element of Advanced Assembly is that it discards the standard grouping of eight bits into a byte--this allows Advanced Assembly to be able to interpret any series of bits as a program but also makes it impossible to run directly on a processor. Instead, Advanced Assembly code must be run via an interpreter, ostensibly on a virtual machine.
+
+During earlier stages of development, Advanced Assembly was called High Level Binary, and, in addition to being able to interpret any series of bits as a program, was intended to be able to express a myriad of high-level programming features reminiscent of programming languages like C++ or Python. However, as development progressed, it became apparent that in order to implement many features the syntax of the language would become incredibly complicated and that they could be replicated in code within a simpler language. As such, the language was rapidly simplified until by the time the first complete language specification was planned out, High Level Binary no longer represented the "high level" programming languages it was originally intended to emulate; instead, the programming language appeared to be a permutation of a typical assembly language. Therefore, the decision was made to rename the language Advanced Assembly to indicate that it facilitated a different feature set than standard assembly languages while distancing the association with so-called high level programming languages.
+
+The simplification of Advanced Assembly has led to several features that were believed to be very important to no longer directly included in the programming language. These features, such as the Object Oriented Programming paradigm, will therefore be provided as "extensions." Separate specification documents will be drafted that define how these features are to work and a reference implementation of them shall be created solely using Advanced Assembly code. Therefore in a program where one of these features is desired, the extension can be used by invoking the extension as one of the first actions of a program. All subsequent statements will than have access to the now-loaded extension's feature set. As of the writing of this document, no extensions have been drafted or implemented.
