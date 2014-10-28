@@ -176,6 +176,7 @@ VIII. Actions
 
 ----
 IX. Program Control Flow
+  Program execution in Advanced Assembly is relatively simple. When executing a program, the first series of bits are interpreted as an integer (See Section V.A). The absolute value of this integer is the number of parameters for the program being interpreted. The value of the parameters are put in the temporary namespaces with a string whose value can be interpreted as an integer that matches with the parameter’s index. Therefore the first parameter (parameter zero) is stored in the temporary namespace "0000", the second parameter is in the temporary namespace "0001", and so forth. Note that the used namespaces always have the most concise names, so the first parameter will always be in  "0000" even if there is a parameter seventeen in "00010000". After the initial integer, all subsequent bits are interpreted as actions. Following the initial integer, there can be an infinite amount of actions which will be interpreted sequentially until a return statement is encountered ending execution. If the series of bits being interpreted ends, then there is an assumed infinite amount of zeroes following which will be used to continue the execution of the program until a return statement is encountered.
 
 ----
 Appendix A. Opcodes
