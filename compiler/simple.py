@@ -4,6 +4,7 @@ import os
 bts=""
 def write_bits(out,bit):
   global bts
+  print bit
   bts = bts+bit
   while len(bts)>8:
     out.write(chr(int(bts[0:8],2)))
@@ -35,7 +36,7 @@ opcodes={
   'NS':'0',
   'AS':'00',
   'RS':'01',
-  'ES':'1',
+  'ET':'1',
   'MS':'1',
 
   'OP':'0000',
@@ -65,7 +66,7 @@ opcodes={
   'TTL':'1111110',
   'TTR':'1111111',
 
-  'RN':'00',
+  'RT':'00',
   'ST':'01',
   'IF':'10',
   'EN':'0',
