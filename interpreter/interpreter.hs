@@ -30,6 +30,19 @@ lstring s
         cs=hasOpcode s "CS"
         (str,prog) = splitAt 4 (fst cs)
 
+bsToInt :: [Bool] -> Integer
+bsToInt [] = 0
+bsToInt x = val + 16*(bsToInt remainder)
+  where (base,remainder) = splitAt 4 x
+        val = foldl (\x y->2*x+(if y then 1 else 0)) 0 base
+
+-- Program -> (Program',Integer); Program' is program with the integer removed.
+linteger :: [Bool] -> ([Bool],Integer)
+linteger [] = ([],0)
+linteger (sign:remainder) = (prog,sgn $ bsToInt str)
+  where (prog,str)=lstring remainder
+        sgn=if sign then (\x->x-2^(length str)) else (\x->x)
+
 main = do
-  print (lstring [True,True,False,True,False,True,False,False,False,False,True,
-         True,True,True,True,False])
+  print (linteger $ True:(concat (replicate 32 [True,True,True,True,True]))
+                  ++[True,False,True,True,True,False])
