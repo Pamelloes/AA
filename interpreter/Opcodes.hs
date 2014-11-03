@@ -1,6 +1,24 @@
--- This module solely contains a list of the valid opcodes in Advanced Assembly
+-- This module contains a list of the valid opcodes in Advanced Assembly and
+-- functions for parsing them.
 module Opcodes where
 import qualified Data.Map as M
+
+-- NOTE: The program is assumed to be an infinitely long list (see language
+-- specification). If a non-infinite list is provided, behavior is undefined.
+
+type Program = [Bool]
+type Opcode = String
+
+-- If Program starts with Opcode, result Program has the opcode removed.
+hasOpcode :: Program -> Opcode -> (Program,Bool)
+hasOpcode [] _ = ([],False)
+hasOpcode s k 
+  | length z==length pattern && match = (reduced, True)
+  | otherwise = (s,False)
+  where pattern=opcodes M.! k
+        z = zip pattern s
+        match = fst (foldl (\(a,_) (x,y) -> (a&&x==y,False)) (True,False) z) == True
+        reduced = drop (length pattern) s
 
 opcodes=M.fromList
  [("ES",[False])
