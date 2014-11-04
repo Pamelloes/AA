@@ -14,6 +14,31 @@ data NmspId = End | Parent NmspId | Child BString NmspId
 globalNamespace :: Program -> Namespace
 globalNamespace p = Namespace [] p (M.fromList []) Nothing
 
+lanmsp :: Program -> (Program,NmspId)
+lanmsp p
+  | snd en = (fst en,End)
+  | snd cn = let (pr,id)=lanmsp (fst str) in (pr,Child (snd str) id)
+  where en=hasOpcode p "EN"
+        cn=hasOpcode p "CN"
+        str=lstring (fst cn)
+
+lrnmsp :: Program -> (Program,NmspId)
+lrnmsp p
+  | snd en = (fst en,End)
+  | snd cn = let (pr,id)=lrnmsp (fst str) in (pr,Child (snd str) id)
+  | snd pn = let (pr,id)=lrnmsp (fst pn) in (pr,Parent id)
+  where en=hasOpcode p "ERN"
+        cn=hasOpcode p "CN"
+        str=lstring (fst cn)
+        pn=hasOpcode p "PN"
+
+lnmsp :: Program -> (Program, NmspId)
+lnmsp p
+  | snd abs = lanmsp (fst abs)
+  | snd rel = lrnmsp (fst rel)
+  where abs=hasOpcode p "AN"
+        rel=hasOpcode p "RN"
+
 findNamespace :: NmspId -> Namespace -> Maybe Namespace
 findNamespace End a = Just a
 findNamespace (Parent id) n@Namespace{parent = Nothing} = findNamespace id n

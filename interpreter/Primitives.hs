@@ -12,8 +12,8 @@ type BInt = Integer
 lstring :: Program -> (Program,BString)
 lstring [] = ([],[])
 lstring s
-  | snd es == True = (fst es,[])
-  | snd cs == True = let (a,b)=lstring prog in (a,str++b)
+  | snd es = (fst es,[])
+  | snd cs = let (a,b)=lstring prog in (a,str++b)
   where es=hasOpcode s "ES"
         cs=hasOpcode s "CS"
         (str,prog) = splitAt 4 (fst cs)
