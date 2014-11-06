@@ -11,10 +11,9 @@ type Opcode = String
 
 -- If Program starts with Opcode, result Program has the opcode removed.
 hasOpcode :: Program -> Opcode -> (Program,Bool)
-hasOpcode [] _ = ([],False)
 hasOpcode s k 
-  | length z==length pattern && match = (reduced, True)
-  | otherwise = (s,False)
+  | length z==length pattern = if match then (reduced, True) else (s, False)
+  | otherwise = error "hasOpcode: Reached program end"
   where pattern=opcodes M.! k
         z = zip pattern s
         match = fst (foldl (\(a,_) (x,y) -> (a&&x==y,False)) (True,False) z) == True
