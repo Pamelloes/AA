@@ -9,7 +9,7 @@ import Test.HUnit
 import TestException
 
 testEmpty = TestCase $ assertException 
-  (ErrorCall "hasOpcode: Reached program end") (return $ hasOpcode [] "ES")
+  (ErrorCall "hasOpcode: Reached program end") (evaluate $ hasOpcode [] "ES")
 
 testL1 = TestCase $ assertEqual
   "Should recognize opcode of length 1." ([],True) (hasOpcode (opcodes M.! "ES")
