@@ -1,5 +1,6 @@
 -- This module contains functions dealing with namesapces in Advanced Assembly
 module Namespaces where
+
 import qualified Data.Map as M
 import Opcodes
 import Primitives

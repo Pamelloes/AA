@@ -1,6 +1,7 @@
 -- This module contains a list of the valid opcodes in Advanced Assembly and
 -- functions for parsing them.
 module Opcodes where
+
 import qualified Data.Map as M
 
 -- NOTE: The program is assumed to be an infinitely long list (see language

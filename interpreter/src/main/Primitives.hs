@@ -1,5 +1,6 @@
 -- This module contains functions for parsing data types in Advanced Assembly
 module Primitives where
+
 import Opcodes
 
 -- NOTE: The program is assumed to be an infinitely long list (see language

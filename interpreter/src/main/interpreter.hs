@@ -1,4 +1,6 @@
 -- This is the interpreter for Advanced Assembly version 0.4
+module Main where
+
 import Primitives
 
 -- NOTE: The program is assumed to be an infinitely long list (see language

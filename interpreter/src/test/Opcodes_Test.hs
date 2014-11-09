@@ -1,12 +1,11 @@
 -- This module contains tests for the Opcodes module.
 module Opcodes_Test where
 
-import Opcodes
+import Control.Exception
 import qualified Data.Map as M
-
+import Opcodes
 import Test.HUnit
 import TestException
-import Control.Exception
 
 -- Opcode Tests
 opError = ErrorCall "hasOpcode: Reached program end"

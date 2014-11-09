@@ -1,15 +1,13 @@
 -- This module contains tests for the Primitives module
 module Primitives_Test where
 
-import Primitives
-
+import Control.Exception
+import qualified Data.Map as M
 import Opcodes
 import qualified Opcodes_Test as P
-import qualified Data.Map as M
-
+import Primitives
 import Test.HUnit
 import TestException
-import Control.Exception
 
 -- String Tests
 strError = ErrorCall "lstring: Reached program end"
