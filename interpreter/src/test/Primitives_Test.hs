@@ -45,5 +45,48 @@ strTests = TestLabel "String" $
   TestList[ testEmptyP, testIncomplete, testUnfinished, testEmpty, testL4, testL8
           , testExtra]
 
-mainList = TestLabel "Primitives" $ TestList [ strTests ]
+-- Integer Tests
+intError = ErrorCall "linteger: Reached program end"
+
+testIEmptyP = TestLabel "Test Empty Program" $
+  TestCase $ assertException intError (linteger [])
+testIIncomplete1 = TestLabel "Test Incomplete Program 1" $
+  TestCase $ assertException strError (linteger [False])
+testIIncomplete2 = TestLabel "Test Incomplete Program 2" $
+  TestCase $ assertException strError (linteger p)
+  where p=[False]++(opcodes M.! "CS")
+testIUnfinished = TestLabel "Test Unfinished Program" $
+  TestCase $ assertException strError (linteger p)
+  where p = [False]++(opcodes M.! "CS")++(replicate 4 False)
+
+testIEmpty1 = TestLabel "Test Positive Empty Integer" $
+  TestCase $ assertEqual "" ([],0) (linteger p)
+  where p = [False]++(opcodes M.! "ES")
+testIEmpty2 = TestLabel "Test Negative Empty Integer" $
+  TestCase $ assertEqual "" ([],-1) (linteger p)
+  where p = [True]++(opcodes M.! "ES")
+
+testIL4 = TestLabel "Test Integer Length 4" $
+  TestCase $ assertEqual "" ([],10) (linteger p)
+  where p = [False]++(opcodes M.! "CS")++([True,False,True,False])
+          ++(opcodes M.! "ES")
+testIL8 = TestLabel "Test Integer Length 8" $
+  TestCase $ assertEqual "" ([],49) (linteger p)
+  where p = [False]++(opcodes M.! "CS")++([False,False,False,True])
+          ++(opcodes M.! "CS")++([False,False,True,True])++(opcodes M.! "ES")
+testINeg = TestLabel "Test Negative Integer" $
+  TestCase $ assertEqual "" ([],-76) (linteger p)
+  where p = [True]++(opcodes M.! "CS")++([False,True,False,False])
+          ++(opcodes M.! "CS")++([True,False,True,True])++(opcodes M.! "ES")
+testIExtra = TestLabel "Test Program Deletion" $
+  TestCase $ assertEqual "" (p2,-3) (linteger (p1++p2))
+  where p1 = [True]++(opcodes M.! "CS")++[True,True,False,True]
+          ++(opcodes M.! "ES")
+        p2 = replicate 100 True
+
+intTests = TestLabel "Integer" $
+  TestList [ testIEmptyP, testIIncomplete1, testIIncomplete2, testIUnfinished
+           , testIEmpty1, testIEmpty2, testIL4, testIL8, testINeg, testIExtra ]
+
+mainList = TestLabel "Primitives" $ TestList [ strTests, intTests ]
 main = runTestTT $ TestList [ P.mainList, mainList]
