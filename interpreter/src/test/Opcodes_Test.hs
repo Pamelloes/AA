@@ -11,7 +11,7 @@ import Control.Exception
 -- Opcode Tests
 opError = ErrorCall "hasOpcode: Reached program end"
 
-testEmpty = TestCase $ assertException opError (evaluate $ hasOpcode [] "ES")
+testEmpty = TestCase $ assertException opError (hasOpcode [] "ES")
 
 testL1 = TestCase $ assertEqual
   "Should recognize opcode of length 1." ([],True) (hasOpcode (opcodes M.! "ES")

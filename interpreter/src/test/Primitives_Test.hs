@@ -15,13 +15,13 @@ import Control.Exception
 strError = ErrorCall "lstring: Reached program end"
 
 testEmpty = TestLabel "Test Empty" $
-  TestCase $ assertException strError (evaluate $ lstring [])
+  TestCase $ assertException strError (lstring [])
 testIncomplete = TestLabel "Test Incomplete" $
-  TestCase $ assertException strError
-  (evaluate $ lstring ((opcodes M.! "CS") ++ (replicate 3 True)))
+  TestCase $ assertException strError (lstring p)
+  where p=(opcodes M.! "CS") ++ (replicate 3 True)
 testUnfinished = TestLabel "Test Unfinished" $
-  TestCase $ assertException strError
-  (evaluate $ lstring ((opcodes M.! "CS") ++ (replicate 4 True)))
+  TestCase $ assertException strError (lstring p)
+  where p=(opcodes M.! "CS") ++ (replicate 4 True)
 
 strTests = TestLabel "String" $
   TestList[ testEmpty, testIncomplete, testUnfinished]
