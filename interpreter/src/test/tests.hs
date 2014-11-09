@@ -24,11 +24,12 @@ THE SOFTWARE.
 module Main where
 
 import qualified Primitives_Test as P
+import qualified Namespaces_Test as N
 import System.Exit (exitFailure)
 import Test.HUnit
 
 main = do
-  counts <- runTestTT P.mainList
+  counts <- runTestTT $ TestList [P.mainList,N.mainList]
   if (errors counts/= 0) || (failures counts /= 0) then
     exitFailure
   else return ()

@@ -31,7 +31,7 @@ data Namespace = Namespace { name :: BString
                            , value :: BString
                            , children :: M.Map BString Namespace
                            , parent :: Maybe Namespace
-                           } deriving (Show)
+                           } deriving (Show,Eq)
 data NmspId = End | Parent NmspId | Child BString NmspId
 
 globalNamespace :: Program -> Namespace
