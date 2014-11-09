@@ -3,13 +3,15 @@ module Opcodes_Test where
 
 import Opcodes
 import qualified Data.Map as M
-import Control.Monad
-import Control.Exception
+
 import Test.HUnit
 import TestException
+import Control.Exception
 
-testEmpty = TestCase $ assertException 
-  (ErrorCall "hasOpcode: Reached program end") (evaluate $ hasOpcode [] "ES")
+-- Opcode Tests
+opError = ErrorCall "hasOpcode: Reached program end"
+
+testEmpty = TestCase $ assertException opError (evaluate $ hasOpcode [] "ES")
 
 testL1 = TestCase $ assertEqual
   "Should recognize opcode of length 1." ([],True) (hasOpcode (opcodes M.! "ES")
@@ -55,4 +57,5 @@ testN7 = TestCase $ assertEqual
 
 testNeg = TestList [testN1, testN2, testN4, testN5, testN7]
 
-main = runTestTT $ TestList [testEmpty, testPos, testNeg]
+mainList = TestList [testEmpty, testPos, testNeg] 
+main = runTestTT mainList

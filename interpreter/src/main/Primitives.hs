@@ -10,7 +10,7 @@ type BInt = Integer
 
 -- Result Program has BString removed.
 lstring :: Program -> (Program,BString)
-lstring [] = ([],[])
+lstring [] = error "lstring: Reached program end"
 lstring s
   | snd es = (fst es,[])
   | snd cs = let (a,b)=lstring prog in (a,str++b)
@@ -26,7 +26,7 @@ bsToInt x = val + 16*(bsToInt remainder)
 
 -- Result Program has BInt removed.
 linteger :: Program -> (Program,BInt)
-linteger [] = ([],0)
+linteger [] = error "linteger: Reached program end"
 linteger (sign:remainder) = (prog,sgn $ bsToInt str)
   where (prog,str)=lstring remainder
         sgn=if sign then (\x->x-2^(length str)) else (\x->x)
