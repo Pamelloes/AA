@@ -20,17 +20,28 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This Module contains tests for the Namespaces module.
-module Namespaces_Test where
+-- This module provides a zipper for manipulating lists.
+module LZipper where
 
-import Control.Exception
-import qualified Data.Map as M
-import Namespaces
-import Primitives
-import Test.HUnit
-import TestException
+-- First is focus, Second is trail
+type LZipper a = ([a],[a])
 
--- Namespace Tests
+forward :: LZipper a -> Maybe (LZipper a)
+forward (l:ls,bs) = Just (ls,l:bs)
+forward ([],_) = Nothing
 
-mainList = TestLabel "Namespaces" $ TestList []
-main = runTestTT mainList
+backward :: LZipper a -> Maybe (LZipper a)
+backward (ls,c:bs) = Just (c:ls,bs)
+backward (_,[]) = Nothing
+
+zipper :: [a] -> LZipper a
+zipper l = (l,[])
+
+unzipper :: LZipper a -> [a]
+unzipper (ls,bs) = reverse bs ++ ls
+
+end :: LZipper a -> LZipper a
+end (ls,bs) = ([],reverse ls ++ bs)
+
+start :: LZipper a -> LZipper a
+start (ls,bs) = (reverse bs ++ ls,[])
