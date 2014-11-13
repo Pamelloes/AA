@@ -39,18 +39,18 @@ II. Table of Contents
 ----
 III. Notation
 
-  Advanced Assembly, as a quasi-assembly language, is programmed by specifying the value of a series of bits. A bit is the smallest unit of memory within a computer and can either have a value of "0" or "1." Throughout this document it is understood that "1" and "0" do not refer to their numerical value. Instead, "1" represents a single bit with a value of one and "0" represents a single bit with a value of zero. All other arabic numerals are understood to be referring to their numeric value. In the event that "1" or "0" is used in conjunction with other arabic numerals, it is understood that the "1" or "0" will not be representing their numeric value and not a computer bit.
-  Under some circumstances, expressing numbers (such as one hundred) in arabic numerals will only use the symbols "1" and "0". In such cases, the number will be written out "one hundred." Therefore, if "100" is encountered it is understood that "100" is referring to three, sequential bits with values of one, zero, and zero respectively.
+  Advanced Assembly programs consist of a series of bits. A bit, the simplest unit of information, can either be true or false. Throughout this document it is understood that "1" and "0" refer to a single bit with a value of true and false, respectively. All other Arabic numerals are understood to be referring to their standard numeric value. If a "1" or "0" is used with other Arabic numerals, it is understood that the "1" or "0" represents its standard numeric value--not a bit.
+  Under some circumstances, expressing numbers (such as one hundred) in Arabic numerals will only use the symbols "1" and "0". In such cases, the number will be written out ("one hundred"). Therefore, if "100" is encountered it is understood that "100" is referring to three, sequential bits with values of true, false, and false, respectively.
 
 Examples:
-     0  Refers to a single bit with a value of zero
+     0  Refers to a bit with a value of true
      8  Refers to the number eight
-    10  Refers to two, sequential bits with values of one and zero respectively
+    10  Refers to two, sequential bits with values of true and false respectively
     15  Refers to the number fifteen
   1425  Refers to the number one thousand, four hundred, twenty-five
-  1000  Refers to four, sequential bits with values of one, zero, zero, and zero respectively
+  1001  Refers to four, sequential bits with values of true, false, false, and true respectively
 
-NOTE: In many documents strings of bits may be grouped into sets of four and expressed in hexadecimal--allowing two hexadecimal digits to express the value of a byte. However, since Advanced Assembly does not group bits into larger groups of regular size, this notation will not be used. Whenever strings of bits are to be expressed, they will be expressed using the previously outlined "1" and "0" notation.
+NOTE: In other documents, series of bits may be grouped into sets of four and expressed in hexadecimal--allowing two hexadecimal digits to express the value of a byte. However, since Advanced Assembly does not group bits into larger groups of regular size, this notation will not be used. Whenever series of bits are to be expressed, they will be expressed using "1" and "0".
 
 A. Opcodes
 
