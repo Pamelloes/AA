@@ -27,7 +27,10 @@ import Control.Exception
 import qualified Data.Map as M
 import qualified LZipper_Test as L
 import Namespaces
+import Opcodes
+import qualified Opcodes_Test as O
 import Primitives
+import qualified Primitives_Test as P
 import Test.HUnit
 import TestException
 
@@ -58,8 +61,40 @@ testNmspValue2 = TestLabel "Test value retrieval 2" $
         k=[replicate 4 True,[True,False,True,False],replicate 4 False]
         v=[False,False,False,True,False,False]
 
+testLNmspA = TestLabel "Test loading absolute namespace" $
+  TestCase $ assertEqual "" ([],id) (lnmsp [] p)
+  where id=[[True,False,True,False],replicate 4 False,replicate 4 True]
+        p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
+          ++(o "CS")++id!!1++(o "ES")++(o "CN")++(o "CS")++id!!2
+          ++(o "ES")++(o "EN")
+        o s=opcodes M.! s
+
+testLNmspR = TestLabel "Test loading relative namespace" $
+  TestCase $ assertEqual "" ([],id) (lnmsp b p)
+  where id=[[True,False,True,False],replicate 4 False,replicate 4 True]
+        b=[[True,False,True,False],replicate 4 True]
+        p=(o "RN")++(o "PN")++(o "CN")++(o "CS")++id!!1++(o "ES")
+          ++(o "CN")++(o "CS")++id!!2++(o "ES")++(o "ERN")
+        o s=opcodes M.! s
+
+testLNmspExtra = TestLabel "Test loading namespace with extra program" $
+  TestCase $ assertEqual "" (e,id) (lnmsp [] (p++e))
+    where id=[]
+          p=(o "AN")++(o "EN")
+          e=replicate 103 False 
+          o s=opcodes M.! s
+
+testLNmspF = TestLabel "Test loading short namespace" $
+  TestCase $ assertException O.opError (lnmsp [] [])
+
+testLNmspF2 = TestLabel "Test loading short namespace 2" $
+  TestCase $ assertException P.strError (lnmsp [] p)
+  where p=(o "AN")++(o "CN")++(o "CS")
+        o s=opcodes M.! s
+
 mainList = TestLabel "Namespaces" $
   TestList [ testDefaultNamespace, testNmspValue, testNmspDefValue 
-           , testNmspValueSet, testNmspValue2
+           , testNmspValueSet, testNmspValue2, testLNmspA, testLNmspR
+           , testLNmspExtra, testLNmspF, testLNmspF2
            ]
-main = runTestTT $ TestList [ L.mainList, mainList ]
+main = runTestTT $ TestList [ L.mainList, O.mainList, P.mainList, mainList ]

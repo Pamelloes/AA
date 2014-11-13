@@ -73,6 +73,6 @@ testInfinite = TestLabel "Test with infinite lists" $
 mainList = TestLabel "LZipper" $
   TestList [ testZipper, testForward, testForwardFail, testBackward
            , testBackwardFail, testUnzipper, testEnd, testStart
-           , testInfinite
+--           , testInfinite
            ]
 main = runTestTT mainList
