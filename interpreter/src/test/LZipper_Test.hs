@@ -64,7 +64,14 @@ testStart = TestLabel "Test jumping to start of zipper" $
     (fmap start $ return (zipper l)>>=forward>>=forward)
   where l=[10000000000000000,2000000000000000000,523215351325326246246246]
   
+testInfinite = TestLabel "Test with infinite lists" $
+  TestCase $ assertEqual "" (Just l)
+    (fmap unzipper $ return (zipper l)>>=forward>>=forward>>=forward
+    >>=forward>>=forward>>=backward>>=backward>>=backward>>=forward)
+  where l=[1,2..]
+  
 mainList = TestLabel "LZipper" $
   TestList [ testZipper, testForward, testForwardFail, testBackward
-           , testBackwardFail, testUnzipper, testEnd, testStart]
+           , testBackwardFail, testUnzipper, testEnd, testStart
+           , testInfinite]
 main = runTestTT mainList
