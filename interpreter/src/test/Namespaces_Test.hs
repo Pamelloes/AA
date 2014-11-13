@@ -25,6 +25,7 @@ module Namespaces_Test where
 
 import Control.Exception
 import qualified Data.Map as M
+import qualified LZipper_Test as L
 import Namespaces
 import Primitives
 import Test.HUnit
@@ -33,4 +34,4 @@ import TestException
 -- Namespace Tests
 
 mainList = TestLabel "Namespaces" $ TestList []
-main = runTestTT mainList
+main = runTestTT $ TestList [ L.mainList, mainList ]
