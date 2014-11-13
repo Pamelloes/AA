@@ -32,8 +32,8 @@ type NmspId = [BString]
 type NZipper = LZipper BString
 type Namespaces = M.Map NmspId BString
 
-globalNamespace :: Program -> Namespaces
-globalNamespace p = M.fromList [([],p)]
+defaultNamespace :: Program -> Namespaces
+defaultNamespace p = M.fromList [([],p)]
 
 lanmsp :: Program -> (Program,NmspId)
 lanmsp p

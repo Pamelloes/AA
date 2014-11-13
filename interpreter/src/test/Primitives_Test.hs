@@ -106,7 +106,8 @@ testIExtra = TestLabel "Test Program Deletion" $
 
 intTests = TestLabel "Integer" $
   TestList [ testIEmptyP, testIIncomplete1, testIIncomplete2, testIUnfinished
-           , testIEmpty1, testIEmpty2, testIL4, testIL8, testINeg, testIExtra ]
+           , testIEmpty1, testIEmpty2, testIL4, testIL8, testINeg, testIExtra
+           ]
 
 mainList = TestLabel "Primitives" $ TestList [ strTests, intTests ]
 main = runTestTT $ TestList [ P.mainList, mainList]

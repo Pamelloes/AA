@@ -32,6 +32,34 @@ import Test.HUnit
 import TestException
 
 -- Namespace Tests
+testDefaultNamespace = TestLabel "Test default namespace" $
+  TestCase $ assertEqual "" (M.fromList [([],p)]) (defaultNamespace p)
+  where p=[False,False,False,False]
 
-mainList = TestLabel "Namespaces" $ TestList []
+testNmspValue = TestLabel "Test value retrieval" $
+  TestCase $ assertEqual "" p (nmspValue [] $ defaultNamespace p)
+  where p=replicate 5 True
+
+testNmspDefValue = TestLabel "Test default value retrieval" $
+  TestCase $ assertEqual "" [] (nmspValue [[False]] $ defaultNamespace p)
+  where p=replicate 5 True
+  
+testNmspValueSet = TestLabel "Test value set" $
+  TestCase $ assertEqual "" (M.fromList [([],p),(k,v)])
+    (nmspValueSet k v $ defaultNamespace p)
+  where p=replicate 10 False
+        k=[[False,True],[True,False],[True,True,True,True]]
+        v=[False,True,True,True,False]
+
+testNmspValue2 = TestLabel "Test value retrieval 2" $
+  TestCase $ assertEqual "" v
+    (nmspValue k $ nmspValueSet k v $ defaultNamespace p)
+  where p=replicate 5 True
+        k=[replicate 4 True,[True,False,True,False],replicate 4 False]
+        v=[False,False,False,True,False,False]
+
+mainList = TestLabel "Namespaces" $
+  TestList [ testDefaultNamespace, testNmspValue, testNmspDefValue 
+           , testNmspValueSet, testNmspValue2
+           ]
 main = runTestTT $ TestList [ L.mainList, mainList ]
