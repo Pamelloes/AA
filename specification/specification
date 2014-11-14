@@ -18,6 +18,7 @@ II. Table of Contents
   II.            Table of Contents
   III.           Notation
    A.             Opcodes
+   B.             Conceptual Opcodes
   IV.            Strings
   V.             Data Types
    A.             Integers
@@ -54,9 +55,12 @@ NOTE: In other documents, series of bits may be grouped into sets of four and ex
 
 A. Opcodes
 
-  While the Advanced Assembly programming language is made up of series of 1's and 0's, such notation can be difficult for humans to read. Furthermore, the character "1" is not equal to a single bit a value of one. Instead, characters are made up of groups of 8 bits so rendering an Advanced Assembly program as text would produce gibberish.
-  In order to solve this problem and allow for easier programming, the various aspects of Advanced Assembly are defined through mnemonics--several character abbreviations that directly transfer to a specific series of bits. A separate program can then be used to turn a text file consisting of these mnemonics into their corresponding bits. These mnemonics are collectively referred to as "opcodes" and are defined throughout the specification. A complete list of all the defined opcodes in Advanced Assembly and their corresponding values can be found in Appendix A.
-  In Advanced Assembly, groups of opcodes are used in conjunction with arbitrary series of bits in predictable patterns to express more complex concepts than a set of opcodes that directly correspond with a series of bits. These concepts, such as strings, often come up in multiple places throughout the specification where it is more meaningful to refer to them by a short mnemonic that can be associated with the concept instead of by copying the series of opcodes and arbitrary bits express. These mnemonics are referred to as "Conceptual Opcodes" because they refer to concepts instead of a specific series of bits. Conceptual opcodes are only used within the specification for the sake of convenience and cannot be used by a programmer to write Advanced Assembly code. Conceptual Opcodes are defined throughout the specification and a complete list of all conceptual opcodes and what they represent can be found in Appendix B.
+  This document explicitly specifies how combinations of true and false bits can be interpretted to produce a desired effect. However, notating a bit as "0" or "1" can become confusing and the same combinations of bits can mean different things depending on where they are. Therefore, when defining various functions, bit patterns will be expressed via several character mnemonics. Each mnemonic is translates directly into a corresponding series of bits (see Appendix A) and provides additional context--making a program easier to read and understand. These mnemonics are referred to as opcodes.
+  An assembler (written in Python) should be included with this document. The assembler will take a text file consisting of "1", "0", and the opcodes defined in this document and translate the text file into a binary file whose bits correspond with the text file.
+
+B. Conceptual Opcodes
+
+  In Advanced Assembly, groups of opcodes are used in conjunction with arbitrary series of bits in predictable patterns to express complex concepts than a single opcode. These concepts, such as strings, often come up in multiple places throughout the specification where it is more meaningful to refer to the concepts by a short mnemonic than it is to refer to the concepts by their constituent parts. These mnemonics are collectively referred to as "Conceptual Opcodes" because they refer to concepts instead of a specific series of bits. Conceptual opcodes are used within this document for clarity and cannot be used by a programmer to write Advanced Assembly code. Conceptual Opcodes are defined throughout the specification and a complete list can be found in Appendix B.
 
 ----
 IV. Strings
