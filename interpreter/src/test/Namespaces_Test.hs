@@ -37,33 +37,33 @@ import TestException
 -- Namespace Tests
 testDefaultNamespace = TestLabel "Test default namespace" $
   TestCase $ assertEqual "" (M.fromList [([],p)]) (defaultNamespace p)
-  where p=[False,False,False,False]
+  where p=[F,F,F,F]
 
 testNmspValue = TestLabel "Test value retrieval" $
   TestCase $ assertEqual "" p (nmspValue [] $ defaultNamespace p)
-  where p=replicate 5 True
+  where p=replicate 5 T
 
 testNmspDefValue = TestLabel "Test default value retrieval" $
-  TestCase $ assertEqual "" [] (nmspValue [[False]] $ defaultNamespace p)
-  where p=replicate 5 True
+  TestCase $ assertEqual "" [] (nmspValue [[F]] $ defaultNamespace p)
+  where p=replicate 5 T
   
 testNmspValueSet = TestLabel "Test value set" $
   TestCase $ assertEqual "" (M.fromList [([],p),(k,v)])
     (nmspValueSet k v $ defaultNamespace p)
-  where p=replicate 10 False
-        k=[[False,True],[True,False],[True,True,True,True]]
-        v=[False,True,True,True,False]
+  where p=replicate 10 F
+        k=[[F,T],[T,F],[T,T,T,T]]
+        v=[F,T,T,T,F]
 
 testNmspValue2 = TestLabel "Test value retrieval 2" $
   TestCase $ assertEqual "" v
     (nmspValue k $ nmspValueSet k v $ defaultNamespace p)
-  where p=replicate 5 True
-        k=[replicate 4 True,[True,False,True,False],replicate 4 False]
-        v=[False,False,False,True,False,False]
+  where p=replicate 5 T
+        k=[replicate 4 T,[T,F,T,F],replicate 4 F]
+        v=[F,F,F,T,F,F]
 
 testLNmspA = TestLabel "Test loading absolute namespace" $
   TestCase $ assertEqual "" ([],id) (lnmsp [] p)
-  where id=[[True,False,True,False],replicate 4 False,replicate 4 True]
+  where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
         p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
           ++(o "CS")++id!!1++(o "ES")++(o "CN")++(o "CS")++id!!2
           ++(o "ES")++(o "EN")
@@ -71,8 +71,8 @@ testLNmspA = TestLabel "Test loading absolute namespace" $
 
 testLNmspR = TestLabel "Test loading relative namespace" $
   TestCase $ assertEqual "" ([],id) (lnmsp b p)
-  where id=[[True,False,True,False],replicate 4 False,replicate 4 True]
-        b=[[True,False,True,False],replicate 4 True]
+  where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
+        b=[[T,F,T,F],replicate 4 T]
         p=(o "RN")++(o "PN")++(o "CN")++(o "CS")++id!!1++(o "ES")
           ++(o "CN")++(o "CS")++id!!2++(o "ES")++(o "ERN")
         o s=opcodes M.! s
@@ -81,7 +81,7 @@ testLNmspExtra = TestLabel "Test loading namespace with extra program" $
   TestCase $ assertEqual "" (e,id) (lnmsp [] (p++e))
     where id=[]
           p=(o "AN")++(o "EN")
-          e=replicate 103 False 
+          e=replicate 103 F 
           o s=opcodes M.! s
 
 testLNmspF = TestLabel "Test loading short namespace" $

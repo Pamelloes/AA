@@ -28,7 +28,7 @@ import Opcodes
 -- NOTE: The program is assumed to be an infinitely long list (see language
 -- specification). If a non-infinite list is provided, behavior is undefined.
 
-type BString = [Bool]
+type BString = [Bit]
 type BInt = Integer
 
 -- Result Program has BString removed.
@@ -45,11 +45,11 @@ bsToInt :: BString -> Integer
 bsToInt [] = 0
 bsToInt x = val + 16*(bsToInt remainder)
   where (base,remainder) = splitAt 4 x
-        val = foldl (\x y->2*x+(if y then 1 else 0)) 0 base
+        val = foldl (\x y->2*x+(if y==T then 1 else 0)) 0 base
 
 -- Result Program has BInt removed.
 linteger :: Program -> (Program,BInt)
 linteger [] = error "linteger: Reached program end"
 linteger (sign:remainder) = (prog,sgn $ bsToInt str)
   where (prog,str)=lstring remainder
-        sgn=if sign then (\x->x-2^(length str)) else (\x->x)
+        sgn=if sign==T then (\x->x-2^(length str)) else (\x->x)

@@ -23,11 +23,35 @@ THE SOFTWARE.
 -- This module contains tests for the Opcodes module.
 module Opcodes_Test where
 
+import Control.DeepSeq
 import Control.Exception
 import qualified Data.Map as M
 import Opcodes
 import Test.HUnit
 import TestException
+
+instance NFData Bit
+
+-- Bit Tests
+testBEq = TestLabel "Test bit equality" $
+  TestList [ TestCase $ assertEqual "" T T
+           , TestCase $ assertEqual "" F F
+           , TestCase $ assertEqual "" Terminate Terminate
+           , TestCase $ assertEqual "" Terminate F
+           , TestCase $ assertBool "" (F/=T)
+           , TestCase $ assertBool "" (Terminate/=T)
+           ]
+testBComp = TestLabel "Test bit comparisons" $
+  TestList [ TestCase $ assertBool "" (F<T)
+           , TestCase $ assertBool "" (Terminate<F)
+           , TestCase $ assertBool "" (Terminate<T)
+           , TestCase $ assertBool "" (T>F)
+           , TestCase $ assertBool "" (T>Terminate)
+           , TestCase $ assertBool "" (F>Terminate)
+           ]
+
+bitList = TestLabel "Bits" $
+  TestList [ testBEq, testBComp ]
 
 -- Opcode Tests
 opError = ErrorCall "hasOpcode: Reached program end"
@@ -58,25 +82,25 @@ testPos = TestList [testL1, testL2, testL4, testL5, testL7]
 
 testN1 = TestCase $ assertEqual
   "Should not recognize opcode of length 1." (pr,False) (hasOpcode pr "ET")
-  where pr=[False,False]
+  where pr=[F,F]
 
 testN2 = TestCase $ assertEqual
   "Should not recognize opcode of length 1." (pr,False) (hasOpcode pr "ERN")
-  where pr=[False,True,False,True]
+  where pr=[F,T,F,T]
 
 testN4 = TestCase $ assertEqual
   "Should not recognize opcode of length 4." (pr,False) (hasOpcode pr "BN")
-  where pr=[False,False,False,True,True,True]
+  where pr=[F,F,F,T,T,T]
 
 testN5 = TestCase $ assertEqual
   "Should not recognize opcode of length 5." (pr,False) (hasOpcode pr "BO")
-  where pr=[False,False,True,True,False,False]
+  where pr=[F,F,T,T,F,F]
 
 testN7 = TestCase $ assertEqual
   "Should not recognize opcode of length 7." (pr,False) (hasOpcode pr "TTL")
-  where pr=[True,False,True,True,True,True,True,False]
+  where pr=[T,F,T,T,T,T,T,F]
 
 testNeg = TestList [testN1, testN2, testN4, testN5, testN7]
 
-mainList = TestList [testEmpty, testPos, testNeg] 
+mainList = TestList [bitList, testEmpty, testPos, testNeg] 
 main = runTestTT mainList

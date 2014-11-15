@@ -26,10 +26,25 @@ module Opcodes where
 
 import qualified Data.Map as M
 
+-- A Bit can be either T (True) or F (False). Terminate is used in infinite
+-- lists to indicate the end of non-repeating data.
+data Bit=T|F|Terminate deriving Show
+instance Eq Bit where
+  T /= F = True
+  F /= T = True
+  T /= Terminate = True
+  Terminate /= T = True
+  _ /= _ = False
+instance Ord Bit where
+  T `compare` a = if a == F then GT else EQ
+  a `compare` T = if a == F then LT else EQ
+  Terminate `compare` F = LT
+  F `compare` Terminate = GT
+  _ `compare` _ = EQ
+
 -- NOTE: The program is assumed to be an infinitely long list (see language
 -- specification). If a non-infinite list is provided, behavior is undefined.
-
-type Program = [Bool]
+type Program = [Bit]
 type Opcode = String
 
 -- If Program starts with Opcode, result Program has the opcode removed.
@@ -43,59 +58,59 @@ hasOpcode s k
         reduced = drop (length pattern) s
 
 opcodes=M.fromList
- [("ES",[False])
- ,("CS",[True])
+ [("ES",[F])
+ ,("CS",[T])
 
- ,("AN" ,[False])
- ,("RN" ,[True])
- ,("EN" ,[False])
- ,("CN" ,[True])
- ,("ERN",[False,False])
- ,("PN" ,[False,True])
+ ,("AN" ,[F])
+ ,("RN" ,[T])
+ ,("EN" ,[F])
+ ,("CN" ,[T])
+ ,("ERN",[F,F])
+ ,("PN" ,[F,T])
 
- ,("LS",[False])
- ,("LT",[False])
- ,("LI",[True,False])
- ,("LF",[True,True])
- ,("FS",[True])
- ,("NS",[False])
- ,("AS",[False,False])
- ,("RS",[False,True])
- ,("ET",[True])
- ,("MS",[True])
+ ,("LS",[F])
+ ,("LT",[F])
+ ,("LI",[T,F])
+ ,("LF",[T,T])
+ ,("FS",[T])
+ ,("NS",[F])
+ ,("AS",[F,F])
+ ,("RS",[F,T])
+ ,("ET",[T])
+ ,("MS",[T])
 
- ,("OP",[False,False,False,False])
- ,("OM",[False,False,False,True])
- ,("OT",[False,False,True,False])
- ,("OD",[False,False,True,True])
- ,("OE",[False,True,False,False])
- ,("OU",[False,True,False,True])
+ ,("OP",[F,F,F,F])
+ ,("OM",[F,F,F,T])
+ ,("OT",[F,F,T,F])
+ ,("OD",[F,F,T,T])
+ ,("OE",[F,T,F,F])
+ ,("OU",[F,T,F,T])
 
- ,("BN" ,[False,True,True,False])
- ,("BO" ,[False,True,True,True,False])
- ,("BX" ,[False,True,True,True,True])
- ,("BA" ,[True,False,False,False])
- ,("BE" ,[True,False,False,True])
- ,("BL" ,[True,False,True,False])
- ,("BLE",[True,False,True,True])
- ,("BG" ,[True,True,False,False])
- ,("BGE",[True,True,False,True])
+ ,("BN" ,[F,T,T,F])
+ ,("BO" ,[F,T,T,T,F])
+ ,("BX" ,[F,T,T,T,T])
+ ,("BA" ,[T,F,F,F])
+ ,("BE" ,[T,F,F,T])
+ ,("BL" ,[T,F,T,F])
+ ,("BLE",[T,F,T,T])
+ ,("BG" ,[T,T,F,F])
+ ,("BGE",[T,T,F,T])
 
- ,("TN" ,[True,True,True,False])
- ,("TO" ,[True,True,True,True,False,False,False])
- ,("TX" ,[True,True,True,True,False,False,True])
- ,("TA" ,[True,True,True,True,False,True,False])
- ,("TL" ,[True,True,True,True,False,True,True])
- ,("TRA",[True,True,True,True,True,False,False])
- ,("TRL",[True,True,True,True,True,False,True])
- ,("TTL",[True,True,True,True,True,True,False])
- ,("TTR",[True,True,True,True,True,True,True])
+ ,("TN" ,[T,T,T,F])
+ ,("TO" ,[T,T,T,T,F,F,F])
+ ,("TX" ,[T,T,T,T,F,F,T])
+ ,("TA" ,[T,T,T,T,F,T,F])
+ ,("TL" ,[T,T,T,T,F,T,T])
+ ,("TRA",[T,T,T,T,T,F,F])
+ ,("TRL",[T,T,T,T,T,F,T])
+ ,("TTL",[T,T,T,T,T,T,F])
+ ,("TTR",[T,T,T,T,T,T,T])
 
- ,("RT",[False,False])
- ,("ST",[False,True])
- ,("IF",[True,False])
- ,("EN",[False])
- ,("EL",[True])
- ,("WH",[True,True])
+ ,("RT",[F,F])
+ ,("ST",[F,T])
+ ,("IF",[T,F])
+ ,("EN",[F])
+ ,("EL",[T])
+ ,("WH",[T,T])
  ]
 

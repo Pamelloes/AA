@@ -38,28 +38,28 @@ testEmptyP = TestLabel "Test Empty Program"  $
   TestCase $ assertException strError (lstring [])
 testIncomplete = TestLabel "Test Incomplete" $
   TestCase $ assertException strError (lstring p)
-  where p=(opcodes M.! "CS") ++ (replicate 3 True)
+  where p=(opcodes M.! "CS") ++ (replicate 3 T)
 testUnfinished = TestLabel "Test Unfinished" $
   TestCase $ assertException strError (lstring p)
-  where p=(opcodes M.! "CS") ++ (replicate 4 True)
+  where p=(opcodes M.! "CS") ++ (replicate 4 T)
 
 testEmpty = TestLabel "Test Empty String" $
   TestCase $ assertEqual "" ([],[]) (lstring p)
   where p=opcodes M.! "ES"
 testL4 = TestLabel "Test String Length 4" $
   TestCase $ assertEqual "" ([],str) (lstring p)
-  where str=[False,True,True,False]
+  where str=[F,T,T,F]
         p=(opcodes M.! "CS") ++ str ++ (opcodes M.! "ES")
 testL8 = TestLabel "Test String Length 8" $
   TestCase $ assertEqual "" ([],s1++s2) (lstring p)
-  where s1=replicate 4 False
-        s2=[False,True,False,True]
+  where s1=replicate 4 F
+        s2=[F,T,F,T]
         p=(opcodes M.! "CS")++s1++(opcodes M.! "CS")++s2++(opcodes M.! "ES")
 testExtra = TestLabel "Test Program Deletion" $
   TestCase $ assertEqual "" (p2,str) $ lstring (p1++p2)
-  where str=replicate 4 True
+  where str=replicate 4 T
         p1=(opcodes M.! "CS")++str++(opcodes M.! "ES")
-        p2=replicate 23 False
+        p2=replicate 23 F
 
 strTests = TestLabel "String" $
   TestList[ testEmptyP, testIncomplete, testUnfinished, testEmpty, testL4, testL8
@@ -71,38 +71,38 @@ intError = ErrorCall "linteger: Reached program end"
 testIEmptyP = TestLabel "Test Empty Program" $
   TestCase $ assertException intError (linteger [])
 testIIncomplete1 = TestLabel "Test Incomplete Program 1" $
-  TestCase $ assertException strError (linteger [False])
+  TestCase $ assertException strError (linteger [F])
 testIIncomplete2 = TestLabel "Test Incomplete Program 2" $
   TestCase $ assertException strError (linteger p)
-  where p=[False]++(opcodes M.! "CS")
+  where p=[F]++(opcodes M.! "CS")
 testIUnfinished = TestLabel "Test Unfinished Program" $
   TestCase $ assertException strError (linteger p)
-  where p = [False]++(opcodes M.! "CS")++(replicate 4 False)
+  where p = [F]++(opcodes M.! "CS")++(replicate 4 F)
 
 testIEmpty1 = TestLabel "Test Positive Empty Integer" $
   TestCase $ assertEqual "" ([],0) (linteger p)
-  where p = [False]++(opcodes M.! "ES")
+  where p = [F]++(opcodes M.! "ES")
 testIEmpty2 = TestLabel "Test Negative Empty Integer" $
   TestCase $ assertEqual "" ([],-1) (linteger p)
-  where p = [True]++(opcodes M.! "ES")
+  where p = [T]++(opcodes M.! "ES")
 
 testIL4 = TestLabel "Test Integer Length 4" $
   TestCase $ assertEqual "" ([],10) (linteger p)
-  where p = [False]++(opcodes M.! "CS")++([True,False,True,False])
+  where p = [F]++(opcodes M.! "CS")++([T,F,T,F])
           ++(opcodes M.! "ES")
 testIL8 = TestLabel "Test Integer Length 8" $
   TestCase $ assertEqual "" ([],49) (linteger p)
-  where p = [False]++(opcodes M.! "CS")++([False,False,False,True])
-          ++(opcodes M.! "CS")++([False,False,True,True])++(opcodes M.! "ES")
+  where p = [F]++(opcodes M.! "CS")++([F,F,F,T])
+          ++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
 testINeg = TestLabel "Test Negative Integer" $
   TestCase $ assertEqual "" ([],-76) (linteger p)
-  where p = [True]++(opcodes M.! "CS")++([False,True,False,False])
-          ++(opcodes M.! "CS")++([True,False,True,True])++(opcodes M.! "ES")
+  where p = [T]++(opcodes M.! "CS")++([F,T,F,F])
+          ++(opcodes M.! "CS")++([T,F,T,T])++(opcodes M.! "ES")
 testIExtra = TestLabel "Test Program Deletion" $
   TestCase $ assertEqual "" (p2,-3) (linteger (p1++p2))
-  where p1 = [True]++(opcodes M.! "CS")++[True,True,False,True]
+  where p1 = [T]++(opcodes M.! "CS")++[T,T,F,T]
           ++(opcodes M.! "ES")
-        p2 = replicate 100 True
+        p2 = replicate 100 T
 
 intTests = TestLabel "Integer" $
   TestList [ testIEmptyP, testIIncomplete1, testIIncomplete2, testIUnfinished
