@@ -23,6 +23,7 @@ THE SOFTWARE.
 -- This module contains tests for the Primitives module
 module Primitives_Test where
 
+import Control.DeepSeq
 import Control.Exception
 import qualified Data.Map as M
 import Opcodes
@@ -30,6 +31,8 @@ import qualified Opcodes_Test as P
 import Primitives
 import Test.HUnit
 import TestException
+
+instance NFData Primitive
 
 -- String Tests
 strError = ErrorCall "lstring: Reached program end"
@@ -44,19 +47,19 @@ testUnfinished = TestLabel "Test Unfinished" $
   where p=(opcodes M.! "CS") ++ (replicate 4 T)
 
 testEmpty = TestLabel "Test Empty String" $
-  TestCase $ assertEqual "" ([],[]) (lstring p)
+  TestCase $ assertEqual "" ([],BString []) (lstring p)
   where p=opcodes M.! "ES"
 testL4 = TestLabel "Test String Length 4" $
-  TestCase $ assertEqual "" ([],str) (lstring p)
+  TestCase $ assertEqual "" ([],BString str) (lstring p)
   where str=[F,T,T,F]
         p=(opcodes M.! "CS") ++ str ++ (opcodes M.! "ES")
 testL8 = TestLabel "Test String Length 8" $
-  TestCase $ assertEqual "" ([],s1++s2) (lstring p)
+  TestCase $ assertEqual "" ([],BString $ s1++s2) (lstring p)
   where s1=replicate 4 F
         s2=[F,T,F,T]
         p=(opcodes M.! "CS")++s1++(opcodes M.! "CS")++s2++(opcodes M.! "ES")
 testExtra = TestLabel "Test Program Deletion" $
-  TestCase $ assertEqual "" (p2,str) $ lstring (p1++p2)
+  TestCase $ assertEqual "" (p2,BString str) $ lstring (p1++p2)
   where str=replicate 4 T
         p1=(opcodes M.! "CS")++str++(opcodes M.! "ES")
         p2=replicate 23 F
@@ -80,26 +83,26 @@ testIUnfinished = TestLabel "Test Unfinished Program" $
   where p = [F]++(opcodes M.! "CS")++(replicate 4 F)
 
 testIEmpty1 = TestLabel "Test Positive Empty Integer" $
-  TestCase $ assertEqual "" ([],0) (linteger p)
+  TestCase $ assertEqual "" ([],BInt 0 [F]) (linteger p)
   where p = [F]++(opcodes M.! "ES")
 testIEmpty2 = TestLabel "Test Negative Empty Integer" $
-  TestCase $ assertEqual "" ([],-1) (linteger p)
+  TestCase $ assertEqual "" ([],BInt (-1) [T]) (linteger p)
   where p = [T]++(opcodes M.! "ES")
 
 testIL4 = TestLabel "Test Integer Length 4" $
-  TestCase $ assertEqual "" ([],10) (linteger p)
+  TestCase $ assertEqual "" ([],BInt 10 [F,T,F,T,F]) (linteger p)
   where p = [F]++(opcodes M.! "CS")++([T,F,T,F])
           ++(opcodes M.! "ES")
 testIL8 = TestLabel "Test Integer Length 8" $
-  TestCase $ assertEqual "" ([],49) (linteger p)
+  TestCase $ assertEqual "" ([],BInt 49 [F,F,F,F,T,F,F,T,T]) (linteger p)
   where p = [F]++(opcodes M.! "CS")++([F,F,F,T])
           ++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
 testINeg = TestLabel "Test Negative Integer" $
-  TestCase $ assertEqual "" ([],-76) (linteger p)
+  TestCase $ assertEqual "" ([],BInt (-76) [T,F,T,F,F,T,F,T,T]) (linteger p)
   where p = [T]++(opcodes M.! "CS")++([F,T,F,F])
           ++(opcodes M.! "CS")++([T,F,T,T])++(opcodes M.! "ES")
 testIExtra = TestLabel "Test Program Deletion" $
-  TestCase $ assertEqual "" (p2,-3) (linteger (p1++p2))
+  TestCase $ assertEqual "" (p2,BInt (-3) [T,T,T,F,T]) (linteger (p1++p2))
   where p1 = [T]++(opcodes M.! "CS")++[T,T,F,T]
           ++(opcodes M.! "ES")
         p2 = replicate 100 T

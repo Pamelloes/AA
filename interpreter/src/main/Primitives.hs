@@ -23,33 +23,46 @@ THE SOFTWARE.
 -- This module contains functions for parsing data types in Advanced Assembly
 module Primitives where
 
+import Data.Ratio
 import Opcodes
+
+-- 
+
+data Primitive = BString [Bit] | BInt Integer [Bit]
+               | BRtnl Integer Integer [Bit] deriving (Show, Eq)
+instance Ord Primitive where
+  BString a `compare` BInt _ b = a `compare` b
+  BInt _ a `compare` BString b = a `compare` b
+  BString a `compare` BRtnl _ _ b = a `compare` b
+  BRtnl _ _ a `compare` BString b = a `compare` b
+  BInt _ a `compare` BRtnl _ _ b = a `compare` b
+  BRtnl _ _ a `compare` BInt _ b = a `compare` b
+  BString a `compare` BString b = a `compare` b
+  BInt a _ `compare` BInt b _ = a `compare` b
+  BRtnl a b _ `compare` BRtnl c d _ = (a%b) `compare` (c%d)
 
 -- NOTE: The program is assumed to be an infinitely long list (see language
 -- specification). If a non-infinite list is provided, behavior is undefined.
 
-type BString = [Bit]
-type BInt = Integer
-
 -- Result Program has BString removed.
-lstring :: Program -> (Program,BString)
+lstring :: Program -> (Program,Primitive)
 lstring [] = error "lstring: Reached program end"
 lstring s
-  | snd es = (fst es,[])
-  | snd cs = let (a,b)=lstring prog in (a,str++b)
+  | snd es = (fst es,BString [])
+  | snd cs = let (a,BString b)=lstring prog in (a,BString (str++b))
   where es=hasOpcode s "ES"
         cs=hasOpcode s "CS"
         (str,prog) = splitAt 4 (fst cs)
 
-bsToInt :: BString -> Integer
+bsToInt :: [Bit] -> Integer
 bsToInt [] = 0
 bsToInt x = val + 16*(bsToInt remainder)
   where (base,remainder) = splitAt 4 x
         val = foldl (\x y->2*x+(if y==T then 1 else 0)) 0 base
 
 -- Result Program has BInt removed.
-linteger :: Program -> (Program,BInt)
+linteger :: Program -> (Program,Primitive)
 linteger [] = error "linteger: Reached program end"
-linteger (sign:remainder) = (prog,sgn $ bsToInt str)
-  where (prog,str)=lstring remainder
+linteger (sign:remainder) = (prog,BInt (sgn $ bsToInt str) (sign:str))
+  where (prog,BString str)=lstring remainder
         sgn=if sign==T then (\x->x-2^(length str)) else (\x->x)

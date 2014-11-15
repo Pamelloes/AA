@@ -44,6 +44,7 @@ instance Ord Bit where
 
 -- NOTE: The program is assumed to be an infinitely long list (see language
 -- specification). If a non-infinite list is provided, behavior is undefined.
+
 type Program = [Bit]
 type Opcode = String
 

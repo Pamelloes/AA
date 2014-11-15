@@ -28,29 +28,29 @@ import LZipper
 import Opcodes
 import Primitives
 
-type NmspId = [BString]
-type NZipper = LZipper BString
-type Namespaces = M.Map NmspId BString
+type NmspId = [Primitive]
+type NZipper = LZipper Primitive
+type Namespaces = M.Map NmspId Primitive
 
 defaultNamespace :: Program -> Namespaces
-defaultNamespace p = M.fromList [([],p)]
+defaultNamespace p = M.fromList [([],BString p)]
 
 lanmsp :: Program -> (Program,NmspId)
 lanmsp p
   | snd en = (fst en,[])
-  | snd cn = let (pr,id)=lanmsp (fst str) in (pr,snd str:id)
+  | snd cn = let (pr,id)=lanmsp prog in (pr,str:id)
   where en=hasOpcode p "EN"
         cn=hasOpcode p "CN"
-        str=lstring (fst cn)
+        (prog, str)=lstring (fst cn)
 
 lrnmsp :: NZipper -> Program -> (Program,NmspId)
 lrnmsp z p
   | snd en = (fst en,unzipper z)
-  | snd cn = lrnmsp (fst z,snd str:snd z) (fst str)
+  | snd cn = lrnmsp (fst z,str:snd z) prog
   | snd pn = lrnmsp (fst z,tail $ snd z) (fst pn)
   where en=hasOpcode p "ERN"
         cn=hasOpcode p "CN"
-        str=lstring (fst cn)
+        (prog, str)=lstring (fst cn)
         pn=hasOpcode p "PN"
 
 lnmsp :: NmspId -> Program -> (Program, NmspId)
@@ -60,8 +60,8 @@ lnmsp b p
   where abs=hasOpcode p "AN"
         rel=hasOpcode p "RN"
 
-nmspValue :: NmspId -> Namespaces -> BString
-nmspValue id nmsp = if M.member id nmsp then nmsp M.! id else []
+nmspValue :: NmspId -> Namespaces -> Primitive
+nmspValue id nmsp = if M.member id nmsp then nmsp M.! id else BString []
 
-nmspValueSet :: NmspId -> BString -> Namespaces -> Namespaces
+nmspValueSet :: NmspId -> Primitive -> Namespaces -> Namespaces
 nmspValueSet = M.insert

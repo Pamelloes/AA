@@ -36,33 +36,34 @@ import TestException
 
 -- Namespace Tests
 testDefaultNamespace = TestLabel "Test default namespace" $
-  TestCase $ assertEqual "" (M.fromList [([],p)]) (defaultNamespace p)
+  TestCase $ assertEqual "" (M.fromList [([],BString p)]) (defaultNamespace p)
   where p=[F,F,F,F]
 
 testNmspValue = TestLabel "Test value retrieval" $
-  TestCase $ assertEqual "" p (nmspValue [] $ defaultNamespace p)
+  TestCase $ assertEqual "" (BString p) (nmspValue [] $ defaultNamespace p)
   where p=replicate 5 T
 
 testNmspDefValue = TestLabel "Test default value retrieval" $
-  TestCase $ assertEqual "" [] (nmspValue [[F]] $ defaultNamespace p)
+  TestCase $ assertEqual "" (BString [])
+    (nmspValue [BString [F]] $ defaultNamespace p)
   where p=replicate 5 T
   
 testNmspValueSet = TestLabel "Test value set" $
-  TestCase $ assertEqual "" (M.fromList [([],p),(k,v)])
+  TestCase $ assertEqual "" (M.fromList [([],BString p),(k,v)])
     (nmspValueSet k v $ defaultNamespace p)
   where p=replicate 10 F
-        k=[[F,T],[T,F],[T,T,T,T]]
-        v=[F,T,T,T,F]
+        k=[BString [F,T],BString [T,F],BString [T,T,T,T]]
+        v=BString [F,T,T,T,F]
 
 testNmspValue2 = TestLabel "Test value retrieval 2" $
   TestCase $ assertEqual "" v
     (nmspValue k $ nmspValueSet k v $ defaultNamespace p)
   where p=replicate 5 T
-        k=[replicate 4 T,[T,F,T,F],replicate 4 F]
-        v=[F,F,F,T,F,F]
+        k=[BString (replicate 4 T),BString [T,F,T,F],BString (replicate 4 F)]
+        v=BString [F,F,F,T,F,F]
 
 testLNmspA = TestLabel "Test loading absolute namespace" $
-  TestCase $ assertEqual "" ([],id) (lnmsp [] p)
+  TestCase $ assertEqual "" ([],fmap BString id) (lnmsp [] p)
   where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
         p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
           ++(o "CS")++id!!1++(o "ES")++(o "CN")++(o "CS")++id!!2
@@ -70,9 +71,9 @@ testLNmspA = TestLabel "Test loading absolute namespace" $
         o s=opcodes M.! s
 
 testLNmspR = TestLabel "Test loading relative namespace" $
-  TestCase $ assertEqual "" ([],id) (lnmsp b p)
+  TestCase $ assertEqual "" ([],fmap BString id) (lnmsp b p)
   where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
-        b=[[T,F,T,F],replicate 4 T]
+        b=[BString [T,F,T,F],BString $ replicate 4 T]
         p=(o "RN")++(o "PN")++(o "CN")++(o "CS")++id!!1++(o "ES")
           ++(o "CN")++(o "CS")++id!!2++(o "ES")++(o "ERN")
         o s=opcodes M.! s
