@@ -137,41 +137,36 @@ Examples:
   RN CN CS 0101 ES ERN                    References the Current Namespace's child "0101"
   RN CN CS 1010 ES CN CS 1111 ES ERN      References the Current Namespace's child "1010"'s child "1111"
 
-B. Temporary Namespaces
-
-  While absolute namespaces and relative namespaces can be used interchangeably under most circumstances, relative namespaces that are a direct child of the Current Namespace are a special case and are a separate entity from the homophonic namespace--the namespace with the same name and parent--that would be referred to absolutely. These namespaces are called "temporary namespaces." Note that the child of a child of the Current Namespace (or a more distant child) is NOT a temporary namespace. Note that before a value is assigned to a temporary namespace, references to the temporary namespace will be referred to the homophonic namespace (e.g. if a temporary namespace 0000 has not had a value assigned to it, but the homophonic namespace 0000's value is a string with the value "0101", then references to the value of the temporary namespace will evaluate to the value of the homophonic namespace: "0101" and not evaluate to the value of an unassigned namespace--an empty string; of course, if neither the temporary namespace nor the homophonic namespace have a value assigned then the value of the temporary namespace will evaluate to an empty string).
-  Once a value is assigned to a temporary namespace, the value can only be accessed from the namespace that assigned the value. Not only is this value unique to the namespace that assigned it, but it is also unique to the version of the namespace that assigned it: thus allowing for recursion. For example: given the program is in the Current Namespace 0000 and the program stores a string with the value "1" in the temporary namespace 0001 (a child of namespace 0000). Then, if the program recurses and transfers execution to the beginning of namespace 0000 the new context means that the temporary namespace 0001 will have a value of an empty string (the default value) and not "1." When execution returns to namespace 0000 in the original context, the temporary namespace 0001 will regain its former value of "1." 
-
 ----
 VI. Statements
 
-  A statement consists of one or more operations that evaluate to a value: either an integer, rational or string (strings may be used to represent namespaces; see Section V). A complete statement is represented by the conceptual opcode STMT. Statements are broken up into two types: literal statements which evaluate to the literal value of their contents, and functional statements which evaluate to a value derived from one or more other statements.
+  A statement, part of the program data type, consists of one or more operations that evaluate to a value. A complete statement is represented by the conceptual opcode STMT. Statements are broken up into two types: literal statements which evaluate to the literal value of their contents, and functional statements which evaluate to a value derived from one or more other statements.
 
 A. Literal Statements
 
-  Literal statements are statements that have a single input and evaluate to the literal value of that input. All literal statements start with the opcode LS (0). After the LS opcode, their are three options. The first is a string literal statement which consists of the opcode LT (0) followed by a STRING. The second option is the opcode LI (10) followed by an INT. The final option is the opcode LF (11) followed by a RTNL. Each type of literal statement evaluates to the value delineated within the statement.
+  Literal statements are statements that have a single input and evaluate to the literal value of that input. Literal statements start with the opcode LS (0). After the LS opcode, their are five options: the opcode LT (00) followed by a string, the opcode LI (01) followed by an an integer, the opcode LR (10) followed by a rational, the opcode LN (110) followed by a namespace identifier, and the opcode LP (111) followed by a program.
 
 Examples:
   LS LT CS 0000 ES                    Evaluates to a string with a value of "0000"
   LS LI 0 CS 0001 ES                  Evaluates to an integer with a value of 1
-  LS LF 0 CS 0001 ES 1 CS 1111 ES     Evaluates to a rational with a value of negative 1/1
+  LS LR 0 CS 0001 ES 1 CS 1111 ES     Evaluates to a rational with a value of negative 1/1
+  LS LN AN EN                         Evaluates to the Global Namespace
 
 B. Functional Statements
 
-  Functional statements are statements that have one or more inputs and evaluate to a value derived from them. All functional statements start with the opcode FS (1). Functional statements can be further divided into two categories: namespace statements which derive their value from manipulating namespaces, and mathematical statements which derive their value from a mathematical manipulation of one or more inputs.
+  Functional statements are statements that have one or more inputs and evaluate to a value derived from them. Functional statements start with the opcode FS (1). Functional statements can be further divided into two categories: namespace statements which derive their value from manipulating namespaces, and mathematical statements which derive their value from a mathematical manipulation of one or more inputs.
 
 1. Namespace Statements
 
-  Namespace statements are the most complex statements and involve manipulating namespaces. They are also the most important section of any program and are what allow an Advanced Assembly program to make changes to the program's state. After the FS opcode, all namespace statements have the NS (0) opcode. After the NS opcode, there are three possible types of namespace statements.
-  The first two types of namespace statement are relatively simple and directly manipulate the value of a namespace. An assign statement can be made using the AS (00) opcode followed by two additional statements. The first of these statements' value is converted to a string (if it is not a string already) and is then interpreted as a namespace. This namespace's value is then set to be whatever the second statement evaluates to. An assign statement evaluates to the value assigned to the namespace. The other simple namespace statement is a read statement which consists of the RS (01) opcode followed by one additional statement. This statement's value is then interpreted as a namespace (via a string). The read statement then evaluates to the value of the designated namespace.
-  The final type of namespace statement is the evaluate statement. The evaluate statement is used to transfer a program's control to another namespace. The evaluate statement starts with the ET (1) opcode followed by a varying amount of statements greater than one. The value of the first statement is interpreted as a namespace (via a string). The contents of this namespace are then interpreted as a program (via a string) which will be executed. As outlined in *Section VIII, the amount of inputs to be sent to the program is derived. For each of these inputs, another statement is evaluated and the value of the current input is set to the value of the statement. Therefore, if an evaluate statement's first input indicates a namespace that contains a program with zero inputs, the evaluate statement will only consist of FS NS ES STMT. However, if the evaluate statement's first input denotes a namespace that contains a program with four inputs, the evaluate statement will consist of FS NS ES STMT STMT STMT STMT STMT. Note that there are five statements: one to identify the program and then one for each input for the program.
+  Namespace statements are the most complex statements and involve manipulating namespaces. They are also the most important section of any program and are what allow an Advanced Assembly program to make changes to the program's state. After the FS opcode, namespace statements have the NS (0) opcode. After the NS opcode, there are three possible types of namespace statements.
+  The first two types of namespace statement are relatively simple and directly manipulate the value of a namespace. The assign statement consists of the AS (00) opcode followed by two statements. The first statements' value is interpeted as a namespace id. The value of the namespace identified by the first statement is set to the result of the second statement. An assign statement evaluates to the value assigned to the namespace.
+  The read statement consists of the RS (01) opcode followed by one statement. This statement's value is interpreted as a namespace id. The read statement evaluates to the value of the namespace identified by the statement.
+  The final type of namespace statement, used to transfer a program's control to another namespace, is the evaluate statement. The evaluate statement consists of with the ET (1) opcode followed by one or more statements. The first statement is interpreted as a namespace id. The identified namespace is then interpreted as a program and executed. The remaining statements are the inputs to the program. How the amount of inputs is calculated is outlined in *Section VIII. For instance, if the indicated namespace contains a program with zero inputs, the evaluate statement will only have one statement and if the indicated namespace contains a program with with four inputs, the evaluate statement will have five statements.
 
 Examples:
-  FS NS AS LS LT nmsp LS LI 0 CS 0001 ES              Assigns an integer with a value of one to the namespace nmsp*. Evaluates to an integer with a value of one.
-  FS NS RS LS LT nmsp                                 Evaluates to namespace nmsp*'s value.
-  FS NS ET LS LT nmsp LS LT ES LS LT ES LS LT ES      Executes the program at namespace nmsp* that has three arguments. Each argument is set to an empty string. The statement evaluates to the result of the program at nmsp*.
-
-*For simplicity's sake, rather than writing out a string that denotes a namespace verbatim, the acronym nmsp is used to denote a string that contains an arbitrary namespace. 
+  FS NS AS LS LN NMSP LS LI INT            Sets the value of NMSP to INT.
+  FS NS RS LS LN NMSP                      Evaluates to the value of NMSP.
+  FS NS ET LS LN NMSP STMT STMT STMT       Interprets NMSP as a program and executes it. The program has three inputs, and each one is specified by a STMT. This statement evaluates to the result of executing the program.
  
 2. Mathematical Statements
 
@@ -187,10 +182,12 @@ Examples:
 
 ----
 VII. Actions
+
   An action is the highest level form of instruction in an Advanced Assembly program and is represented by the conceptual opcode ACTN. There are four types of actions: return, statement, if, and while. The first type of action, the return action, consists of the opcode RT (00) followed by a statement. The return action evaluates the specified statement and then terminates the execution of the current namespace. Program execution then returns to the evaluate statement that initiated the execution of the current namespace. The evaluate statement evaluates to the value of the return action’s statement. If a return statement is found in the global namespace, then it causes program execution to stop with the return action’s statement’s value as the program’s exit code. The second type of action is the statement action. The statement action consists of the opcode ST (01) followed by a statement. The statement action simply evaluates the subsequent statement. The third type of action is the if action. The if action consists of the opcode IF (10) followed by two statements and either the opcode EN (0) - indicating the end of the if action - or the opcode EL (1) and a third, final statement. The if action starts by evaluating the first statement. If the first, conditional statement evaluates to true, then the second statement is executed, otherwise the second statement is discarded. If the conditional statement evaluates to false and there is a third statement (specified by the EL opcode), the third statement will be executed. The final type of action, the while action, consists of the opcode WH (11) followed by two statements. The while action starts by evaluating the first statement. If the statement evaluates true, then the second statement is executed, otherwise the while action terminates. After evaluating the second statement, the while action re-evaluates the first action. If the first statement is still true, then the second statement will be executed yet again. The while action will keep alternating between evaluating the first statement and the second statement until the first statement evaluates false. Once the first statement evaluates false, then the while action will end.
 
 ----
 VIII. Program Control Flow
+
   Program execution in Advanced Assembly is relatively simple. When executing a program, the first series of bits are interpreted as an integer (See Section IV.B). The absolute value of this integer is the number of parameters for the program being interpreted. The value of the parameters are put in the temporary namespaces with a string whose value can be interpreted as an integer that matches with the parameter’s index. Therefore the first parameter (parameter zero) is stored in the temporary namespace "0000", the second parameter is in the temporary namespace "0001", and so forth. Note that the used namespaces always have the most concise names, so the first parameter will always be in  "0000" even if there is a parameter seventeen in "00010000". After the initial integer, all subsequent bits are interpreted as actions. Following the initial integer, there can be an infinite amount of actions which will be interpreted sequentially until a return statement is encountered ending execution. If the series of bits being interpreted ends, then there is an assumed infinite amount of zeroes following which will be used to continue the execution of the program until a return statement is encountered.
 
 ----
@@ -212,9 +209,11 @@ PN                 01
 
   Statements (Section VII)
 LS                 0
-LT                 0
-LI                 10
-LF                 11
+LT                 00
+LI                 01
+LR                 10
+LN                 110
+LP                 111
 FS                 1
 NS                 0
 AS                 00
