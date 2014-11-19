@@ -1,5 +1,5 @@
 ================================================================
-==   ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.5   ==
+==   ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.5.0   ==
 ================================================================
 
 ----
@@ -29,10 +29,10 @@ II. Table of Contents
   VI.            Statements
    A.             Literal Statements
    B.             Functional Statements
-    1.             Namespace Statements
+    1.             Control Statements
     2.             Mathematical Statements
-  VII.           Actions
-  VIII.          Program Control Flow
+   C.             Input/Output Statements
+  VII.          Program Control Flow
 
   Appendix A.    Opcodes
   Appendix B.    Conceptual Opcodes
@@ -68,15 +68,15 @@ B. Conceptual Opcodes
 ----
 IV. Data Types
 
-  Within Advanced Assembly, a series of arbitrary bits can interpreted in five distinct ways: as a string, as an integer, as a rational, as a namespace, and as a program. Each way of interpreting a series of bits is considered a data type.
+  Within Advanced Assembly, a series of arbitrary bits can interpreted in five distinct ways: as a string, as an integer, as a rational, as a namespace identifier, and as a statement. Each way of interpreting a series of bits is considered a data type.
   When a bit series is defined, it is assigned a data type based off of context. While a bit series' data type does not affect the series' contents, it determines how the series will be interpreted when the series can be interpreted in several ways.
   Each data type defines a specific process for interpreting a bit series. The process does not take into account how long the bit series is. Oftentimes, therefore, a different amount of bits will be used when interpreting the series than the series contains. If fewer bits are required, than the remaining bits are ignored. If additional bits are required, then all additional bits are assumed to be 0. Note that this does not effect the contents of the series itself--just the interpretation.
   For instance, a series interpreted as a string might have seven unused bits. Then, the same series might be interpreted as an integer and have 4 unused bits. The three additional bits used when interpreting the series as an integer come from the unused bits when interpreting the series as a string. Unused bits are still part of the series, even if they don't affect the current value. Similarly, if a series interpreted as a namespace requires five additional bits and then the series is interpreted as a string with three extra bits, the three extra bits do not include the five 0 bits used when interpreting the series as a namespace. Additional bits are not part of the series, even if they are needed to calculate the current value.
-  Under some circumstances, bit series must be interpreted in a boolean matter (true or false). The values considered false are: an empty string, an integer equal to zero, a rational equal to zero, the global namespace, and an empty program. All other values are considered true.
+  Under some circumstances, bit series must be interpreted in a boolean matter (true or false). The values considered false are: an empty string, an integer equal to zero, a rational equal to zero, the global namespace, and an empty statement. All other values are considered true.
 
 A. String
 
-  The string data type, notated by the conceptual opcode STRING, interprets a series of bits as a series of bits. Within a string, the opcode CS (1) indicates that the next four bits are part of the string's value while the opcode ES (0) indicates the end of the string. A string can have an arbitrary amount of CS segments, but once an ES is reached, the string ends. A bit series notated by a string will have a length with a multiple of four. A string consisting solely of ES will be an empty string--a string with a length of zero.
+  The string data type, notated by the conceptual opcode STR, interprets a series of bits as a series of bits. Within a string, the opcode CS (1) indicates that the next four bits are part of the string's value while the opcode ES (0) indicates the end of the string. A string can have an arbitrary amount of CS segments, but once an ES is reached, the string ends. A bit series notated by a string will have a length with a multiple of four. A string consisting solely of ES will be an empty string--a string with a length of zero.
 
 Examples:
   ES                                      An empty string (the string has a length of zero)
@@ -116,7 +116,7 @@ V. Namespaces
 
   Namespaces are a hierarchical structure used for storing data. Every namespace has a name, a bit series value, and a set of children namespaces. The Global Namespace is the top of the namespace hierarchy; all other namespaces are ultimately children of the Global Namespace: if not a direct child, then a child of a child, or a more distant relationship.
   Every possible namespace is assumed to always exist. Initially, every namespace's value is assumed to be an empty bit series with a data type of string. But, throughout a program's execution, namespaces may be assigned other values. Once assigned, a namespace will retain its value and its value's data type until assigned another value.
-  The Global Namespace's initial value is the code being executed. The Global Namespace's initial data type is a program. When a namespace with a data type of program is executed, the namespace that contains the binary string being executed is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed as a program and special cases that may arise, see *Section VII.
+  The Global Namespace's initial value is the code being executed. The Global Namespace's initial data type is a statement. When a namespace with a data type of statement is executed, the namespace that contains the binary string being executed is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed and special cases that may arise, see *Section VII.
 
 A. Namespace Identifiers
 
@@ -140,34 +140,45 @@ Examples:
 ----
 VI. Statements
 
-  A statement, part of the program data type, consists of one or more operations that evaluate to a value. A complete statement is represented by the conceptual opcode STMT. Statements are broken up into two types: literal statements which evaluate to the literal value of their contents, and functional statements which evaluate to a value derived from one or more other statements.
+  The statement data type is used to detail one or more actions that evaluate to a value. A complete statement is represented by the conceptual opcode STMT. Statements are broken up into three types: literal statements, which evaluate to the literal value of their contents; functional statements, which evaluate to a value derived from one or more other statements; and Input/Output statements, which pass a value out of the program and get a response.
+  In addition, statements can be grouped as embedded and executable statements. Embedded statements are found within a larger statement and have no special features. Executable statements are "top-level" statements, they are not embedded in any other statement and are run directly. Furthermore, all executable statements are prefaced by an integer. The absolute value of this integer is the number of parameters for the executable statement. The Current Namespace when the executable statement will be executed is called the Destination Namespace. The value of parameters are stored in children of the Destination Namespace. Parameters are stored in the children namespaces of the Destination Namespace. Each parameter's index is interpretted as a string and used as the name of the namespace that the parameter's value is stored in. Parameters' indexes are zero-based, so the first parameter will be stored in "0 ES", the second in "0 CS 0001 ES", and so forth. 
 
 A. Literal Statements
 
-  Literal statements are statements that have a single input and evaluate to the literal value of that input. Literal statements start with the opcode LS (0). After the LS opcode, their are five options: the opcode LT (00) followed by a string, the opcode LI (01) followed by an an integer, the opcode LR (10) followed by a rational, the opcode LN (110) followed by a namespace identifier, and the opcode LP (111) followed by a program.
+  Literal statements have a single input and evaluate to the literal value of that input. Literal statements start with the opcode LS (0). After the LS opcode, there are five options: the opcode LT (00) followed by a string, the opcode LI (01) followed by an an integer, the opcode LR (10) followed by a rational, the opcode LN (110) followed by a namespace identifier, and the opcode LM (111) followed by a statement. Note that a literal statement with the LP opcode does not evaluate to the value of the statement, but to the bit series that the statement is made up of.
 
 Examples:
   LS LT CS 0000 ES                    Evaluates to a string with a value of "0000"
   LS LI 0 CS 0001 ES                  Evaluates to an integer with a value of 1
   LS LR 0 CS 0001 ES 1 CS 1111 ES     Evaluates to a rational with a value of negative 1/1
   LS LN AN EN                         Evaluates to the Global Namespace
+  LS LM 0 CS 0001 ES LS LT CS ES      Evaluates to the statement "LS LT CS ES" with one parameter
 
 B. Functional Statements
 
-  Functional statements are statements that have one or more inputs and evaluate to a value derived from them. Functional statements start with the opcode FS (1). Functional statements can be further divided into two categories: namespace statements which derive their value from manipulating namespaces, and mathematical statements which derive their value from a mathematical manipulation of one or more inputs.
+  Functional statements derive a value from one or more inputs. Functional statements start with the opcode FS (1). Functional statements can be divided into two categories: control statements and mathematical statements.
 
-1. Namespace Statements
+1. Control Statements
 
-  Namespace statements are the most complex statements and involve manipulating namespaces. They are also the most important section of any program and are what allow an Advanced Assembly program to make changes to the program's state. After the FS opcode, namespace statements have the NS (0) opcode. After the NS opcode, there are three possible types of namespace statements.
-  The first two types of namespace statement are relatively simple and directly manipulate the value of a namespace. The assign statement consists of the AS (00) opcode followed by two statements. The first statements' value is interpeted as a namespace id. The value of the namespace identified by the first statement is set to the result of the second statement. An assign statement evaluates to the value assigned to the namespace.
+  Control statements serve two purposes: to manipulate namespaces' values and to conditionally execute statements. Control statements begin, after the FS opcode, with the TS (0) opcode.
+  The first two control statements directly manipulate the value of a namespace. The assign statement consists of the AS (00) opcode followed by two statements. The first statements' value is interpeted as a namespace id. The value of the namespace identified by the first statement is set to the result of the second statement. An assign statement evaluates to the value assigned to the namespace.
   The read statement consists of the RS (01) opcode followed by one statement. This statement's value is interpreted as a namespace id. The read statement evaluates to the value of the namespace identified by the statement.
-  The final type of namespace statement, used to transfer a program's control to another namespace, is the evaluate statement. The evaluate statement consists of with the ET (1) opcode followed by one or more statements. The first statement is interpreted as a namespace id. The identified namespace is then interpreted as a program and executed. The remaining statements are the inputs to the program. How the amount of inputs is calculated is outlined in *Section VIII. For instance, if the indicated namespace contains a program with zero inputs, the evaluate statement will only have one statement and if the indicated namespace contains a program with with four inputs, the evaluate statement will have five statements.
+  The evaluate statement consists of with the ET (100) opcode followed by one or more statements. The first statement is interpreted as a namespace id. The identified namespace is then interpreted as a statement and executed. The remaining statements are the values of the statement's parameters. There is one statement per parameter. For instance, if the indicated namespace contains a program with zero parameters, the evaluate statement will only have one statement and if the indicated namespace contains a program with with four inputs, the evaluate statement will have five statements.
 
 Examples:
-  FS NS AS LS LN NMSP LS LI INT            Sets the value of NMSP to INT.
-  FS NS RS LS LN NMSP                      Evaluates to the value of NMSP.
-  FS NS ET LS LN NMSP STMT STMT STMT       Interprets NMSP as a program and executes it. The program has three inputs, and each one is specified by a STMT. This statement evaluates to the result of executing the program.
- 
+  FS TS AS LS LN NMSP LS LI INT            Sets the value of NMSP to INT
+  FS TS RS LS LN NMSP                      Evaluates to the value of NMSP
+  FS TS ET LS LN NMSP STMT STMT STMT       Interprets NMSP as a program and executes it The program has three inputs, and each one is specified by a STMT. This statement evaluates to the result of executing the program
+
+  The next three statements execute statements sequentially. The sequence statement consists of the SQ (101) opcode followed by two statements. The sequence statement evaluates the first statement, discards its value, and then evaluates to the value of the second statement.
+  The if statement consists of the IF (110) opcode followed by three statements. The if statement starts by evaluating the first statement. If it evaluates to true, then the if statement evaluates to the value of the second statement. Otherwise, the if statement evaluates to the value of the third statement.
+  Finally, the do while statement consists of the DW (111) opcode followed by two statements. The do while statement starts by evaluating the first statement. Then, if the second statement evaluates to false, the while loop evaluates to the value of the previously executed first statement. Otherwise, the value of the first statement is discarded and the process is executed again. Thus, the first statement will keep being executed as long as the second statement evaluates to true. Once the second statement evaluates to false, the do while statement evaluates to the value of the first statement in the current iteration.
+
+Examples:
+  FS TS SQ STMT LS LI 0 ES                  Evaluates STMT and then evaluates "LS LI 0 ES", ultimately evaluating to an integer with a value of zero
+  FS TS IF STMT LS LI 0 ES LS LI 1 ES       Evaluates to the integer zero if STMT is true, and the integer negative one otherwise.
+  LS TS DW FS TS RS LS LN NMSP STMT         Reads the value at NMSP as long as STMT is true. Evaluates to the last-read value of at NMSP once STMT evaluates to false
+
 2. Mathematical Statements
 
   Mathematical statements are the most diverse set of statements. All mathematical statements start with the MS (1) opcode followed by one of the "operation opcodes" and then by either one or two statements. Operation opcodes are a long list of opcodes outlined below that indicate of the mathematical operations that can be performed. The first statement after the operation opcode is the first input for the operation opcode and the second statement is the second input for the operation opcode. Some operation opcodes only have one input and in that case, only one statement will be read after the operation opcode.
@@ -181,14 +192,7 @@ Examples:
   The final two bit shifts are rotate bit shifts. Rotate left (TTL) affects strings, integers, and rationals differently. When applied to a string, a rotate left operation will take the first bit of the string and move it to be the last so that all of the bits are preserved, but they are re-ordered. This process is repeated as many times as the absolute value of the second input. When applied to an integer, the integer's most significant digit is moved to the integer's sign bit and the integer's sign bit is moved to its least significant digit. This process is repeated as many times as the absolute value of the second input. When applied to a rational, the numerator's most significant digit is shifted to the numerator's sign bit, the numerator's sign bit is shifted to the denominator's least significant digit, the denominator's most significant digit is shifted to the denominator's sign bit, and the denominator's sign bit is shifted to the numerator's least significant digit. This process is repeated as many times as the absolute value of the second input. Similarly, a rotate right (TTR) affects strings, integers, and rationals differently. When applied to a string, a rotate right will take the last bit of the string and move it to the first. This process is repeated as many times as the absolute value of the second input. When applied to an integer, the sign bit is moved to the most significant digit and the least significant digit is moved into the sign bit. This process is repeated as many times as the absolute value of the second input. When applied to a rational, the numerator's sign bit is moved to the numerator's most significant digit, the numerator's least significant digit is moved to the denominator's sign bit, the denominator's sign bit is moved to the denominator's most significant digit, and the denominator's least significant digit is moved to the numerator's sign bit. This process is repeated as many times as the absolute value of the second input.
 
 ----
-VII. Actions
-
-  An action is the highest level form of instruction in an Advanced Assembly program and is represented by the conceptual opcode ACTN. There are four types of actions: return, statement, if, and while. The first type of action, the return action, consists of the opcode RT (00) followed by a statement. The return action evaluates the specified statement and then terminates the execution of the current namespace. Program execution then returns to the evaluate statement that initiated the execution of the current namespace. The evaluate statement evaluates to the value of the return action’s statement. If a return statement is found in the global namespace, then it causes program execution to stop with the return action’s statement’s value as the program’s exit code. The second type of action is the statement action. The statement action consists of the opcode ST (01) followed by a statement. The statement action simply evaluates the subsequent statement. The third type of action is the if action. The if action consists of the opcode IF (10) followed by two statements and either the opcode EN (0) - indicating the end of the if action - or the opcode EL (1) and a third, final statement. The if action starts by evaluating the first statement. If the first, conditional statement evaluates to true, then the second statement is executed, otherwise the second statement is discarded. If the conditional statement evaluates to false and there is a third statement (specified by the EL opcode), the third statement will be executed. The final type of action, the while action, consists of the opcode WH (11) followed by two statements. The while action starts by evaluating the first statement. If the statement evaluates true, then the second statement is executed, otherwise the while action terminates. After evaluating the second statement, the while action re-evaluates the first action. If the first statement is still true, then the second statement will be executed yet again. The while action will keep alternating between evaluating the first statement and the second statement until the first statement evaluates false. Once the first statement evaluates false, then the while action will end.
-
-----
-VIII. Program Control Flow
-
-  Program execution in Advanced Assembly is relatively simple. When executing a program, the first series of bits are interpreted as an integer (See Section IV.B). The absolute value of this integer is the number of parameters for the program being interpreted. The value of the parameters are put in the temporary namespaces with a string whose value can be interpreted as an integer that matches with the parameter’s index. Therefore the first parameter (parameter zero) is stored in the temporary namespace "0000", the second parameter is in the temporary namespace "0001", and so forth. Note that the used namespaces always have the most concise names, so the first parameter will always be in  "0000" even if there is a parameter seventeen in "00010000". After the initial integer, all subsequent bits are interpreted as actions. Following the initial integer, there can be an infinite amount of actions which will be interpreted sequentially until a return statement is encountered ending execution. If the series of bits being interpreted ends, then there is an assumed infinite amount of zeroes following which will be used to continue the execution of the program until a return statement is encountered.
+VII. Program Control Flow
 
 ----
 Appendix A. Opcodes
@@ -213,12 +217,15 @@ LT                 00
 LI                 01
 LR                 10
 LN                 110
-LP                 111
+LM                 111
 FS                 1
-NS                 0
+TS                 0
 AS                 00
 RS                 01
-ET                 1
+ET                 100
+SQ                 101
+IF                 110
+DW                 111
 MS                 1
 
   Operation Opcodes (Section VII.B.2)
@@ -249,18 +256,10 @@ TRL                1111101
 TTL                1111110
 TTR                1111111
 
-  Actions
-RT                 00
-ST                 01
-IF                 10
-EN                 0
-EL                 1
-WH                 11
-
 ----
 Appendix B. Conceptual Opcodes
 
-  STRING             Represents a string. See Section IV.A
+  STR                Represents a string. See Section IV.A
   INT                Represents an integer. See Section IV.B
   RTNL               Represents a rational. See Section IV.C
   NMSP               Represents a namespace. See Section V
