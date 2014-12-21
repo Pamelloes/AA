@@ -145,7 +145,7 @@ VI. Statements
 
 A. Literal Statements
 
-  Literal statements have a single input and evaluate to the literal value of that input. Literal statements start with the opcode LS (0). After the LS opcode, there are five options: the opcode LT (00) followed by a string, the opcode LI (01) followed by an an integer, the opcode LR (10) followed by a rational, the opcode LN (110) followed by a namespace identifier, and the opcode LM (111) followed by an executable statement. Note that a literal statement with the LM opcode does not evaluate to the value of the statement, but to the bit series that the statement is made up of.
+  Literal statements have a single input and evaluate to the literal value of that input. Literal statements start with the opcode LS (00). After the LS opcode, there are five options: the opcode LT (00) followed by a string, the opcode LI (01) followed by an an integer, the opcode LR (10) followed by a rational, the opcode LN (110) followed by a namespace identifier, and the opcode LM (111) followed by an executable statement. Note that a literal statement with the LM opcode does not evaluate to the value of the statement, but to the bit series that the statement is made up of.
 
 Examples:
   LS LT CS 0000 ES                    Evaluates to a string with a value of "0000"
@@ -156,7 +156,7 @@ Examples:
 
 B. Functional Statements
 
-  Functional statements derive a value from one or more inputs. Functional statements start with the opcode FS (1). Functional statements can be divided into two categories: control statements and mathematical statements.
+  Functional statements derive a value from one or more inputs. Functional statements start with the opcode FS (01). Functional statements can be divided into two categories: control statements and mathematical statements.
 
 1. Control Statements
 
@@ -218,6 +218,10 @@ Examples:
   The bit shift operators are a special subset of bitwise operators that rearrange affected bits instead of conditionally changing their value. In the bit shift operators, the second input is always interpreted as an integer. If the second input is zero, then the bit shift operator evaluates to its first input. Logical bit shift's opcode is TS (1111011); logical bit shift replaces each bit's value with the value of the bit offset by the value of the second input. In a logical bit shift, any bit referenced that doesn't exist is assumed to have a value of 0. For example: if the second input is one, then each bit's value is set to the value of the next affected bit and the last bit is set to 0; if the second input is 4, then each bit's value is set to the value of the bit four after it and the last four bits are set to 0; if the second input is negative one, each bit's value is set to the value of the bit immediately preceding it and the first bit is set to 0; and if the second input is negative 4, each bit's value is set to the value of the bit four before it, and the first four bits are set to 0.
   Bit rotate's opcode is TR (11111); bit rotate is a bit shift that fills in missing bits past the end of the series with bits from the beginning and vice versa instead of assuming the missing bits have a value of 0. For example: if the second input is one, then each bit's value is set to the value of the next affected bit and the last bit is set to the value of the first bit; if the second input is 4, then each bit's value is set to the value of the bit four after it and the last four bits are set to the value of the first four bits; if the second input is negative one, each bit's value is set to the value of the bit immediately preceding it and the first bit is set to the value of the last bit; and if the second input is negative 4, each bit's value is set to the value of the bit four before it, and the first four bits are set to the value of the last four bits.
 
+C. Input/Ouput Statements
+
+  Input/output statements derive their value from interaction outside the program. Input/output statements start with the opcode IO (1) followed by a single statement. Unlike the reset of Advanced Assembly, input/ouput is not standardized. Instead, the interpreter provides an "I/O Handler" which determines how input/output functions. When an input/output statement is evaluated, the provided statement is evaluated and its value is passed to the I/O Handler. Then, the I/O handler performs some arbitrary action based off the provided value. Finally, the I/O handler returns a value which is considered the result of the input/output statement and used as the input/output statement's value. How specifically the provided statement is used by the I/O handler is left up to the interpreter to decide.
+
 ----
 VII. Program Control Flow
 
@@ -230,7 +234,7 @@ Appendix A. Opcodes
 ES                 0
 CS                 1
 
-  Namespaces (Section VI)
+  Namespaces (Section V)
 AN                 0
 RN                 1
 EN                 0
@@ -238,14 +242,14 @@ CN                 1
 ERN                00
 PN                 01
 
-  Statements (Section VII)
-LS                 0
+  Statements (Section VI)
+LS                 00
 LT                 00
 LI                 01
 LR                 10
 LN                 110
 LM                 111
-FS                 1
+FS                 01
 TS                 0
 AS                 00
 RS                 01
@@ -254,8 +258,9 @@ SQ                 101
 IF                 110
 DW                 111
 MS                 1
+IO                 1
 
-  Operation Opcodes (Section VII.B.2)
+  Operation Opcodes (Section VI.B.2)
 OP                 0000
 OM                 0001
 OT                 0010
