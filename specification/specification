@@ -37,7 +37,6 @@ II. Table of Contents
   Appendix A.    Opcodes
   Appendix B.    Conceptual Opcodes
   Appendix C.    Change Log
-  Appendix D.    Memory Management Notes
 
 ----
 III. Notation
@@ -116,7 +115,7 @@ V. Namespaces
 
   Namespaces are a hierarchical structure used for storing data. Every namespace has a name, a bit series value, and a set of children namespaces. The Global Namespace is the top of the namespace hierarchy; all other namespaces are ultimately children of the Global Namespace: if not a direct child, then a child of a child, or a more distant relationship.
   Every possible namespace is assumed to exist. Initially, every namespace's value is assumed to be an empty bit series with a data type of string. But, throughout a program's execution, namespaces may be assigned other values. Once assigned, a namespace will retain its value and its value's data type until assigned another value.
-  The Global Namespace's initial value is the code being executed. The Global Namespace's initial data type is an execuable statement. When a namespace with a data type of executable statement is evaluated, the namespace that contains the binary string being executed is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed and special cases that may arise, see *Section VII.
+  The Global Namespace's initial value is the code being executed. The Global Namespace's initial data type is an execuable statement. When a namespace with a data type of executable statement is evaluated, the namespace that contains the binary string being executed is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed see Section VI.
 
 A. Namespace Identifiers
 
@@ -225,6 +224,9 @@ C. Input/Ouput Statements
 ----
 VII. Program Control Flow
 
+  Program execution starts by setting the value of the Global Namespace to the value of the program being executed. Then, the Global Namespace is evaluated as specified in Section VI. Note that, unlike any other statements, if the Global Namespace's statement finishes and returns a value but there are more bits remaining, the remaining bits are executed as another statement. The last completed statement in the Global Namespace's value is used as the program's exit code.
+  When executing statements, statements are loaded sequentially, bit by bit, until a full statement is loaded. Once an entire statement has been read, it is immediately evaluated performing all effects. If one effect of evaluating the statement was to change the value of the Current Namespace, execution continues at the same offset as before on the new bit series. If the location is past the end of the new value for the Current Namespace, values of zero are assumed.
+
 ----
 Appendix A. Opcodes
 
@@ -297,10 +299,14 @@ Appendix B. Conceptual Opcodes
 ----
 Appendix C. Change Log
 
+0.5
+- Made several breaking opcode changes
+- Removed unneeded sections and completed missing ones.
+- Added I/O statements
+- Simplified bit shift operators
+- Reduced all of Advanced Assembly into five datatypes: string, integer, rational, namespace identifier, and statement.
+- Merged actions into statements
 0.4.1
 - Replaced Float with Rational, syntax remains unchanged
 0.4
 - First complete specification
-
-----
-Appendix D. Memory Management Notes
