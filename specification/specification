@@ -1,5 +1,5 @@
 ================================================================
-==   ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.4.1   ==
+==   ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.5.0   ==
 ================================================================
 
 ----
@@ -9,7 +9,7 @@ I. Preface
   Advanced Assembly discards the conventional grouping of eight bits into a byte; instead, bits are divided into groups of arbitrary length. This makes it impossible to run an Advanced Assembly program directly on a processor, but allows instructions to be packed much more densely. Therefore, Advanced Assembly programs must be run in an interpreter. The official Advanced Assembly interpreter, programmed in Haskell, should be included with this document.
   During early stages of development, Advanced Assembly was called High Level Binary and  was intended to be able to express a diverse range of paradigms found in high level programming languages. However, as development progressed, it became apparent that such paradigms lead to a complex and convoluted syntax. In order to simplify the syntax, all complex paradigms that could be easily implemented through simpler paradigms were removed.
   When the first complete language specification was planned out, High Level Binary no longer represented the "high level" programming languages it was originally intended to emulate; instead, the programming language appeared to be a permutation of a typical assembly language. Therefore, the decision was made to rename the language Advanced Assembly to indicate that it facilitated a different feature set than standard assembly languages while distancing the association with the more advanced high level programming languages.
-  Advanced Assembly's simplification led to the removal of several essential features. These features, such as the Object Oriented Programming paradigm, will therefore be provided as "extensions." Separate specification documents will be drafted that define how these features are to work and a reference implementation of them shall be created solely using Advanced Assembly code. Therefore in a program where one of these features is desired, the extension can be used by invoking the extension as one of the first actions of a program. All subsequent statements will than have access to the now-loaded extension's feature set. As of the writing of this document, no extensions have been drafted or implemented.
+  Advanced Assembly's simplification led to the removal of several essential features. These features, such as the Object Oriented Programming paradigm, will therefore be provided as "extensions." Separate specification documents will be drafted that define how these features are to work and a reference implementation of them shall be created solely using Advanced Assembly code. Therefore in a program where one of these features is desired, the extension can be imported via an input/output statement and then all subsequent statements will than have access to the now-loaded extension's features. As of the writing of this document, no extensions have been drafted or implemented.
   
 ----
 II. Table of Contents
@@ -19,23 +19,24 @@ II. Table of Contents
   III.           Notation
    A.             Opcodes
    B.             Conceptual Opcodes
-  IV.            Strings
-  V.             Data Types
-   A.             Integers
-   B.             Rationals
-  VI.            Namespaces
-  VII.           Statements
+  IV.            Data Types
+   A.             Strings
+   B.             Integers
+   C.             Rationals
+  V.             Namespaces
+   A.             Namespace Identifiers
+   B.             Temporary Namespaces
+  VI.            Statements
    A.             Literal Statements
    B.             Functional Statements
-    1.             Namespace Statements
+    1.             Control Statements
     2.             Mathematical Statements
-  VIII.          Actions
-  IX.            Program Control Flow
+   C.             Input/Output Statements
+  VII.          Program Control Flow
 
   Appendix A.    Opcodes
   Appendix B.    Conceptual Opcodes
   Appendix C.    Change Log
-  Appendix D.    Memory Management Notes
 
 ----
 III. Notation
@@ -44,7 +45,7 @@ III. Notation
   Under some circumstances, expressing numbers (such as one hundred) in Arabic numerals will only use the symbols "1" and "0". In such cases, the number will be written out ("one hundred"). Therefore, if "100" is encountered it is understood that "100" is referring to three, sequential bits with values of true, false, and false, respectively.
 
 Examples:
-     0  Refers to a bit with a value of true
+     0  Refers to a bit with a value of false
      8  Refers to the number eight
     10  Refers to two, sequential bits with values of true and false respectively
     15  Refers to the number fifteen
@@ -55,49 +56,48 @@ NOTE: In other documents, series of bits may be grouped into sets of four and ex
 
 A. Opcodes
 
-  This document explicitly specifies how combinations of true and false bits can be interpretted to produce a desired effect. However, notating a bit as "0" or "1" can become confusing and the same combinations of bits can mean different things depending on where they are. Therefore, when defining various functions, bit patterns will be expressed via several character mnemonics. Each mnemonic is translates directly into a corresponding series of bits (see Appendix A) and provides additional context--making a program easier to read and understand. These mnemonics are referred to as opcodes.
+  This document explicitly specifies how combinations of true and false bits can be interpretted to produce a desired effect. However, notating a bit solely as "0" or "1" can become confusing as the same combinations of bits mean different things in different places. Therefore, when defining various functions, bit patterns will be expressed via several character mnemonics. Each mnemonic directly translates to a corresponding series of bits (see Appendix A) and provides additional context--making a program easier to understand. These mnemonics are referred to as opcodes.
   An assembler (written in Python) should be included with this document. The assembler will take a text file consisting of "1", "0", and the opcodes defined in this document and translate the text file into a binary file whose bits correspond with the text file.
 
 B. Conceptual Opcodes
 
-  In Advanced Assembly, groups of opcodes are used in conjunction with arbitrary series of bits in predictable patterns to express complex concepts than a single opcode. These concepts, such as strings, often come up in multiple places throughout the specification where it is more meaningful to refer to the concepts by a short mnemonic than it is to refer to the concepts by their constituent parts. These mnemonics are collectively referred to as "Conceptual Opcodes" because they refer to concepts instead of a specific series of bits. Conceptual opcodes are used within this document for clarity and cannot be used by a programmer to write Advanced Assembly code. Conceptual Opcodes are defined throughout the specification and a complete list can be found in Appendix B.
+  In Advanced Assembly, groups of opcodes are used in conjunction with arbitrary series of bits in predictable patterns to express complex concepts. These concepts, such as strings, often come up in multiple places throughout the specification where it is more meaningful to refer to the concepts by a short mnemonic than it is to refer to the concepts by their constituent parts. These mnemonics are collectively referred to as "Conceptual Opcodes" because they refer to concepts instead of specific series of bits. Conceptual opcodes are used within this document for clarity and cannot be used by a programmer to write an Advanced Assembly program. Conceptual Opcodes are defined throughout the specification and a complete list can be found in Appendix B.
+
 
 ----
-IV. Strings
+IV. Data Types
 
-  In Advanced Assembly, a string refers to a series of bits with a length of zero or a positive multiple of four. A string is the fundamental structure of Advanced Assembly and is notated using the conceptual opcode "STRING." A string consists of the opcode CS (1) followed by four arbitrary bits. This pattern is repeated as many times as necessary in order to convey the desired string. The end of a string is indicated by the opcode ES (0) after the CS opcode and four bits pattern.  A string consisting solely of an ES opcode will have a length of zero and no defined value. It is important to note that a string refers to the collection of bits notated and does not include the CS and ES - the opcodes are used for notating a string literally within a program. However, when a program manipulates a string the manipulation refers to the notated bits and if a statement evaluates to a string, the string does not include the CS and ES opcodes.
+  Within Advanced Assembly, a series of arbitrary bits can interpreted in five distinct ways: as a string, as an integer, as a rational, as a namespace identifier, and as an executable statement. Each way of interpreting a series of bits is considered a data type.
+  When a bit series is defined, it is assigned a data type based off of context. While a bit series' data type does not affect the series' contents, it determines how the series will be interpreted when the series can be interpreted in several ways.
+  Each data type defines a specific process for interpreting a bit series. The process does not take into account how long the bit series is. Oftentimes, therefore, a different amount of bits will be used when interpreting the series than the series contains. If fewer bits are required, than the remaining bits are ignored. If additional bits are required, then all additional bits are assumed to be 0. Note that this does not effect the contents of the series itself--just the interpretation.
+  For instance, a series interpreted as a string might have seven unused bits. Then, the same series might be interpreted as an integer and have 4 unused bits. The three additional bits used when interpreting the series as an integer come from the unused bits when interpreting the series as a string. Unused bits are still part of the series, even if they don't affect the current value. Similarly, if a series interpreted as a namespace requires five additional bits and then the series is interpreted as a string with three extra bits, the three extra bits do not include the five 0 bits used when interpreting the series as a namespace. Additional bits are not part of the series, even if they are needed to calculate the current value.
+  Under some circumstances, bit series must be interpreted in a boolean matter (true or false). The values considered false are: an empty string ("ES"), an integer equal to zero ("0 ES"), a rational equal to zero ("0 ES 1 ES"), the global namespace ("AN EN"), and a literal empty string executable statement ("0 ES LS LT ES"). All other values are considered true.
+
+A. String
+
+  The string data type, notated by the conceptual opcode STR, interprets a series of bits as a series of bits. Within a string, the opcode CS (1) indicates that the next four bits are part of the string's value while the opcode ES (0) indicates the end of the string. A string can have an arbitrary amount of CS segments, but once an ES is reached, the string ends. A bit series notated by a string will have a length with a multiple of four. A string consisting solely of ES will be an empty string--a string with a length of zero.
 
 Examples:
-  ES                                      A string with a length of zero and no defined value
+  ES                                      An empty string (the string has a length of zero)
   CS 1001 ES                              A string with a length of four and a value of 1001
   CS 0001 CS 0010 CS 0100 CS 1000 ES      A string with a length of 16 and a value of 0001001001001000
 
-----
-V. Data Types
+B. Integer
 
-  All data within Advanced Assembly can be grouped into three data types: strings, integers, and rationals. Several aspects of the program, such as the program's code and namespaces (see section VI) are stored as strings and can be manipulated as such. Numerical data is typically stored as either an integer or a rational. Note that strings, integers, and rational are fully interchangeable.
-  Under some circumstances, data must be interpreted in a boolean matter (true or false). In Advanced Assembly, the boolean value for false is an empty string, an integer equal to zero, and a rational equal to zero. Any other value is considered true.
-
-A. Integer
-
-  An integer represents a mathematical integer: any real, whole number. It is represented by the conceptual opcode INT. An integer consists of one bit followed by a string. The string represents the integer's value and is interpreted in a little-endian style. The first group of four bits represents the eight, four, two, and one place values respectively; the second group of four bits represents the one hundred twenty-eight, sixty-four, thirty-two, and sixteen place values respectively; and so forth. The first bit (before the string) is the sign bit. If it is 0, then the string integer value is determined as previously outlined. If it is 1, then the integer is negative, and the string integer value is its two's compliment: the positive value of the integer is calculated by replacing every 1 with 0 (and vice versa) and incrementing the resulting integer.
-  When converting a string to an integer, the first bit of the string is the sign bit and the subsequent bits are the string component. When converting an integer to a string, the string is formed by prepending the sign bit to the string component. When converting to and from a string, it is possible to create an integer without enough bits to complete a full four bit segment. If so, the last segment will be interpretted to have its bits in the least significant positions of that segment and the unfilled bits will be interpretted as having a value of 0.
+  The integer data type, notated by the conceptual opcode INT, represents a mathematical integer: any real, whole number. Within an integer, the first bit is the integer's sign and the remaining bits are a string. The string is the integer's value and is interpreted in a little-endian style: the first group of four bits represents the eights, fours, twos, and ones place values respectively; the second group of four bits represents the one hundred twenty-eights, sixty-fours, thirty-twos, and sixteens place values respectively; and so forth. A positive integer has a 0 sign bit and its value is the value of its string component. A negative integer has a 1 sign bit and its value is the two's compliment of its string component: the positive value of the integer is calculated by replacing every 1 with 0 (and vice versa) and incrementing the resulting integer.
 
 Examples:
-  0 ES                                       An integer with a value of one
+  0 ES                                       An integer with a value of zero
   0 CS 1001 CS 0001 ES                       An integer with a value of 25
   0 CS 0000 CS 0000 CS 0000 CS 0010 ES       An integer with a value of 8192
   1 ES                                       An integer with a value of negative one
   1 CS 1110 ES                               An integer with a value of negative two
   1 CS 1111 CS 1000 ES                       An integer with a value of negative 113
 
-B. Rational
+C. Rational
 
-  A rational represents a mathematical rational number: any number that can be expressed as the quotient of two integers. Rationals are represented with the conceptual opcode RTNL and consist of two integers: the first integer is the numerator and the second the denominator. Standard conventions are used when dealing with signs: if the numerator and denominator are the same sign, the rational is positive; if the numerator and denominator are opposite signs, the rational is negative.
-  A rational can be convertted to a string by converting both the numerator and denominator into strings and then appending the denominator string to the numerator string. To convert a rational into an integer, it is first converted into a string and then the string is converted into an integer.
-  Because there is no way to determine where the numerator ends and the denominator begins, a rational cannot be directly convertted from a string. However, an integer can be interpretted as a rational with an implicit denominator of one. Therefore, if a string or integer needs to be interpretted as a rational a value can be determined.
-  If a rational is converted into another data type, the numerator and denominator component are maintained as long as the new data type is not modified. Therefore, if a rational is converted to a string, and then immediately converted back to a rational, the resulting rational will have the same value as the first. However, if a rational is converted to a string and the string is modified, the new string cannot ever be converted into the original rational.
-  Because a rational involves division, it is possible to divide by zero. A division by zero is undefined, and to indicate this the rational's value will be set to zero divided by zero. Any mathematical operation performmed on zero divided by zero will result in zero divided by zero.
+  The rational data type, notated by the conceptual opcode RTNL, represents a rational number: any number that can be expressed as the quotient of two integers. Within a rational, the bits are interpreted as two subsequent integers: the first integer is the numerator and the second the denominator. Standard conventions are used when dealing with signs: if the numerator and denominator are the same sign, the rational is positive; if the numerator and denominator are opposite signs, the rational is negative.
+  Because a rational involves division, it is possible to divide by zero. A division by zero is undefined, and to indicate this the rational's value will be set to zero divided by zero. Any mathematical operation performed on zero divided by zero will result in zero divided by zero.
 
 Examples:
   0 ES 0 ES                      A rational with a value of zero divided by zero
@@ -111,80 +111,121 @@ Examples:
   1 CS 0011 ES 0 CS 1100 ES      A rational with a value of negative 13/12
 
 ----
-VI. Namespaces
+V. Namespaces
 
-  Namespaces are a hierarchical structure--namespaces are grouped via parent-child relationships--used for storing data. A namespace is represented by the conceptual opcode NMSP. Every namespace has a name, a value, and a parent namespace. A namespace's name and parent uniquely identify it. At the top of namespace hierarchy is the Global Namespace; all other namespaces either have the Global Namespace as a parent or as a more distant ancestor. Under certain circumstances, the parent of the Global Namespace may be referenced: the Global Namespace is the parent of the Global namespace.
-  Initially, every namespace has a value of an empty string; however, throughout a program's execution, a namespace may be assigned another value. A namespace will maintain the value it is assigned in the form it is assigned (so if a namespace is assigned a rational value, the namespace will have the value of the rational--the rational will not be converted to another type), however any namespace may be interpreted as any type. If a namespace is interpreted as a type other than the type of its current value, the value will be implicitly converted to the appropriate type.
-  Since all statements within an Advanced Assembly program are expressed as a series of bits, a program's code is stored in a namespace as a string. When stored as a string, the string's value includes the opcodes used for describing a namespace's structure (outlined below). Any namespace can be interpreted as a fully functional Advanced Assembly program and run as such. If a namespace is run as a program and its value is not a string, then the namespace's value is converted to a string before being run. Because of this, the Global Namespace, unlike all other namespaces, does not start with an initial value of an empty string. Instead, the Global Namespace starts with a string value that contains the currently run program. When actions in Advanced Assembly are executed, the namespace that contains the binary string being interpreted as the action is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed as a program and special cases that may arise, see *Section VII.
-  Namespaces can be written in two formats: absolute and relative. Absolute namespaces are prefaced by the opcode AN (0). Then the namespace consists of groups of the CN (1) opcode and a STRING. After an arbitrary amount of groups, the EN (0) opcode is encountered indicating the end of the namespace definition. After the AN opcode, the Global Namespace is referenced. Each subsequent group references the child namespace of the previously referenced namespace with the specified STRING as its name. When the EN opcode is encountered, the last referenced namespace is the namespace being referenced by the NMSP statement. Note that by including no CN and STRING groups, the Global Namespace can be referenced.
+  Namespaces are a hierarchical structure used for storing data. Every namespace has a name, a bit series value, and a set of children namespaces. The Global Namespace is the top of the namespace hierarchy; all other namespaces are ultimately children of the Global Namespace: if not a direct child, then a child of a child, or a more distant relationship.
+  Every possible namespace is assumed to exist. Initially, every namespace's value is assumed to be an empty bit series with a data type of string. But, throughout a program's execution, namespaces may be assigned other values. Once assigned, a namespace will retain its value and its value's data type until assigned another value.
+  The Global Namespace's initial value is the code being executed. The Global Namespace's initial data type is an execuable statement. When a namespace with a data type of executable statement is evaluated, the namespace that contains the binary string being executed is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed see Section VI.
+
+A. Namespace Identifiers
+
+  Namespaces can be specified by the Namespace Identifiers data type. Namespace Idenitifiers, notated by the conceptual opcode NMSP, are written in two formats: absolute and relative. Within a namespace identifier, the first bit determines the id's type. Absolute identifiers start with the opcode AN (0). Within the remaining bits, the opcode CN (1) indicates the following bits are a string and the EN (0) opcode indicates the end of the id. An absolute id starts at the Global Namespace, and each following string identifies the child of the previously identified namespace with a name equal to the string.
 
 Examples:
   AN EN                                         References the Global Namespace
   AN CN CS 0000 ES EN                           References a child of the Global Namespace called "0000"
   AN CN CS 0101 ES CN CS 0000 CS 1111 ES EN     References the Global Namespace's child "0101"'s child "00001111"
 
-  Alternatively, a namespace can be referenced by its relation to the Current Namespace. Relative namespaces are prefaced by the opcode RN (1). The the namespace consists of groups of the CN (1) opcode and a STRING, or the PN (01) opcode. After an arbitrary amount of groups, the ERN (00) opcode is encountered indicating the end of the namespace definition. After an RN opcode, the Current Namespace is identified. Each subsequent group of CN and STRING encountered references the child namespace of the previously referenced namespace with the specified STRING as its name. Alternatively, the PN opcode may be encountered in which case the parent of the last referenced namespace is referenced. When the ERN opcode is encountered the last referenced namespace is the namespace being referenced by the NMSP statement. Note that by only including the RN and ERN opcodes, the Current Namespace can be referenced.
-  While absolute namespaces and relative namespaces can be used interchangeably under most circumstances, relative namespaces that are a direct child of the Current Namespace are a special case and are a separate entity from the homophonic namespace--the namespace with the same name and parent--that would be referred to absolutely. These namespaces are called "temporary namespaces." Note that the child of a child of the Current Namespace (or a more distant child) is NOT a temporary namespace. Note that before a value is assigned to a temporary namespace, references to the temporary namespace will be referred to the homophonic namespace (e.g. if a temporary namespace 0000 has not had a value assigned to it, but the homophonic namespace 0000's value is a string with the value "0101", then references to the value of the temporary namespace will evaluate to the value of the homophonic namespace: "0101" and not evaluate to the value of an unassigned namespace--an empty string; of course, if neither the temporary namespace nor the homophonic namespace have a value assigned then the value of the temporary namespace will evaluate to an empty string).
-  Once a value is assigned to a temporary namespace, the value can only be accessed from the namespace that assigned the value. Not only is this value unique to the namespace that assigned it, but it is also unique to the version of the namespace that assigned it: thus allowing for recursion. For example: given the program is in the Current Namespace 0000 and the program stores a string with the value "1" in the temporary namespace 0001 (a child of namespace 0000). Then, if the program recurses and transfers execution to the beginning of namespace 0000 the new context means that the temporary namespace 0001 will have a value of an empty string (the default value) and not "1." When execution returns to namespace 0000 in the original context, the temporary namespace 0001 will regain its former value of "1." 
+  Relative namespaces identifiers start with the opcode RN (1). Within the remaining bits, the opcode CN (1) indicates the following bits as a string, the PN (01) opcode, and the ERN (00) opcode indicates the end of the id. A relative id starts at the Current Namespace, and each following string identifies the child of the previously identified namespace with a name equal to the string. In addition, the PN opcode identifies the parent of the previously identified namespace.
 
 Examples:
   RN ERN                                  References the Current Namespace
   RN PN ERN                               References the Current Namespace's parent
-  RN PN CN CS 0000 ES ERN                 References the child "0000" of the Current Namespace's parent. If the current namespace's name is "0000" then this would be referencing the Current Namespace
-  RN PN CN CS 1010 ES CN CS 1111 ES ERN   References the Current Namespace's parent's child "1010"'s child "1111." If the current namespace's name is "1010," then this is referencing the temporary namespace "1111"
+  RN PN CN CS 0000 ES ERN                 References the child "0000" of the Current Namespace's parent. If the Current Namespace's name is "0000" then this would be referencing the Current Namespace
+  RN PN CN CS 1010 ES CN CS 1111 ES ERN   References the Current Namespace's parent's child "1010"'s child "1111." If the Current Namespace's name is "1010," then this is referencing the Current Namespace's child "1111"
   RN CN CS 0101 ES ERN                    References the Current Namespace's child "0101"
   RN CN CS 1010 ES CN CS 1111 ES ERN      References the Current Namespace's child "1010"'s child "1111"
 
 ----
-VII. Statements
+VI. Statements
 
-  A statement consists of one or more operations that evaluate to a value: either an integer, rational or string (strings may be used to represent namespaces; see Section VI). A complete statement is represented by the conceptual opcode STMT. Statements are broken up into two types: literal statements which evaluate to the literal value of their contents, and functional statements which evaluate to a value derived from one or more other statements.
+  The statement data type is used to detail one or more actions that evaluate to a value. A complete statement is represented by the conceptual opcode STMT. Statements are broken up into three types: literal statements, which evaluate to the literal value of their contents; functional statements, which evaluate to a value derived from one or more other statements; and Input/Output statements, which pass a value out of the program and get a response.
+  Statements can be grouped into embedded and executable statements. Embedded statements are found within another statement. Unless explicitly stated otherwise, all statements are assumed to be embedded statements. Executable statements are "top-level" statements--they are not embedded in any other statement and are run directly. All executable statements are prefaced by an integer. The absolute value of this integer is the number of parameters for the executable statement. All executable statements have an associated Destination Namespace. An executable statement's Destination Namespace is the namespace that would become the Current Namespace if the executable statement was evaluated. The values of parameters are stored in children of the Destination Namespace. Each parameter's index is interpretted as a string and used as the name of the namespace that the parameter's value is stored in. Parameters' indexes are zero-based, so the first parameter will be stored in "0 ES", the second in "0 CS 0001 ES", and so forth. 
 
 A. Literal Statements
 
-  Literal statements are statements that have a single input and evaluate to the literal value of that input. All literal statements start with the opcode LS (0). After the LS opcode, their are three options. The first is a string literal statement which consists of the opcode LT (0) followed by a STRING. The second option is the opcode LI (10) followed by an INT. The final option is the opcode LF (11) followed by a RTNL. Each type of literal statement evaluates to the value delineated within the statement.
+  Literal statements have a single input and evaluate to the literal value of that input. Literal statements start with the opcode LS (00). After the LS opcode, there are five options: the opcode LT (00) followed by a string, the opcode LI (01) followed by an an integer, the opcode LR (10) followed by a rational, the opcode LN (110) followed by a namespace identifier, and the opcode LM (111) followed by an executable statement. Note that a literal statement with the LM opcode does not evaluate to the value of the statement, but to the bit series that the statement is made up of.
 
 Examples:
   LS LT CS 0000 ES                    Evaluates to a string with a value of "0000"
   LS LI 0 CS 0001 ES                  Evaluates to an integer with a value of 1
-  LS LF 0 CS 0001 ES 1 CS 1111 ES     Evaluates to a rational with a value of negative 1/1
+  LS LR 0 CS 0001 ES 1 CS 1111 ES     Evaluates to a rational with a value of negative 1/1
+  LS LN AN EN                         Evaluates to the Global Namespace
+  LS LM 0 CS 0001 ES LS LT CS ES      Evaluates to the statement "LS LT CS ES" with one parameter
 
 B. Functional Statements
 
-  Functional statements are statements that have one or more inputs and evaluate to a value derived from them. All functional statements start with the opcode FS (1). Functional statements can be further divided into two categories: namespace statements which derive their value from manipulating namespaces, and mathematical statements which derive their value from a mathematical manipulation of one or more inputs.
+  Functional statements derive a value from one or more inputs. Functional statements start with the opcode FS (01). Functional statements can be divided into two categories: control statements and mathematical statements.
 
-1. Namespace Statements
+1. Control Statements
 
-  Namespace statements are the most complex statements and involve manipulating namespaces. They are also the most important section of any program and are what allow an Advanced Assembly program to make changes to the program's state. After the FS opcode, all namespace statements have the NS (0) opcode. After the NS opcode, there are three possible types of namespace statements.
-  The first two types of namespace statement are relatively simple and directly manipulate the value of a namespace. An assign statement can be made using the AS (00) opcode followed by two additional statements. The first of these statements' value is converted to a string (if it is not a string already) and is then interpreted as a namespace. This namespace's value is then set to be whatever the second statement evaluates to. An assign statement evaluates to the value assigned to the namespace. The other simple namespace statement is a read statement which consists of the RS (01) opcode followed by one additional statement. This statement's value is then interpreted as a namespace (via a string). The read statement then evaluates to the value of the designated namespace.
-  The final type of namespace statement is the evaluate statement. The evaluate statement is used to transfer a program's control to another namespace. The evaluate statement starts with the ET (1) opcode followed by a varying amount of statements greater than one. The value of the first statement is interpreted as a namespace (via a string). The contents of this namespace are then interpreted as a program (via a string) which will be executed. As outlined in *Section IX, the amount of inputs to be sent to the program is derived. For each of these inputs, another statement is evaluated and the value of the current input is set to the value of the statement. Therefore, if an evaluate statement's first input indicates a namespace that contains a program with zero inputs, the evaluate statement will only consist of FS NS ES STMT. However, if the evaluate statement's first input denotes a namespace that contains a program with four inputs, the evaluate statement will consist of FS NS ES STMT STMT STMT STMT STMT. Note that there are five statements: one to identify the program and then one for each input for the program.
+  Control statements serve two purposes: to manipulate namespaces' values and to conditionally execute statements. Control statements begin, after the FS opcode, with the TS (0) opcode.
+  The first two control statements directly manipulate the value of a namespace. The assign statement consists of the AS (00) opcode followed by two statements. The first statements' value is interpeted as a namespace id. The value of the namespace identified by the first statement is set to the result of the second statement. An assign statement evaluates to the value assigned to the namespace.
+  The read statement consists of the RS (01) opcode followed by one statement. This statement's value is interpreted as a namespace id. The read statement evaluates to the value of the namespace identified by the statement.
+  The evaluate statement consists of with the ET (100) opcode followed by one or more statements. The first statement is interpreted as a namespace id. The identified namespace is then interpreted as an executable statement and executed. The remaining statements are the values of the executable statement's parameters. There is one statement per parameter. For instance, if the indicated namespace contains an executable statement with zero parameters, the evaluate statement will only have one statement and if the indicated namespace contains an executable statement with with four parameters, the evaluate statement will have five statements.
 
 Examples:
-  FS NS AS LS LT nmsp LS LI 0 CS 0001 ES              Assigns an integer with a value of one to the namespace nmsp*. Evaluates to an integer with a value of one.
-  FS NS RS LS LT nmsp                                 Evaluates to namespace nmsp*'s value.
-  FS NS ET LS LT nmsp LS LT ES LS LT ES LS LT ES      Executes the program at namespace nmsp* that has three arguments. Each argument is set to an empty string. The statement evaluates to the result of the program at nmsp*.
+  FS TS AS LS LN NMSP LS LI INT            Sets the value of NMSP to INT
+  FS TS RS LS LN NMSP                      Evaluates to the value of NMSP
+  FS TS ET LS LN NMSP STMT STMT STMT       Interprets NMSP as an executable statement and executes it. The executable statement has three inputs, and each one is specified by an STMT. This statement evaluates to the result of the executable statement
 
-*For simplicity's sake, rather than writing out a string that denotes a namespace verbatim, the acronym nmsp is used to denote a string that contains an arbitrary namespace. 
- 
+  The next three statements execute statements sequentially. The sequence statement consists of the SQ (101) opcode followed by two statements. The sequence statement evaluates the first statement, discards its value, and then evaluates to the value of the second statement.
+  The if statement consists of the IF (110) opcode followed by three statements. The if statement starts by evaluating the first statement. If it evaluates to true, then the if statement evaluates to the value of the second statement. Otherwise, the if statement evaluates to the value of the third statement.
+  Finally, the do while statement consists of the DW (111) opcode followed by two statements. The do while statement starts by evaluating the first statement. Then, if the second statement evaluates to false, the while loop evaluates to the value of the previously executed first statement. Otherwise, the value of the first statement is discarded and the process is executed again. Thus, the first statement will keep being executed as long as the second statement evaluates to true. Once the second statement evaluates to false, the do while statement evaluates to the value of the first statement in the current iteration.
+
+Examples:
+  FS TS SQ STMT LS LI 0 ES                  Evaluates STMT and then evaluates "LS LI 0 ES", ultimately evaluating to an integer with a value of zero
+  FS TS IF STMT LS LI 0 ES LS LI 1 ES       Evaluates to the integer zero if STMT is true, and the integer negative one otherwise.
+  LS TS DW FS TS RS LS LN NMSP STMT         Reads the value at NMSP as long as STMT is true. Evaluates to the last-read value of at NMSP once STMT evaluates to false
+
 2. Mathematical Statements
 
-  Mathematical statements are the most diverse set of statements. All mathematical statements start with the MS (1) opcode followed by one of the "operation opcodes" and then by either one or two statements. Operation opcodes are a long list of opcodes outlined below that indicate of the mathematical operations that can be performed. The first statement after the operation opcode is the first input for the operation opcode and the second statement is the second input for the operation opcode. Some operation opcodes only have one input and in that case, only one statement will be read after the operation opcode.
-  If only one input is required, the result will be the same type as the input. If two inputs are required, then result is more complicated. If both inputs are integers, the result will an integer. If both inputs are rationals, the result will be a rational. If one input is an integer and the other a rational, the integer will be converted to a rational and the inputs will be handled like two rationals. If one input is a string and the other an integer, the string will be converted to an integer and the inputs will be handled like two integers. If one input is a string and the other is a rational, the string will be converted to a rational and the inputs will be handled like two rationals.  If both inputs are strings, then, in general, the strings will be converted to integers, processed accordingly, and then the result will be converted back to a string. However, in certain circumstances this behavior will be different.
-  The simplest operation opcodes are OP (0000) for addition, OM (0001) for subtraction, OT (0010) for multiplication, and OD (0011) for division. The addition opcode (OP) evaluates to the sum of the two inputs. If both inputs for the addition opcode are strings, the result will be a string that is equal to the second input appended to the first input. The multiplication opcode (OM) evaluates to the product of the two inputs. The subtraction opcode (OM) evaluates to the second input subtracted from the first input. The division opcode (OD) evaluates to the quotient of the first input divided by the second input. If the second input is zero, than the result is the rational zero divided by zero (see Section V.B for an explanation on this value).
-  The next two operational opcodes provide two other standard mathematical capabilities: modulus and exponentiation. The exponentiation opcode, OE (0100) evaluates to the first input raised to the power of the second input. The modulus opcode OU (0101) evaluates to the positive difference between the first input and the largest multiple of the second input less than the first input.
-  The next nine operational opcodes are boolean opcodes. While there are many ways to express the boolean values true and false (see Section V), when a boolean operation evaluates to true, it will evaluate to an integer with a value of one. Similarly, when a boolean operation evaluates to false, it will evaluate to an integer with a value of zero. The eight boolean operational opcodes are as follows: boolean not, BN (0110); boolean or, BO (01110); boolean xor, BX (01111); boolean and, BA (1000); equal to, BE (1001); less than, BL (1010); less than or equal to, BLE (1011); greater than, BG (1100); and greater than or equal to, BGE (1101). Boolean not (BN) only takes one input. If the input is true, it evaluates to false; if the input is false, it evaluates to true. Boolean or (BO) evaluates to true if either of its inputs is true. Boolean or evaluates to false only if both inputs are false. Boolean xor (BX) evaluates to true if only one of the inputs is true. If both inputs are true or both inputs are false, boolean xor evaluates to false. Boolean and (BA) evaluates to true if both inputs are true. Otherwise, boolean and evaluates to false.
-  The remaining boolean operators are comparison operators. Comparison operators treat two string inputs specially: first, the two inputs' lengths are compared and only if both inputs have the same length are they converted to integers and compared. A string with a smaller length is always considered smaller than a string with a larger length and vice versa. The equal to comparison operator (BE) evaluates to true if both inputs are the equivalent and false otherwise. Less than (BL) is true if the first input's numerical value is smaller than the second input's numerical value (strings are handled as outlined earlier). Less than or equal to (BLE) is true if the first input's numerical value is the same as or smaller than the second input's numerical value (strings are handled as outlined earlier). Greater than (BG) is true if the first input's numerical value is larger than the second input's numerical value (strings are handled as outlined earlier) and greater than or equal to (BGE) is true if the first input's numerical value is the same as or larger than the second input's numerical value (strings are handled as outlined earlier).
-  The final nine operators are the bitwise operators: bitwise not, TN (1110); bitwise or, TO (1111000); bitwise xor, TX (1111001); bitwise and, TA (1111010); bit shift left, TL (1111011); arithmetic bit shift right, (1111100); logical bit shift right, (1111101); rotate left, TTL (1111110); and rotate right, TTR (1111111). All bitwise manipulations work on a per bit level, from left to right. Therefore, the first bits are aligned up and any discrepancies in length will occur at the end. When two strings are compared, the resulting string will have the length of the longer of the two inputs. For each bit in the longer string without a corresponding bit in the shorter string, the shorter bit will be assumed to have a value of "0." When comparing two integers, first the sign bits are compared and then the values are compared as strings. When comparing rationals, each of the two composite integers are compared as previously outlined. The first bitwise operator, bitwise not (TN), only takes one input. Bitwise not evaluates to the same type as its input. For each bit that is a 1 in the input, it is changed to a 0 in the result. Bitwise or (TO) evaluates two inputs such that the output has a 1 if the corresponding bit in either input is a 1 or a 0 if both inputs have a 0 in the corresponding bit. Bitwise xor (TX) evaluates two inputs such that the output has a 1 if the corresponding bit only one input is a 1, or a 0 if both inputs have a 0 or both inputs have a 1 in the corresponding bit. Bitwise and (TA) evaluates two inputs such that the output has a 1 if the corresponding bit in both inputs is a 1 or a 0 if either inputs has a 0 in the corresponding bit.
-  The remaining bitwise operators are the five bit shifts. In a bit shift, the first input can be any type and the second input will always be interpreted as an integer. The first bit shift is the left bit shift (TL); depending on the type of the first input, this operation behaves in different ways. In a string, this bit shift simply appends an amount of "0"'s equal to the absolute value of the second input, moving every other bit over one spot to the left. In an integer, each bit is shifted to the place value immediately larger than its current place value and a 0 is inserted into the least significant bit. This process is repeated as many times as the absolute value of the second input. Left bit shifting a rational left bit shifts the rational's numerator. The next two bit shifts are the arithmetic bit shift right (TRA) and the logical bit shift right (TRL). When applied to a string, both bit shifts have the same affect: they remove the last digit as many times as the absolute value of the second input--thus shifting the remaining bits to the right. When applied to an integer, an arithmetic shift right removes the least significant digit of the integer as many times as the absolute value of the second input. In the event that all of the integer's digits are removed, the next digit to be removed is the sign bit: if its value is 1, it is to be changed to 0. Any remaining digits to be removed are discarded. A logical bit shift right functions almost identically on an integer. The key difference is that after the first bit shift right, if the sign bit is 1, the sign bit is to be set to 0 and "1" is to be appended to the integer's string component such that it becomes the most significant digit--thus shifting the sign bit into the integer's body. When a right bit shift is applied to a rational, the rational is first convertted so that a positive rational's numerator and denominator are positive and a negative rationals' numerator is negative and denominator is positive. Then, the right bit shift is applied to the rational's numerator as previously outlined.
-  The final two bit shifts are rotate bit shifts. Rotate left (TTL) affects strings, integers, and rationals differently. When applied to a string, a rotate left operation will take the first bit of the string and move it to be the last so that all of the bits are preserved, but they are re-ordered. This process is repeated as many times as the absolute value of the second input. When applied to an integer, the integer's most significant digit is moved to the integer's sign bit and the integer's sign bit is moved to its least significant digit. This process is repeated as many times as the absolute value of the second input. When applied to a rational, the numerator's most significant digit is shifted to the numerator's sign bit, the numerator's sign bit is shifted to the denominator's least significant digit, the denominator's most significant digit is shifted to the denominator's sign bit, and the denominator's sign bit is shifted to the numerator's least significant digit. This process is repeated as many times as the absolute value of the second input. Similarly, a rotate right (TTR) affects strings, integers, and rationals differently. When applied to a string, a rotate right will take the last bit of the string and move it to the first. This process is repeated as many times as the absolute value of the second input. When applied to an integer, the sign bit is moved to the most significant digit and the least significant digit is moved into the sign bit. This process is repeated as many times as the absolute value of the second input. When applied to a rational, the numerator's sign bit is moved to the numerator's most significant digit, the numerator's least significant digit is moved to the denominator's sign bit, the denominator's sign bit is moved to the denominator's most significant digit, and the denominator's least significant digit is moved to the numerator's sign bit. This process is repeated as many times as the absolute value of the second input.
+  Mathematical statements consist of, after the FS opcode, the MS (1) opcode followed by an "operation opcode" and one or two statements. The operation opcodes, defined below, specify the mathematical operation used to derive an output value from the inputs. The two statements represent the first and second input, respectively. Some operations only require one input and will only have one following statement.
+  All mathematical statements can only process homogenous inputs--inputs of the same data type. The result of a statement with homogenous input will have the same data type as the input. When faced with heterogenous inputs--inputs of varying data types--all the inputs must be interpreted as the same data type. The data type used with heterogenous inputs is determined by the order of precedence (from highest to lowest): rational, integer, string, namespace identifier, statement. The statement's result's data type will be the highest-precedent input data type. For example: if a statement's inputs are an integer and a namespace identifier, the inputs will be interpreted as integers and the statement's result will be an integer.
+  Some operations can only handle numerical input--integers or rationals. If the highest-precedence input data type of a numerical-only statement is not numerical, then the inputs will be processed as if they were rationals. The output will be converted from rational to the highest-precedent input data type.
+  Addition's operation opcode is OP (0000). Addition takes two, numerical inputs and evaluates to the sum of both inputs. When provided two strings, however, addition evaluates to the second string concatenated to the first string. Subtraction's operation opcode is OM (0001); subtraction takes two, numerical inputs and evaluates to the difference of the second input subtracted from the first input. Multiplication's operation opcode is OT (0010); multiplication takes two, numerical inputs and evaluates to the product of both inputs. Division's operation opcode is OD (0011); division takes two, numerical inputs and evaluates to the quotient of the first input divided by the second input. When dividing integers, the result is rounded down. If the second input, the divisor, is equal to zero, the statement will evaluate to the rational zero divided by zero (see Section V.B).
+
+Examples:
+  FS MS OP LS LI 0 CS 0010 ES LS LR 0 CS 1000 ES 0 CS 0011 ES        Adds two (integer) and eight thirds (rational) to fourteen thirds (rational)
+  FS MS OM LS LI 0 CS 0001 ES LS LI 0 CS 0101 ES                     Subtracts one (integer) from five (integer) to four (integer)
+  FS MS OT LS LR 1 ES 0 CS 0010 ES LS LR 0 CS 1000 ES 0 CS 0001 ES   Multiplies negative one half (rational) and eight (rational) to negative four (rational)
+  FS MS OD LS LI 0 CS 1000 ES LS LI 0 CS 0011 ES                     Divides eight (integer) by three (integer) to two (integer)
+  FS MS OD LS LI 1 CS 1010 CS 1110 ES LS LI 0 ES                     Divides negative 22 (integer) by zero (integer) to zero divide by zero (rational).
+
+  Exponentiation's opcode is OE (0100); exponentiation takes two inputs--the first input is numerical and the second input will always be interpreted as an integer--and evaluates to the first input raised to the power of the second input. Modulus's opcode is OU (0101); modulus takes two, numerical inputs and evaluates to the the smallest positive value of a multiple of the second input being subtracted from the first input. If the second input, the divisor, is equal to zero, the statement will evaluate to the rational zero divided by zero (see Section V.B).
+  
+Examples:
+  FS MS OE LS LI 0 CS 0010 ES LS LI 0 CS 1000 ES                Raises two (integer) to the eighth (integer) powere to 256 (integer)
+  FS MS OE LS LR 1 ES 0 CS 0010 ES LS LI 0 CS 0010 ES           Raises negative one half (rational) to the second (integer) power to one fourth (rational)
+  FS MS OU LS LI 0 CS 1010 ES LS LI 0 CS 0011 ES                Calculates ten (integer) modulo three (integer) to one (integer)
+  FS MS OU LS LI 1 CS 0000 ES LS LR 0 CS 1011 ES 0 CS 0011 ES   Calculates negative 32 (integer) modulus seven thirds (rational) to two thirds (rational).
+  FS MS OU LS LI 1 CS 1011 ES LS LI 0 ES                        Calculates negative five (integer) modulus zero (integer) to zero divide by zero (rational).
+
+  Boolean operators evaluate inputs to a boolean value--true or false. There are multiple ways of expressing true and false (see Section IV); in order to determine which version of true and false to use, boolean operators follow the previously defined data type restrictions. False will be expressed in the one outlined method per data type; true will be expressed as follows: the executable statement "0 ES LS LT CS 0000 ES", the namespace identifier "AD CN ES EN", the string "CS 0000 ES", the integer "0 CS 0001 ES", and the rational "1 ES 1 ES".
+  Boolean not's opcode is BN (0110); boolean not takes one input. If the input is false, boolean not evaluates to true; if the input is true, boolean not evaluates to false. Boolean or's opcode is BO (01110); boolean or takes two inputs and evaluates to true if either input is true. Otherwise, boolean or evaluatates to false. Boolean exclusive or's opcode is BX (01111); boolean exclusive or takes two inputs and evaluates to true if exactly one input is true. Otherwise, boolean exclusive or evaluates to false. Boolean and's opcode is BA (1000); boolean and takes two inputs and evaluates to true if both arguments are true. Otherwise, boolean and evaluates to false.
+
+Examples:
+  FS MS BN LS LI 0 ES                           Evaluates to "0 CS 0001 ES" (true; integer)
+  FS MS BO LS LT CS 0000 ES LS LT ES            Evaluates to "CS 0000 ES" (true; string)
+  FS MS BX LS LN AN CN ES EN LS LN AN CN ES EN  Evaluates to "AN EN" (false; namespace)
+  FS MS BA LS LR 0 ES 1 ES LS LR 1 ES 1 ES      Evaluates to "0 ES 1 ES" (false; rational)
+
+  Equal's opcode is BE (1001); equal takes two inputs and evaluates to true if both inputs are an equivalent value. Otherwise, equal evaluates to false. Numerical inputs are equal if they refer to the same rational number; strings are equal if they refer to strings of the same length with the same contents; namespace identifiers are equal if, with respect to the Current Namespace, they refer to the same namespace; and statements are equal if they refer to the exact same bit series. Less than's opcode is BL (1010); less than takes two inputs and evaluates to true if the first input's value is considered smaller than the second input's value. Otherwise, less than evaluates to false. If two values are equal, then neither value is less than the other. One numerical input is smaller than another if the first input's numerical value is less than the second input's numerical value. Strings and statements are compared the same way: one input is less than another if the first bit with a different value in each input is a 0 in the first input and a 1 in the second input. If the inputs are different lengths but are identical among the shared bits, the first input is smaller than the second input if the first input's length is smaller than the second input's length. When comparing two namespaces identifiers, both identifiers are compared as if they were absolute namespace identifiers. If the first identifier is a parent of the second identifier, the first identifier is less than the second identifier. Otherwise, the first input is smaller if the first differing string component between the two identifiers is smaller in the first input than the second input.
+
+  The bitwise operators manipulate a bit series' individual bits rather than the bit series as a whole. Bitwise operators evaluate to a permutation of the first parameter with only the structurally insignificant bits changed--bits that will change the series' overall value but don't affect how other bits are interpreted. When dealing with a string, only the four bits following a CS opcode will be affected. When dealing with an integer, the sign bit will be affected and the string component will be affected as outlined. Within a rational, the two integers will be affected as outlined. Within a namespace identifier, the string components will be affected as outlined; no other bits will be affected. Within a statement, all bits are affected. All uninterpreted bits are affected. When a bitwise operator takes a second parameter, only the second parameter's structurally insignificant bits are used for comparing with the first parameter's structurally insignificant bits. If the first parameter has more structurally insignificant bits than the second parameter, the second parameter will be assumed to have additional structurally insignificant 0 bits for the sake of comparison.
+  Bitwise not's opcode is TN (1110); bitwise not takes one input and evaluates to the input with each affected 0 replaced with 1 and each affected 1 replaced with 0. Bitwise or's opcode is TO (1111000); bitwise or takes two inputs and replaces affected 0 bits with 1 if the corresponding affected bit in the second input is 1. Bitwise xor's opcode is TX (1111001); bitwise xor takes two inputs and replaces affected 1 bits with 0 if the corresponding affected bit is 1 and replaces 0 bits with 1 if the corresponding affected bit is 1. Bitwise and's opcode is TA (1111010); bitwise and takes two inputs and replaces affected 1 bits with 0 if the corresponding affected bit is 0.
+  The bit shift operators are a special subset of bitwise operators that rearrange affected bits instead of conditionally changing their value. In the bit shift operators, the second input is always interpreted as an integer. If the second input is zero, then the bit shift operator evaluates to its first input. Logical bit shift's opcode is TS (1111011); logical bit shift replaces each bit's value with the value of the bit offset by the value of the second input. In a logical bit shift, any bit referenced that doesn't exist is assumed to have a value of 0. For example: if the second input is one, then each bit's value is set to the value of the next affected bit and the last bit is set to 0; if the second input is 4, then each bit's value is set to the value of the bit four after it and the last four bits are set to 0; if the second input is negative one, each bit's value is set to the value of the bit immediately preceding it and the first bit is set to 0; and if the second input is negative 4, each bit's value is set to the value of the bit four before it, and the first four bits are set to 0.
+  Bit rotate's opcode is TR (11111); bit rotate is a bit shift that fills in missing bits past the end of the series with bits from the beginning and vice versa instead of assuming the missing bits have a value of 0. For example: if the second input is one, then each bit's value is set to the value of the next affected bit and the last bit is set to the value of the first bit; if the second input is 4, then each bit's value is set to the value of the bit four after it and the last four bits are set to the value of the first four bits; if the second input is negative one, each bit's value is set to the value of the bit immediately preceding it and the first bit is set to the value of the last bit; and if the second input is negative 4, each bit's value is set to the value of the bit four before it, and the first four bits are set to the value of the last four bits.
+
+C. Input/Ouput Statements
+
+  Input/output statements derive their value from interaction outside the program. Input/output statements start with the opcode IO (1) followed by a single statement. Unlike the reset of Advanced Assembly, input/ouput is not standardized. Instead, the interpreter provides an "I/O Handler" which determines how input/output functions. When an input/output statement is evaluated, the provided statement is evaluated and its value is passed to the I/O Handler. Then, the I/O handler performs some arbitrary action based off the provided value. Finally, the I/O handler returns a value which is considered the result of the input/output statement and used as the input/output statement's value. How specifically the provided statement is used by the I/O handler is left up to the interpreter to decide.
 
 ----
-VIII. Actions
-  An action is the highest level form of instruction in an Advanced Assembly program and is represented by the conceptual opcode ACTN. There are four types of actions: return, statement, if, and while. The first type of action, the return action, consists of the opcode RT (00) followed by a statement. The return action evaluates the specified statement and then terminates the execution of the current namespace. Program execution then returns to the evaluate statement that initiated the execution of the current namespace. The evaluate statement evaluates to the value of the return action’s statement. If a return statement is found in the global namespace, then it causes program execution to stop with the return action’s statement’s value as the program’s exit code. The second type of action is the statement action. The statement action consists of the opcode ST (01) followed by a statement. The statement action simply evaluates the subsequent statement. The third type of action is the if action. The if action consists of the opcode IF (10) followed by two statements and either the opcode EN (0) - indicating the end of the if action - or the opcode EL (1) and a third, final statement. The if action starts by evaluating the first statement. If the first, conditional statement evaluates to true, then the second statement is executed, otherwise the second statement is discarded. If the conditional statement evaluates to false and there is a third statement (specified by the EL opcode), the third statement will be executed. The final type of action, the while action, consists of the opcode WH (11) followed by two statements. The while action starts by evaluating the first statement. If the statement evaluates true, then the second statement is executed, otherwise the while action terminates. After evaluating the second statement, the while action re-evaluates the first action. If the first statement is still true, then the second statement will be executed yet again. The while action will keep alternating between evaluating the first statement and the second statement until the first statement evaluates false. Once the first statement evaluates false, then the while action will end.
+VII. Program Control Flow
 
-----
-IX. Program Control Flow
-  Program execution in Advanced Assembly is relatively simple. When executing a program, the first series of bits are interpreted as an integer (See Section V.A). The absolute value of this integer is the number of parameters for the program being interpreted. The value of the parameters are put in the temporary namespaces with a string whose value can be interpreted as an integer that matches with the parameter’s index. Therefore the first parameter (parameter zero) is stored in the temporary namespace "0000", the second parameter is in the temporary namespace "0001", and so forth. Note that the used namespaces always have the most concise names, so the first parameter will always be in  "0000" even if there is a parameter seventeen in "00010000". After the initial integer, all subsequent bits are interpreted as actions. Following the initial integer, there can be an infinite amount of actions which will be interpreted sequentially until a return statement is encountered ending execution. If the series of bits being interpreted ends, then there is an assumed infinite amount of zeroes following which will be used to continue the execution of the program until a return statement is encountered.
+  Program execution starts by setting the value of the Global Namespace to the value of the program being executed. Then, the Global Namespace is evaluated as specified in Section VI. Note that, unlike any other statements, if the Global Namespace's statement finishes and returns a value but there are more bits remaining, the remaining bits are executed as another statement. The last completed statement in the Global Namespace's value is used as the program's exit code.
+  When executing statements, statements are loaded sequentially, bit by bit, until a full statement is loaded. Once an entire statement has been read, it is immediately evaluated performing all effects. If one effect of evaluating the statement was to change the value of the Current Namespace, execution continues at the same offset as before on the new bit series. If the location is past the end of the new value for the Current Namespace, values of zero are assumed.
 
 ----
 Appendix A. Opcodes
@@ -195,7 +236,7 @@ Appendix A. Opcodes
 ES                 0
 CS                 1
 
-  Namespaces (Section VI)
+  Namespaces (Section V)
 AN                 0
 RN                 1
 EN                 0
@@ -203,19 +244,25 @@ CN                 1
 ERN                00
 PN                 01
 
-  Statements (Section VII)
-LS                 0
-LT                 0
-LI                 10
-LF                 11
-FS                 1
-NS                 0
+  Statements (Section VI)
+LS                 00
+LT                 00
+LI                 01
+LR                 10
+LN                 110
+LM                 111
+FS                 01
+TS                 0
 AS                 00
 RS                 01
-ET                 1
+ET                 100
+SQ                 101
+IF                 110
+DW                 111
 MS                 1
+IO                 1
 
-  Operation Opcodes (Section VII.B.2)
+  Operation Opcodes (Section VI.B.2)
 OP                 0000
 OM                 0001
 OT                 0010
@@ -237,36 +284,29 @@ TN                 1110
 TO                 1111000
 TX                 1111001
 TA                 1111010
-TL                 1111011
-TRA                1111100
-TRL                1111101
-TTL                1111110
-TTR                1111111
-
-  Actions
-RT                 00
-ST                 01
-IF                 10
-EN                 0
-EL                 1
-WH                 11
+TS                 1111011
+TR                 11111
 
 ----
 Appendix B. Conceptual Opcodes
 
-  STRING             Represents a string. See Section IV
-  INT                Represents an integer. See Section V.A
-  RTNL               Represents a rational. See Section V.B
-  NMSP               Represents a namespace. See Section VI
-  STMT               Represents a complete statement. See Section VII
+  STR                Represents a string. See Section IV.A
+  INT                Represents an integer. See Section IV.B
+  RTNL               Represents a rational. See Section IV.C
+  NMSP               Represents a namespace. See Section V
+  STMT               Represents a complete statement. See Section VI
 
 ----
 Appendix C. Change Log
 
+0.5
+- Made several breaking opcode changes
+- Removed unneeded sections and completed missing ones.
+- Added I/O statements
+- Simplified bit shift operators
+- Reduced all of Advanced Assembly into five datatypes: string, integer, rational, namespace identifier, and statement.
+- Merged actions into statements
 0.4.1
 - Replaced Float with Rational, syntax remains unchanged
 0.4
 - First complete specification
-
-----
-Appendix D. Memory Management Notes
