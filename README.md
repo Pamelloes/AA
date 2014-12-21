@@ -1,8 +1,8 @@
-# Advanced Assembly 0.4.1
+# Advanced Assembly 0.5.0
 
 Advanced Assembly is a programming language that roughly resembles an assembly programming language. However, unlike standard assembly languages, Advanced Assembly is not designed to be run on a specific processor. Instead, it has been designed so that any series of bits--any combination of "1" and "0"--is a valid program.
 
-Advanced Assembly discards the conventional grouping of eight bits into a byte; instead, bits are divided into groups of arbitrary length. This makes it impossible to run an Advanced Assembly program directly on a processor, but allows instructions to be packed much more densely. Therefore, Advanced Assembly programs must be run in an interpreter. The official Advanced Assembly interpreter, programmed in Haskell, is included in this repo.
+Advanced Assembly discards the conventional grouping of eight bits into a byte; instead, bits are divided into groups of arbitrary length. This makes it impossible to run an Advanced Assembly program directly on a processor, but allows instructions to be packed much more densely. Therefore, Advanced Assembly programs must be run in an interpreter. The official Advanced Assembly interpreter, programmed in Haskell, should be included with this document.
 
 During early stages of development, Advanced Assembly was called High Level Binary and  was intended to be able to express a diverse range of paradigms found in high level programming languages. However, as development progressed, it became apparent that such paradigms lead to a complex and convoluted syntax. In order to simplify the syntax, all complex paradigms that could be easily implemented through simpler paradigms were removed.
 
