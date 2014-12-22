@@ -20,21 +20,33 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This is the bridge between HUnit tests and Cabal.
-module Main where
+-- This module contains tests for the Opcodes module.
+module BitSeries_Test where
 
-import qualified BitSeries_Test as B
---import qualified LZipper_Test as L
-import qualified Opcodes_Test as O
---import qualified Namespaces_Test as N
---import qualified Primitives_Test as P
-import System.Exit (exitFailure)
+import BitSeries
+import Control.DeepSeq
 import Test.HUnit
 
-main = do
-  counts <- runTestTT $ 
---    TestList [ O.mainList, P.mainList, L.mainList, N.mainList ]
-      TestList [ B.mainList, O.mainList ]
-  if (errors counts/= 0) || (failures counts /= 0) then
-    exitFailure
-  else return ()
+instance NFData Bit
+
+-- Bit Tests
+testBEq = TestLabel "Test bit equality" $
+  TestList [ TestCase $ assertEqual "" T T
+           , TestCase $ assertEqual "" F F
+           , TestCase $ assertEqual "" Terminate Terminate
+           , TestCase $ assertEqual "" Terminate F
+           , TestCase $ assertBool "" (F/=T)
+           , TestCase $ assertBool "" (Terminate/=T)
+           ]
+testBComp = TestLabel "Test bit comparisons" $
+  TestList [ TestCase $ assertBool "" (F<T)
+           , TestCase $ assertBool "" (Terminate<F)
+           , TestCase $ assertBool "" (Terminate<T)
+           , TestCase $ assertBool "" (T>F)
+           , TestCase $ assertBool "" (T>Terminate)
+           , TestCase $ assertBool "" (F>Terminate)
+           ]
+
+mainList = TestLabel "Bits" $
+  TestList [ testBEq, testBComp ]
+main = runTestTT mainList
