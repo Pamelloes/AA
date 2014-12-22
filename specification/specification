@@ -113,7 +113,7 @@ Examples:
 ----
 V. Namespaces
 
-  Namespaces are a hierarchical structure used for storing data. Every namespace has a name, a bit series value, and a set of children namespaces. The Global Namespace is the top of the namespace hierarchy; all other namespaces are ultimately children of the Global Namespace: if not a direct child, then a child of a child, or a more distant relationship.
+  Namespaces are a hierarchical structure used for storing data. Every namespace has a name, a bit series value, and a set of children namespaces. The Global Namespace is the top of the namespace hierarchy; all other namespaces are children of the Global Namespace: if not a direct child, then a child of a child, or a more distant relationship.
   Every possible namespace is assumed to exist. Initially, every namespace's value is assumed to be an empty bit series with a data type of string. But, throughout a program's execution, namespaces may be assigned other values. Once assigned, a namespace will retain its value and its value's data type until assigned another value.
   The Global Namespace's initial value is the code being executed. The Global Namespace's initial data type is an execuable statement. When a namespace with a data type of executable statement is evaluated, the namespace that contains the binary string being executed is considered the "Current Namespace." Every program starts with the Global Namespace as the Current Namespace. For additional details on how a namespace is executed see Section VI.
 

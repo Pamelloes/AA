@@ -23,10 +23,10 @@ executable aainterpreter
   hs-source-dirs:      src/main
   default-language:    Haskell2010
 
-test-suite tests
-  main-is:             tests.hs
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      src/test, src/main
-  build-depends:       base >=4.7 && <4.8, containers >=0.5 && <0.6,
-                       HUnit >=1.2 && <1.3, deepseq >=1.3 && <1.4
-  default-language:    Haskell2010
+--test-suite tests
+--  main-is:             tests.hs
+--  type:                exitcode-stdio-1.0
+--  hs-source-dirs:      src/test, src/main
+--  build-depends:       base >=4.7 && <4.8, containers >=0.5 && <0.6,
+--                       HUnit >=1.2 && <1.3, deepseq >=1.3 && <1.4
+--  default-language:    Haskell2010

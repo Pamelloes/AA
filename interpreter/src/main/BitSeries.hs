@@ -20,28 +20,22 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This module provides a zipper for manipulating lists.
-module LZipper where
+module BitSeries where
 
--- First is focus, Second is trail
-type LZipper a = ([a],[a])
+-- A Bit can be either T (True) or F (False). Terminate is used in infinite
+-- lists to indicate the end of non-repeating data.
+data Bit = T | F | Terminate deriving Show
+instance Eq Bit where
+  T /= F = True
+  F /= T = True
+  T /= Terminate = True
+  Terminate /= T = True
+  _ /= _ = False
+instance Ord Bit where
+  T `compare` a = if a == F then GT else EQ
+  a `compare` T = if a == F then LT else EQ
+  Terminate `compare` F = LT
+  F `compare` Terminate = GT
+  _ `compare` _ = EQ
 
-forward :: LZipper a -> Maybe (LZipper a)
-forward (l:ls,bs) = Just (ls,l:bs)
-forward ([],_) = Nothing
-
-backward :: LZipper a -> Maybe (LZipper a)
-backward (ls,c:bs) = Just (c:ls,bs)
-backward (_,[]) = Nothing
-
-zipper :: [a] -> LZipper a
-zipper l = (l,[])
-
-unzipper :: LZipper a -> [a]
-unzipper (ls,bs) = reverse bs ++ ls
-
-end :: LZipper a -> LZipper a
-end (ls,bs) = ([],reverse ls ++ bs)
-
-start :: LZipper a -> LZipper a
-start (ls,bs) = (reverse bs ++ ls,[])
+type BitSeries=[Bit]

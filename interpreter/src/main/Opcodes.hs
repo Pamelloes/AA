@@ -24,32 +24,13 @@ THE SOFTWARE.
 -- functions for parsing them.
 module Opcodes where
 
+import BitSeries
 import qualified Data.Map as M
 
--- A Bit can be either T (True) or F (False). Terminate is used in infinite
--- lists to indicate the end of non-repeating data.
-data Bit=T|F|Terminate deriving Show
-instance Eq Bit where
-  T /= F = True
-  F /= T = True
-  T /= Terminate = True
-  Terminate /= T = True
-  _ /= _ = False
-instance Ord Bit where
-  T `compare` a = if a == F then GT else EQ
-  a `compare` T = if a == F then LT else EQ
-  Terminate `compare` F = LT
-  F `compare` Terminate = GT
-  _ `compare` _ = EQ
-
--- NOTE: The program is assumed to be an infinitely long list (see language
--- specification). If a non-infinite list is provided, behavior is undefined.
-
-type Program = [Bit]
 type Opcode = String
 
--- If Program starts with Opcode, result Program has the opcode removed.
-hasOpcode :: Program -> Opcode -> (Program,Bool)
+-- If BitSeries starts with Opcode, result BitSeries has the opcode removed.
+hasOpcode :: BitSeries -> Opcode -> (BitSeries,Bool)
 hasOpcode s k 
   | length z==length pattern = if match then (reduced, True) else (s, False)
   | otherwise = error "hasOpcode: Reached program end"
