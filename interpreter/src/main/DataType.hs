@@ -133,7 +133,7 @@ defaultNamespace :: BitSeries -> Namespaces
 defaultNamespace p = M.fromList [([],(p,BStatement))]
 
 nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
-nmspValue a d n = if M.member i n then n M.! i else ([],BString [])
+nmspValue a d n = if M.member i n then n M.! i else (repeat Terminate,BString [])
   where i=gnmsp a d
 
 nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
