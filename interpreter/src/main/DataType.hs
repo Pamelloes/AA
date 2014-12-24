@@ -74,8 +74,9 @@ cinteger (b,_) = (b,linteger b)
 prational :: BitSeries -> (BitSeries,Primitive)
 prational [] = error "lrational: Reached program end"
 prational s = (prog,BRational i1 i2)
-  where (p1,BInteger i1)=pinteger s
+  where (p1,BInteger i1a)=pinteger s
         (prog,BInteger i2)=pinteger p1
+        i1=if i2 == 0 then 0 else i1a
 
 lrational = snd . prational
 

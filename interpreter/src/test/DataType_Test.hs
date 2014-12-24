@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
 -- This module contains tests for the Primitives module
-module Primitives_Test where
+module DataType_Test where
 
 import BitSeries
 import qualified BitSeries_Test as B
@@ -140,5 +140,81 @@ intTests = TestLabel "Integer" $
            , testIEmpty1, testIEmpty2, testIL4, testIL8, testINeg, testIExtra
            , testLinteger, testCi1, testCi2 ]
 
-mainList = TestLabel "Primitives" $ TestList [ strTests, intTests ]
+-- Rational Tests
+rationalError = ErrorCall "lrational: Reached program end"
+
+testREmptyP = TestLabel "Test Empty Program" $
+  TestCase $ assertException rationalError (prational [])
+testRIncomplete1 = TestLabel "Test Incomplete Program 1" $
+  TestCase $ assertException strError (prational [F])
+testRIncomplete2 = TestLabel "Test Incomplete Program 2" $
+  TestCase $ assertException strError (prational p)
+  where p=[F]++(opcodes M.! "CS")
+testRUnfinished = TestLabel "Test Unfinished Program" $
+  TestCase $ assertException intError (prational p)
+  where p = [F]++(opcodes M.! "CS")++(replicate 4 F)++(opcodes M.! "ES")
+
+testREDiv0 = TestLabel "Test Empty Division By 0" $
+  TestCase $ assertEqual "" ([],BRational 0 0) (prational p)
+  where p = [F]++(opcodes M.! "ES")++[F]++(opcodes M.! "ES")
+testRDiv0 = TestLabel "Test Division By 0" $
+  TestCase $ assertEqual "" ([],BRational 0 0) (prational p)
+  where p = [F]++(opcodes M.! "CS")++([T,T,T,T])++(opcodes M.! "ES")
+          ++[F]++(opcodes M.! "ES")
+testREmpty1 = TestLabel "Test Empty 0" $
+  TestCase $ assertEqual "" ([],BRational 0 (-1)) (prational p)
+  where p = [F]++(opcodes M.! "ES")++[T]++(opcodes M.! "ES")
+testREmpty2 = TestLabel "Test Empty 1" $
+  TestCase $ assertEqual "" ([],BRational (-1) (-1)) (prational p)
+  where p = [T]++(opcodes M.! "ES")++[T]++(opcodes M.! "ES")
+
+testRL44 = TestLabel "Test Rational Length 4/4" $
+  TestCase $ assertEqual "" ([],BRational 6 1) (prational p)
+  where p = [F]++(opcodes M.! "CS")++([F,T,T,F])
+          ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
+          ++([F,F,F,T])++(opcodes M.! "ES")
+testRL84 = TestLabel "Test Rational Length 8/4" $
+  TestCase $ assertEqual "" ([],BRational 50 3) (prational p)
+  where p = [F]++(opcodes M.! "CS")++([F,F,T,F])
+          ++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
+          ++[F]++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
+testRL48 = TestLabel "Test Rational Length 4/8" $
+  TestCase $ assertEqual "" ([],BRational 7 106) (prational p)
+  where p = [F]++(opcodes M.! "CS")++([F,T,T,T])
+          ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
+          ++([T,F,T,F])++(opcodes M.! "CS")++([F,T,T,F])
+          ++(opcodes M.! "ES")
+testRL88 = TestLabel "Test Rational Length 8/8" $
+  TestCase $ assertEqual "" ([],BRational 249 16) (prational p)
+  where p = [F]++(opcodes M.! "CS")++([T,F,F,T])
+          ++(opcodes M.! "CS")++([T,T,T,T])++(opcodes M.! "ES")
+          ++[F]++(opcodes M.! "CS")++([F,F,F,F])++(opcodes M.! "CS")
+          ++([F,F,F,T])++(opcodes M.! "ES")
+testRExtra = TestLabel "Test Program Deletion" $
+  TestCase $ assertEqual "" (p2,BRational (-3) (1)) (prational (p1++p2))
+  where p1 = [T]++(opcodes M.! "CS")++[T,T,F,T]
+          ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
+          ++[F,F,F,T]++(opcodes M.! "ES")
+        p2 = replicate 100 T
+
+testLrational = TestLabel "Test lrational" $
+  TestCase $ assertEqual "" (BRational 15 (-3)) (lrational p)
+  where p= [F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
+         ++[T]++(opcodes M.! "CS")++[T,T,F,T]++(opcodes M.! "ES")
+testCr1 = TestLabel "Test crational from BStatement" $
+  TestCase $ assertEqual "" (p,BRational (-4) 1) (crational (p,BStatement))
+  where p= [T]++(opcodes M.! "CS")++[T,T,F,F]++(opcodes M.! "ES")
+         ++[F]++(opcodes M.! "CS")++[F,F,F,T]++(opcodes M.! "ES")
+testCr2 = TestLabel "Test crational from BRational" $
+  TestCase $ assertEqual "" (p,BRational 7 1234) (crational (p,BRational 7 1234))
+  where p= [F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
+         ++[F]++(opcodes M.! "ES")
+
+rationalTests = TestLabel "Rational" $
+  TestList [ testREmptyP, testRIncomplete1, testRIncomplete2, testRUnfinished
+           , testREDiv0, testRDiv0, testREmpty1, testREmpty2, testRL44, testRL84
+           , testRL48, testRL88, testRExtra, testLrational, testCr1, testCr2
+           ]
+
+mainList = TestLabel "Primitives" $ TestList [ strTests, intTests, rationalTests ]
 main = runTestTT $ TestList [ B.mainList, P.mainList, mainList]
