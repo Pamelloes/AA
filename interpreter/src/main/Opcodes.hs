@@ -20,8 +20,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This module contains a list of the valid opcodes in Advanced Assembly and
--- functions for parsing them.
+-- This module defines the Opcodes and associated functionality in accordance
+-- with Appendix A of the Advanced Assembly 0.5.0 specification.
 module Opcodes where
 
 import BitSeries

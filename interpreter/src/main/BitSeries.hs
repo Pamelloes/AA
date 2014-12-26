@@ -20,6 +20,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
+-- This module defines a Bit and BitSeries. A special Bit implementation is used
+-- to accomodate lists that end with a repeating false value.
 module BitSeries where
 
 -- A Bit can be either T (True) or F (False). Terminate is used in infinite

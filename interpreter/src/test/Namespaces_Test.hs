@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This Module contains tests for the Namespaces module.
+-- This Module contains tests for the DataType module's Namespace section.
 module Namespaces_Test where
 
 import BitSeries
@@ -61,7 +61,7 @@ utilList = TestLabel "Namespaces_Test Utilities" $
   TestList [ testMaid, testMrid, testTt
            ]
 
--- Namespace Tests
+-- Namespace Functionality Tests
 testDefaultNamespace = TestLabel "Test default namespace" $
   TestCase $ assertEqual "" (M.fromList [([],(p,BStatement))]) (defaultNamespace p)
   where p=[F,F,F,F]
@@ -123,43 +123,59 @@ testFTEq = TestLabel "Test False/Terminate equivalence" $
         k2=[[F,T,F,T],[T,F,T,F],replicate 4 F]
         v=([F,F,T,T,F,F,T,T,T],BStatement)
 
-{-
-testLNmspA = TestLabel "Test loading absolute namespace" $
-  TestCase $ assertEqual "" ([],fmap BString id) (lnmsp [] p)
+-- Namespace Parsing Tests
+testPNmspA = TestLabel "Test loading absolute namespace" $
+  TestCase $ assertEqual "" ([],snd $ maid id) (pnmsp p)
   where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
         p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
           ++(o "CS")++id!!1++(o "ES")++(o "CN")++(o "CS")++id!!2
           ++(o "ES")++(o "EN")
         o s=opcodes M.! s
 
-testLNmspR = TestLabel "Test loading relative namespace" $
-  TestCase $ assertEqual "" ([],fmap BString id) (lnmsp b p)
-  where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
-        b=[BString [T,F,T,F],BString $ replicate 4 T]
-        p=(o "RN")++(o "PN")++(o "CN")++(o "CS")++id!!1++(o "ES")
-          ++(o "CN")++(o "CS")++id!!2++(o "ES")++(o "ERN")
+testPNmspR = TestLabel "Test loading relative namespace" $
+  TestCase $ assertEqual "" ([],snd $ mrid id) (pnmsp p)
+  where id=[Parent,Child [F,F,F,F], Child [T,T,T,T]]
+        p=(o "RN")++(o "PN")++(o "CN")++(o "CS")++[F,F,F,F]++(o "ES")
+          ++(o "CN")++(o "CS")++[T,T,T,T]++(o "ES")++(o "ERN")
         o s=opcodes M.! s
 
-testLNmspExtra = TestLabel "Test loading namespace with extra program" $
-  TestCase $ assertEqual "" (e,id) (lnmsp [] (p++e))
+testPNmspExtra = TestLabel "Test loading namespace with extra program" $
+  TestCase $ assertEqual "" (e,snd $ maid id) (pnmsp (p++e))
     where id=[]
           p=(o "AN")++(o "EN")
           e=replicate 103 F 
           o s=opcodes M.! s
 
-testLNmspF = TestLabel "Test loading short namespace" $
-  TestCase $ assertException O.opError (lnmsp [] [])
+testPNmspF = TestLabel "Test loading short namespace" $
+  TestCase $ assertException O.opError (pnmsp [])
 
-testLNmspF2 = TestLabel "Test loading short namespace 2" $
-  TestCase $ assertException D.strError (lnmsp [] p)
+testPNmspF2 = TestLabel "Test loading short namespace 2" $
+  TestCase $ assertException D.strError (pnmsp p)
   where p=(o "AN")++(o "CN")++(o "CS")
         o s=opcodes M.! s
--}
+
+testLNmsp = TestLabel "Test lnmsp" $
+  TestCase $ assertEqual "" (snd $ maid id) (lnmsp p)
+  where id=[[T,T,T,T]]
+        p=(o "AN")++(o "CN")++(o "CS")++[T,T,T,T]++(o "ES")++(o "EN")
+        o s=opcodes M.! s
+
+testCn1 = TestLabel "Test cnmsp 1" $
+  TestCase $ assertEqual "" (maid id) (cnmsp $ maid id)
+  where id=[[T,T,F,F]]
+
+testCn2 = TestLabel "Test cnmsp 2" $
+  TestCase $ assertEqual "" (p,snd $ maid id) (cnmsp (p,BStatement))
+  where id=[[F,T,F,F],[T,F,F,F]]
+        p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
+         ++(o "CS")++id!!1++(o "ES")++(o "EN")
+        o s=opcodes M.! s
+
 mainList = TestLabel "Namespaces" $
   TestList [ utilList, testDefaultNamespace, testANmspValue, testRNmspValue
            , testANmspDefValue, testRNmspDefValue, testANmspValueSet
            , testRNmspValueSet, testANmspValue2, testRNmspValue2, testFTEq
-           {-, testLNmspA, testLNmspR
-           , testLNmspExtra, testLNmspF, testLNmspF2-}
+           , testPNmspA, testPNmspR, testPNmspExtra, testPNmspF, testPNmspF2
+           , testLNmsp, testCn1, testCn2 
            ]
 main = runTestTT $ TestList [ B.mainList, O.mainList, D.mainList, mainList ]

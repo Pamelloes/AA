@@ -20,6 +20,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
+-- This module defines the DataTypes and provides associated functionality for
+-- Strings, Integers, Rationals, and Namespaces in accordance with Sections IV
+-- and V of the Advanced Assembly 0.5.0 language specification.
 module DataType where
 
 import BitSeries
@@ -97,7 +100,7 @@ prnmsp :: BitSeries -> (BitSeries,RNmsp)
 prnmsp p
   | snd en = (fst en,[])
   | snd cn = let (pr,id)=prnmsp prog in (pr,(Child str):id)
-  | snd pn = let (pr,id)=prnmsp prog in (pr,Parent:id)
+  | snd pn = let (pr,id)=prnmsp (fst pn) in (pr,Parent:id)
   where en=hasOpcode p "ERN"
         cn=hasOpcode p "CN"
         (prog, BString str)=pstring (fst cn)
