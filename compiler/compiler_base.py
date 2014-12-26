@@ -1,6 +1,8 @@
 import argparse
 import os
 
+version="Advanced Assembly 0.5.0 Compiler"
+
 bts=""
 def write_bits(out,bit):
   global bts
@@ -17,60 +19,54 @@ def flush_bits(out):
   out.write(chr(int(bts[0:8],2)))
 
 opcodes={
-  'ES':'0',
-  'CS':'1',
-
-  'AN' :'0',
-  'RN' :'1',
-  'EN' :'0',
-  'CN' :'1',
-  'ERN':'00',
-  'PN' :'01',
-
-  'LS':'0',
-  'LT':'0',
-  'LI':'10',
-  'LF':'11',
-  'FS':'1',
-  'NS':'0',
-  'AS':'00',
-  'RS':'01',
-  'ET':'1',
-  'MS':'1',
-
-  'OP':'0000',
-  'OM':'0001',
-  'OT':'0010',
-  'OD':'0011',
-  'OE':'0100',
-  'OU':'0101',
-
-  'BN' :'0110',
-  'BO' :'01110',
-  'BX' :'01111',
-  'BA' :'1000',
-  'BE' :'1001',
-  'BL' :'1010',
-  'BLE':'1011',
-  'BG' :'1100',
-  'BGE':'1101',
-
-  'TN' :'1110',
-  'TO' :'1111000',
-  'TX' :'1111001',
-  'TA' :'1111010',
-  'TL' :'1111011',
-  'TRA':'1111100',
-  'TRL':'1111101',
-  'TTL':'1111110',
-  'TTR':'1111111',
-
-  'RT':'00',
-  'ST':'01',
-  'IF':'10',
-  'EN':'0',
-  'EL':'1',
-  'WH':'11'
+  'ES'  : '0',
+  'CS'  : '1',
+  
+  'AN'  : '0',
+  'RN'  : '1',
+  'EN'  : '0',
+  'CN'  : '1',
+  'ERN' : '00',
+  'PN'  : '01',
+  
+  'LS'  : '00',
+  'LT'  : '00',
+  'LI'  : '01',
+  'LR'  : '10',
+  'LN'  : '110',
+  'LM'  : '111',
+  'FS'  : '01',
+  'TS'  : '0',
+  'AS'  : '00',
+  'RS'  : '01',
+  'ET'  : '100',
+  'SQ'  : '101',
+  'IF'  : '110',
+  'DW'  : '111',
+  'MS'  : '1',
+  'IO'  : '1',
+  
+  'OP'  : '0000',
+  'OM'  : '0001',
+  'OT'  : '0010',
+  'OD'  : '0011',
+  'OE'  : '0100',
+  'OU'  : '0101',
+  'BN'  : '0110',
+  'BO'  : '01110',
+  'BX'  : '01111',
+  'BA'  : '1000',
+  'BE'  : '1001',
+  'BL'  : '1010',
+  'BLE' : '1011',
+  'BG'  : '1100',
+  'BGE' : '1101',
+  'TN'  : '1110',
+  'TO'  : '1111000',
+  'TX'  : '1111001',
+  'TA'  : '1111010',
+  'TS'  : '1111011',
+  'TR'  : '11111',
 }
 
 def compile(inp,out):
@@ -95,6 +91,7 @@ def precompile(input,output,cfunc):
   print "Successfully compiled '%s'!" % (input)
 
 def main(cfunc):
+  print version
   parser = argparse.ArgumentParser(description="Compiles Advanced Assembly code"
     + " into an interpretable  binary format.")
   parser.add_argument('-o','--output',metavar="output",dest="output",
