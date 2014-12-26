@@ -25,9 +25,22 @@ module Main where
 
 import BitSeries
 import DataType
+import Options.Applicative
 
--- NOTE: The program is assumed to be an infinitely long list (see language
--- specification). If a non-infinite list is provided, behavior is undefined.
+data Cmdline = Cmdline
+  { file :: String
+  }
+cmdline :: Parser Cmdline
+cmdline = Cmdline <$> strArgument (metavar "file")
 
-main = do
+run :: Cmdline -> IO ()
+run c = do
   print (linteger $ T:(concat (replicate 32 [T,T,T,T,T])) ++[T,F,T,T,T,F])
+
+main :: IO ()
+main = execParser opts >>= run
+  where opts = info (helper <*> cmdline)
+          ( fullDesc 
+         <> progDesc "Run the program stored in file"
+         <> header "Advanced Assembly 0.5.0 Interpreter"
+          )
