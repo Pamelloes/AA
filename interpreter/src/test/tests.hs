@@ -25,15 +25,14 @@ module Main where
 
 import qualified BitSeries_Test as B
 import qualified Opcodes_Test as O
---import qualified Namespaces_Test as N
+import qualified Namespaces_Test as N
 import qualified DataType_Test as D
 import System.Exit (exitFailure)
 import Test.HUnit
 
 main = do
   counts <- runTestTT $ 
---    TestList [ O.mainList, P.mainList, L.mainList, N.mainList ]
-      TestList [ B.mainList, O.mainList, D.mainList ]
+      TestList [ B.mainList, O.mainList, D.mainList, N.mainList ]
   if (errors counts/= 0) || (failures counts /= 0) then
     exitFailure
   else return ()

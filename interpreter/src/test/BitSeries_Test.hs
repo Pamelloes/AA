@@ -40,11 +40,9 @@ testBEq = TestLabel "Test bit equality" $
            ]
 testBComp = TestLabel "Test bit comparisons" $
   TestList [ TestCase $ assertBool "" (F<T)
-           , TestCase $ assertBool "" (Terminate<F)
            , TestCase $ assertBool "" (Terminate<T)
            , TestCase $ assertBool "" (T>F)
            , TestCase $ assertBool "" (T>Terminate)
-           , TestCase $ assertBool "" (F>Terminate)
            ]
 
 mainList = TestLabel "Bits" $

@@ -34,8 +34,6 @@ instance Eq Bit where
 instance Ord Bit where
   T `compare` a = if a == F then GT else EQ
   a `compare` T = if a == F then LT else EQ
-  Terminate `compare` F = LT
-  F `compare` Terminate = GT
   _ `compare` _ = EQ
 
 type BitSeries=[Bit]

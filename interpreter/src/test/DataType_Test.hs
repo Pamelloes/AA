@@ -34,11 +34,19 @@ import DataType
 import Test.HUnit
 import TestException
 
+instance NFData RNmspS
+instance Eq RNmspS where
+  (Child a)==(Child b)=a==b
+  Parent==Parent=True
+  _==_=False
+
 instance NFData Primitive
 instance Eq Primitive where
   (BString a)==(BString b)=a==b
   (BInteger a)==(BInteger b)=a==b
   (BRational a b)==(BRational c d)=(a==c) && (b==d)
+  (BNmspId a)==(BNmspId b)=a==b
+  BStatement==BStatement=True
 
 -- String Tests
 strError = ErrorCall "lstring: Reached program end"
