@@ -2,6 +2,7 @@
 -- Advanced Assembly 0.5.0 specification.
 module Statement where
 
+import BitSeries
 import DataType
 import Opcodes
 
@@ -24,3 +25,18 @@ data Stmt next = LS DataType
                | MSB Opcode next next
               -- IO Statements
                | IOS next
+
+loadLS :: BitSeries -> (BitSeries,Free (Stmt n) r)
+loadLS = undefined
+
+loadCS :: BitSeries -> (BitSeries,Free (Stmt n) r)
+loadCS = undefined
+
+loadIO :: BitSeries -> (BitSeries,Free (Stmt n) r)
+loadIO = undefined
+
+loadStmt :: BitSeries -> (BitSeries, Free (Stmt n) r)
+loadStmt = undefined
+
+loadEStmt :: BitSeries -> (BitSeries, Free (Stmt n) r)
+loadEStmt = undefined
