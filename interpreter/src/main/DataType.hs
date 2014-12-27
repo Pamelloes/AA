@@ -39,16 +39,16 @@ type DataType = (BitSeries,Primitive)
 type Namespaces = M.Map ANmsp DataType
 
 -- Strings
-pstring :: BitSeries -> (BitSeries,Primitive)
+pstring :: BitSeries -> (BitSeries,DataType)
 pstring [] = error "lstring: Reached program end"
 pstring s
-  | snd es = (fst es,BString [])
-  | snd cs = let (a,BString b)=pstring prog in (a,BString (str++b))
+  | snd es = (fst es,(opcodes M.! "ES",BString []))
+  | snd cs = let (a,(p,BString b))=pstring prog in (a,((opcodes M.! "CS")++str++p,BString (str++b)))
   where es=hasOpcode s "ES"
         cs=hasOpcode s "CS"
         (str,prog) = splitAt 4 (fst cs)
 
-lstring = snd . pstring
+lstring = snd . snd . pstring
 
 cstring :: DataType -> DataType
 cstring a@(_,BString _) = a
@@ -61,32 +61,33 @@ bsToInt x = val + 16*(bsToInt remainder)
   where (base,remainder) = splitAt 4 x
         val = foldl (\x y->2*x+(if y==T then 1 else 0)) 0 base
 
-pinteger :: BitSeries -> (BitSeries,Primitive)
+pinteger :: BitSeries -> (BitSeries,DataType)
 pinteger [] = error "linteger: Reached program end"
-pinteger (sign:remainder) = (prog,BInteger (sgn $ bsToInt str))
-  where (prog,BString str)=pstring remainder
+pinteger (sign:remainder) = (prog,(sign:p,BInteger (sgn $ bsToInt str)))
+  where (prog,(p,BString str))=pstring remainder
         sgn=if sign==T then (\x->x-2^(length str)) else (\x->x)
 
-linteger = snd . pinteger
+linteger = snd . snd . pinteger
 
 cinteger :: DataType -> DataType
 cinteger a@(_,BInteger _) = a
 cinteger (b,_) = (b,linteger b)
 
 -- Rationals
-prational :: BitSeries -> (BitSeries,Primitive)
+prational :: BitSeries -> (BitSeries,DataType)
 prational [] = error "lrational: Reached program end"
-prational s = (prog,BRational i1 i2)
-  where (p1,BInteger i1a)=pinteger s
-        (prog,BInteger i2)=pinteger p1
+prational s = (prog,(p++p2,BRational i1 i2))
+  where (p1,(p,BInteger i1a))=pinteger s
+        (prog,(p2,BInteger i2))=pinteger p1
         i1=if i2 == 0 then 0 else i1a
 
-lrational = snd . prational
+lrational = snd . snd . prational
 
 crational :: DataType -> DataType
 crational a@(_,BRational _ _) = a
 crational (b,_) = (b,lrational b)
 
+{-
 -- Namespaces
 panmsp :: BitSeries -> (BitSeries,ANmsp)
 panmsp p
@@ -143,7 +144,8 @@ nmspValue a d n = if M.member i n then n M.! i else (repeat Terminate,BString []
 nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
 nmspValueSet a d = M.insert i
   where i = gnmsp a d
-  
+-}
+
 -- Statements
 cstmt :: DataType -> DataType
 cstmt a@(_,BStatement)=a

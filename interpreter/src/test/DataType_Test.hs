@@ -62,19 +62,19 @@ testUnfinished = TestLabel "Test Unfinished" $
   where p=(opcodes M.! "CS") ++ (replicate 4 T)
 
 testEmpty = TestLabel "Test Empty String" $
-  TestCase $ assertEqual "" ([],BString []) (pstring p)
+  TestCase $ assertEqual "" ([],(p,BString [])) (pstring p)
   where p=opcodes M.! "ES"
 testL4 = TestLabel "Test String Length 4" $
-  TestCase $ assertEqual "" ([],BString str) (pstring p)
+  TestCase $ assertEqual "" ([],(p,BString str)) (pstring p)
   where str=[F,T,T,F]
         p=(opcodes M.! "CS") ++ str ++ (opcodes M.! "ES")
 testL8 = TestLabel "Test String Length 8" $
-  TestCase $ assertEqual "" ([],BString $ s1++s2) (pstring p)
+  TestCase $ assertEqual "" ([],(p,BString $ s1++s2)) (pstring p)
   where s1=replicate 4 F
         s2=[F,T,F,T]
         p=(opcodes M.! "CS")++s1++(opcodes M.! "CS")++s2++(opcodes M.! "ES")
 testExtra = TestLabel "Test Program Deletion" $
-  TestCase $ assertEqual "" (p2,BString str) $ pstring (p1++p2)
+  TestCase $ assertEqual "" (p2,(p1,BString str)) $ pstring (p1++p2)
   where str=replicate 4 T
         p1=(opcodes M.! "CS")++str++(opcodes M.! "ES")
         p2=replicate 23 F
@@ -110,26 +110,26 @@ testIUnfinished = TestLabel "Test Unfinished Program" $
   where p = [F]++(opcodes M.! "CS")++(replicate 4 F)
 
 testIEmpty1 = TestLabel "Test Positive Empty Integer" $
-  TestCase $ assertEqual "" ([],BInteger 0) (pinteger p)
+  TestCase $ assertEqual "" ([],(p,BInteger 0)) (pinteger p)
   where p = [F]++(opcodes M.! "ES")
 testIEmpty2 = TestLabel "Test Negative Empty Integer" $
-  TestCase $ assertEqual "" ([],BInteger (-1)) (pinteger p)
+  TestCase $ assertEqual "" ([],(p,BInteger (-1))) (pinteger p)
   where p = [T]++(opcodes M.! "ES")
 
 testIL4 = TestLabel "Test Integer Length 4" $
-  TestCase $ assertEqual "" ([],BInteger 10) (pinteger p)
+  TestCase $ assertEqual "" ([],(p,BInteger 10)) (pinteger p)
   where p = [F]++(opcodes M.! "CS")++([T,F,T,F])
           ++(opcodes M.! "ES")
 testIL8 = TestLabel "Test Integer Length 8" $
-  TestCase $ assertEqual "" ([],BInteger 49) (pinteger p)
+  TestCase $ assertEqual "" ([],(p,BInteger 49)) (pinteger p)
   where p = [F]++(opcodes M.! "CS")++([F,F,F,T])
           ++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
 testINeg = TestLabel "Test Negative Integer" $
-  TestCase $ assertEqual "" ([],BInteger (-76)) (pinteger p)
+  TestCase $ assertEqual "" ([],(p,BInteger (-76))) (pinteger p)
   where p = [T]++(opcodes M.! "CS")++([F,T,F,F])
           ++(opcodes M.! "CS")++([T,F,T,T])++(opcodes M.! "ES")
 testIExtra = TestLabel "Test Program Deletion" $
-  TestCase $ assertEqual "" (p2,BInteger (-3)) (pinteger (p1++p2))
+  TestCase $ assertEqual "" (p2,(p1,BInteger (-3))) (pinteger (p1++p2))
   where p1 = [T]++(opcodes M.! "CS")++[T,T,F,T]
           ++(opcodes M.! "ES")
         p2 = replicate 100 T
@@ -164,43 +164,43 @@ testRUnfinished = TestLabel "Test Unfinished Program" $
   where p = [F]++(opcodes M.! "CS")++(replicate 4 F)++(opcodes M.! "ES")
 
 testREDiv0 = TestLabel "Test Empty Division By 0" $
-  TestCase $ assertEqual "" ([],BRational 0 0) (prational p)
+  TestCase $ assertEqual "" ([],(p,BRational 0 0)) (prational p)
   where p = [F]++(opcodes M.! "ES")++[F]++(opcodes M.! "ES")
 testRDiv0 = TestLabel "Test Division By 0" $
-  TestCase $ assertEqual "" ([],BRational 0 0) (prational p)
+  TestCase $ assertEqual "" ([],(p,BRational 0 0)) (prational p)
   where p = [F]++(opcodes M.! "CS")++([T,T,T,T])++(opcodes M.! "ES")
           ++[F]++(opcodes M.! "ES")
 testREmpty1 = TestLabel "Test Empty 0" $
-  TestCase $ assertEqual "" ([],BRational 0 (-1)) (prational p)
+  TestCase $ assertEqual "" ([],(p,BRational 0 (-1))) (prational p)
   where p = [F]++(opcodes M.! "ES")++[T]++(opcodes M.! "ES")
 testREmpty2 = TestLabel "Test Empty 1" $
-  TestCase $ assertEqual "" ([],BRational (-1) (-1)) (prational p)
+  TestCase $ assertEqual "" ([],(p,BRational (-1) (-1))) (prational p)
   where p = [T]++(opcodes M.! "ES")++[T]++(opcodes M.! "ES")
 
 testRL44 = TestLabel "Test Rational Length 4/4" $
-  TestCase $ assertEqual "" ([],BRational 6 1) (prational p)
+  TestCase $ assertEqual "" ([],(p,BRational 6 1)) (prational p)
   where p = [F]++(opcodes M.! "CS")++([F,T,T,F])
           ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
           ++([F,F,F,T])++(opcodes M.! "ES")
 testRL84 = TestLabel "Test Rational Length 8/4" $
-  TestCase $ assertEqual "" ([],BRational 50 3) (prational p)
+  TestCase $ assertEqual "" ([],(p,BRational 50 3)) (prational p)
   where p = [F]++(opcodes M.! "CS")++([F,F,T,F])
           ++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
           ++[F]++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
 testRL48 = TestLabel "Test Rational Length 4/8" $
-  TestCase $ assertEqual "" ([],BRational 7 106) (prational p)
+  TestCase $ assertEqual "" ([],(p,BRational 7 106)) (prational p)
   where p = [F]++(opcodes M.! "CS")++([F,T,T,T])
           ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
           ++([T,F,T,F])++(opcodes M.! "CS")++([F,T,T,F])
           ++(opcodes M.! "ES")
 testRL88 = TestLabel "Test Rational Length 8/8" $
-  TestCase $ assertEqual "" ([],BRational 249 16) (prational p)
+  TestCase $ assertEqual "" ([],(p,BRational 249 16)) (prational p)
   where p = [F]++(opcodes M.! "CS")++([T,F,F,T])
           ++(opcodes M.! "CS")++([T,T,T,T])++(opcodes M.! "ES")
           ++[F]++(opcodes M.! "CS")++([F,F,F,F])++(opcodes M.! "CS")
           ++([F,F,F,T])++(opcodes M.! "ES")
 testRExtra = TestLabel "Test Program Deletion" $
-  TestCase $ assertEqual "" (p2,BRational (-3) (1)) (prational (p1++p2))
+  TestCase $ assertEqual "" (p2,(p1,BRational (-3) (1))) (prational (p1++p2))
   where p1 = [T]++(opcodes M.! "CS")++[T,T,F,T]
           ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
           ++[F,F,F,T]++(opcodes M.! "ES")
