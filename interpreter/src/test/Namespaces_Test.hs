@@ -125,7 +125,7 @@ testFTEq = TestLabel "Test False/Terminate equivalence" $
 
 -- Namespace Parsing Tests
 testPNmspA = TestLabel "Test loading absolute namespace" $
-  TestCase $ assertEqual "" ([],snd $ maid id) (pnmsp p)
+  TestCase $ assertEqual "" ([],(p,snd $ maid id)) (pnmsp p)
   where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
         p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
           ++(o "CS")++id!!1++(o "ES")++(o "CN")++(o "CS")++id!!2
@@ -133,14 +133,14 @@ testPNmspA = TestLabel "Test loading absolute namespace" $
         o s=opcodes M.! s
 
 testPNmspR = TestLabel "Test loading relative namespace" $
-  TestCase $ assertEqual "" ([],snd $ mrid id) (pnmsp p)
+  TestCase $ assertEqual "" ([],(p,snd $ mrid id)) (pnmsp p)
   where id=[Parent,Child [F,F,F,F], Child [T,T,T,T]]
         p=(o "RN")++(o "PN")++(o "CN")++(o "CS")++[F,F,F,F]++(o "ES")
           ++(o "CN")++(o "CS")++[T,T,T,T]++(o "ES")++(o "ERN")
         o s=opcodes M.! s
 
 testPNmspExtra = TestLabel "Test loading namespace with extra program" $
-  TestCase $ assertEqual "" (e,snd $ maid id) (pnmsp (p++e))
+  TestCase $ assertEqual "" (e,(p,snd $ maid id)) (pnmsp (p++e))
     where id=[]
           p=(o "AN")++(o "EN")
           e=replicate 103 F 

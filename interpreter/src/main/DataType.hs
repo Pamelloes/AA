@@ -87,34 +87,38 @@ crational :: DataType -> DataType
 crational a@(_,BRational _ _) = a
 crational (b,_) = (b,lrational b)
 
-{-
 -- Namespaces
-panmsp :: BitSeries -> (BitSeries,ANmsp)
+panmsp :: BitSeries -> (BitSeries,(BitSeries,ANmsp))
 panmsp p
-  | snd en = (fst en,[])
-  | snd cn = let (pr,id)=panmsp prog in (pr,str:id)
+  | snd en = (fst en,(opcodes M.! "EN",[]))
+  | snd cn = let (pr,(q,id))=panmsp prog in (pr,(cno++pstr++q,str:id))
   where en=hasOpcode p "EN"
         cn=hasOpcode p "CN"
-        (prog, BString str)=pstring (fst cn)
+        cno=opcodes M.! "CN"
+        (prog, (pstr,BString str))=pstring (fst cn)
 
-prnmsp :: BitSeries -> (BitSeries,RNmsp)
+prnmsp :: BitSeries -> (BitSeries,(BitSeries,RNmsp))
 prnmsp p
-  | snd en = (fst en,[])
-  | snd cn = let (pr,id)=prnmsp prog in (pr,(Child str):id)
-  | snd pn = let (pr,id)=prnmsp (fst pn) in (pr,Parent:id)
+  | snd en = (fst en,(opcodes M.! "ERN",[]))
+  | snd cn = let (pr,(q,id))=prnmsp prog in (pr,(cno++pstr++q,(Child str):id))
+  | snd pn = let (pr,(q,id))=prnmsp (fst pn) in (pr,(pno++q,Parent:id))
   where en=hasOpcode p "ERN"
         cn=hasOpcode p "CN"
-        (prog, BString str)=pstring (fst cn)
+        (prog, (pstr,BString str))=pstring (fst cn)
+        cno=opcodes M.! "CN"
         pn=hasOpcode p "PN"
+        pno=opcodes M.! "PN"
 
-pnmsp :: BitSeries -> (BitSeries, Primitive)
+pnmsp :: BitSeries -> (BitSeries, DataType)
 pnmsp p
-  | snd abs = let (a,b)=panmsp (fst abs) in (a,BNmspId $ Left b)
-  | snd rel = let (a,b)=prnmsp (fst rel) in (a,BNmspId $ Right b)
+  | snd abs = let (a,(q,b))=panmsp (fst abs) in (a,(an++q,BNmspId $ Left b))
+  | snd rel = let (a,(q,b))=prnmsp (fst rel) in (a,(rn++q,BNmspId $ Right b))
   where abs=hasOpcode p "AN"
+        an=opcodes M.! "AN"
         rel=hasOpcode p "RN"
+        rn=opcodes M.! "RN"
 
-lnmsp = snd . pnmsp
+lnmsp = snd . snd . pnmsp
 
 cnmsp :: DataType -> DataType
 cnmsp a@(_,BNmspId _) = a
@@ -144,7 +148,6 @@ nmspValue a d n = if M.member i n then n M.! i else (repeat Terminate,BString []
 nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
 nmspValueSet a d = M.insert i
   where i = gnmsp a d
--}
 
 -- Statements
 cstmt :: DataType -> DataType
