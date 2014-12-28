@@ -25,6 +25,7 @@ THE SOFTWARE.
 module Statement where
 
 import BitSeries
+import qualified Data.Map as M
 import DataType
 import Opcodes
 
@@ -50,30 +51,34 @@ data Stmt next = LS DataType
               -- IO Statements
                | IOS next
                deriving Show
+type DStmt a = (DataType,Free (Stmt a) ())
 
-loadLS :: BitSeries -> (BitSeries,Free (Stmt n) ())
+loadLS :: BitSeries -> (BitSeries,DStmt n)
 loadLS s 
-  | snd lt = undefined
-  | snd li = undefined
-  | snd lr = undefined
-  | snd ln = undefined
-  | snd lm = undefined
+  | snd lt = pr "LT" $ pstring (fst lt)
+  | snd li = pr "LI" $ pinteger (fst li)
+  | snd lr = pr "LR" $ prational (fst lr)
+  | snd ln = pr "LN" $ pnmsp (fst ln)
+  | snd lm = pr "LM" $ fst (snd $ loadEstmt (dst lm))
   where lt = hasOpcode s "LT"
         li = hasOpcode s "LI"
         lr = hasOpcode s "LR"
         ln = hasOpcode s "LN"
         lm = hasOpcode s "LM"
---        pr :: BitSeries -> (BitSeries,Primitive) -> (BitSeries,Free (Stmt n) ())
---        pr s (t,p) = (t,Free (LS (
+        pr :: Opcode -> (BitSeries,DataType) -> (BitSeries,DStmt n)
+        pr o (t,d) = (t,ds)
+          where p=(opcodes M.! o)++(fst d)
+                dt=(p,BStatement)
+                ds=(dt,Free (LS d) $ Pure ())
 
-loadCS :: BitSeries -> (BitSeries,Free (Stmt n) r)
+loadCS :: BitSeries -> (BitSeries, DStmt a)
 loadCS = undefined
 
-loadIO :: BitSeries -> (BitSeries,Free (Stmt n) r)
+loadIO :: BitSeries -> (BitSeries, DStmt a)
 loadIO = undefined
 
-loadStmt :: BitSeries -> (BitSeries, Free (Stmt n) r)
+loadStmt :: BitSeries -> (BitSeries, DStmt a)
 loadStmt = undefined
 
-loadEStmt :: BitSeries -> (BitSeries, Free (Stmt n) r)
+loadEStmt :: BitSeries -> (BitSeries, DStmt a)
 loadEStmt = undefined

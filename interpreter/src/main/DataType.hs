@@ -29,9 +29,11 @@ import BitSeries
 import qualified Data.Map as M
 import Opcodes
 
+-- Namespace Types
 data RNmspS = Child BitSeries | Parent deriving Show
 type RNmsp = [RNmspS]
 type ANmsp = [BitSeries]
+-- Global Types
 data Primitive = BString BitSeries | BInteger Integer | BRational Integer Integer
                | BNmspId (Either ANmsp RNmsp) | BStatement deriving Show
 type DataType = (BitSeries,Primitive) 

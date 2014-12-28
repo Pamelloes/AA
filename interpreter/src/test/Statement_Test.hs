@@ -20,20 +20,40 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This is the bridge between HUnit tests and Cabal.
-module Main where
+-- This module profides tests for the Statement module
+module Statement_Test where
 
+import BitSeries
 import qualified BitSeries_Test as B
+import Control.Exception
+import qualified Data.Map as M
+import DataType
 import qualified DataType_Test as D
 import qualified Namespaces_Test as N
+import Opcodes
 import qualified Opcodes_Test as O
-import qualified Statement_Test as S
-import System.Exit (exitFailure)
+import Statement
 import Test.HUnit
+import TestException
 
-main = do
-  counts <- runTestTT $ 
-      TestList [ B.mainList, O.mainList, D.mainList, N.mainList, S.mainList ]
-  if (errors counts/= 0) || (failures counts /= 0) then
-    exitFailure
-  else return ()
+{-
+instance (Eq a, Eq b) => Eq (Free a b)
+instance (Eq a) => Eq (Stmt a)
+--instance Eq (Stmt a)
+
+-- Literal Statement Tests
+testLsS = TestLabel "Test loading literal string" $
+  TestCase $ assertEqual "" 
+    (([],Free (LS (p,BString s)) $ Pure ())::(Eq a,Show a)=>(BitSeries,Free
+    (Stmt a) ()))
+    ((loadLS p)::(Eq a,Show a)=>(BitSeries,Free (Stmt a) ()))
+  where s=[T,T,F,F]
+        p=(o "LT")++(o "CS")++s++(o "ES")
+        o t=opcodes M.! t
+-}
+
+mainList = TestLabel "Statements" $
+  TestList [] -- testLsS ]
+
+main = runTestTT $
+  TestList [ B.mainList, O.mainList, D.mainList, N.mainList, mainList ]
