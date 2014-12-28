@@ -176,7 +176,7 @@ Examples:
 Examples:
   FS TS SQ STMT LS LI 0 ES                  Evaluates STMT and then evaluates "LS LI 0 ES", ultimately evaluating to an integer with a value of zero
   FS TS IF STMT LS LI 0 ES LS LI 1 ES       Evaluates to the integer zero if STMT is true, and the integer negative one otherwise.
-  LS TS DW FS TS RS LS LN NMSP STMT         Reads the value at NMSP as long as STMT is true. Evaluates to the last-read value of at NMSP once STMT evaluates to false
+  FS TS DW FS TS RS LS LN NMSP STMT         Reads the value at NMSP as long as STMT is true. Evaluates to the last-read value of at NMSP once STMT evaluates to false
 
 2. Mathematical Statements
 

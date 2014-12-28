@@ -59,7 +59,7 @@ loadLS s
   | snd li = pr "LI" $ pinteger (fst li)
   | snd lr = pr "LR" $ prational (fst lr)
   | snd ln = pr "LN" $ pnmsp (fst ln)
-  | snd lm = pr "LM" $ fst (snd $ loadEstmt (dst lm))
+  | snd lm = pr "LM" $ let (b,(d,_))=loadEStmt (fst lm) in (b,d)
   where lt = hasOpcode s "LT"
         li = hasOpcode s "LI"
         lr = hasOpcode s "LR"
@@ -71,14 +71,35 @@ loadLS s
                 dt=(p,BStatement)
                 ds=(dt,Free (LS d) $ Pure ())
 
-loadCS :: BitSeries -> (BitSeries, DStmt a)
-loadCS = undefined
+loadTS :: BitSeries -> (BitSeries, DStmt a)
+loadTS = undefined
+
+loadMS :: BitSeries -> (BitSeries, DStmt a)
+loadMS = undefined
+
+loadFS :: BitSeries -> (BitSeries, DStmt a)
+loadFS s
+  | snd ts = let (b,((c,BStatement),t))=loadTS s in (b,((tso++c,BStatement),t))
+  | snd ms = let (b,((c,BStatement),t))=loadMS s in (b,((mso++c,BStatement),t))
+  where ts = hasOpcode s "TS"
+        tso = opcodes M.! "TS"
+        ms = hasOpcode s "MS"
+        mso = opcodes M.! "MS"
 
 loadIO :: BitSeries -> (BitSeries, DStmt a)
 loadIO = undefined
 
 loadStmt :: BitSeries -> (BitSeries, DStmt a)
-loadStmt = undefined
+loadStmt s
+  | snd ls = let (b,((c,BStatement),t))=loadLS s in (b,((lso++c,BStatement),t))
+  | snd fs = let (b,((c,BStatement),t))=loadFS s in (b,((fso++c,BStatement),t))
+  | snd io = let (b,((c,BStatement),t))=loadIO s in (b,((ioo++c,BStatement),t))
+  where ls = hasOpcode s "LS"
+        lso = opcodes M.! "LS"
+        fs = hasOpcode s "FS"
+        fso = opcodes M.! "FS"
+        io = hasOpcode s "IO"
+        ioo = opcodes M.! "IO"
 
 loadEStmt :: BitSeries -> (BitSeries, DStmt a)
 loadEStmt = undefined
