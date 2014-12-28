@@ -35,7 +35,7 @@ type RNmsp = [RNmspS]
 type ANmsp = [BitSeries]
 -- Global Types
 data Primitive = BString BitSeries | BInteger Integer | BRational Integer Integer
-               | BNmspId (Either ANmsp RNmsp) | BStatement deriving Show
+               | BNmspId (Either ANmsp RNmsp) | BStatement Integer deriving Show
 type DataType = (BitSeries,Primitive) 
 
 type Namespaces = M.Map ANmsp DataType
@@ -141,7 +141,8 @@ gnmsp b (s,BNmspId (Right r)) = gnmsp b (s,BNmspId (Left (anmsp b r)))
 gnmsp b s = gnmsp b (cnmsp s)
 
 defaultNamespace :: BitSeries -> Namespaces
-defaultNamespace p = M.fromList [([],(p,BStatement))]
+defaultNamespace p = M.fromList [([],(p,BStatement n))]
+  where BInteger n=linteger p
 
 nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
 nmspValue a d n = if M.member i n then n M.! i else (repeat Terminate,BString [])
@@ -150,8 +151,3 @@ nmspValue a d n = if M.member i n then n M.! i else (repeat Terminate,BString []
 nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
 nmspValueSet a d = M.insert i
   where i = gnmsp a d
-
--- Statements
-cstmt :: DataType -> DataType
-cstmt a@(_,BStatement)=a
-cstmt (s,_)=(s,BStatement)

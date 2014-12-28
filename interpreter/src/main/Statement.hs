@@ -53,8 +53,11 @@ data Stmt next = LS DataType
                deriving Show
 type DStmt a = (DataType,Free (Stmt a) ())
 
-loadLS :: BitSeries -> (BitSeries,DStmt n)
-loadLS s 
+dpre :: BitSeries -> (BitSeries,DStmt a) -> (BitSeries,DStmt a)
+dpre a (b,((c,BStatement i),t)) = (b,((a++c,BStatement i),t))
+
+loadLS :: Integer -> BitSeries -> (BitSeries,DStmt n)
+loadLS i s 
   | snd lt = pr "LT" $ pstring (fst lt)
   | snd li = pr "LI" $ pinteger (fst li)
   | snd lr = pr "LR" $ prational (fst lr)
@@ -68,32 +71,32 @@ loadLS s
         pr :: Opcode -> (BitSeries,DataType) -> (BitSeries,DStmt n)
         pr o (t,d) = (t,ds)
           where p=(opcodes M.! o)++(fst d)
-                dt=(p,BStatement)
+                dt=(p,BStatement i)
                 ds=(dt,Free (LS d) $ Pure ())
 
-loadTS :: BitSeries -> (BitSeries, DStmt a)
+loadTS :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadTS = undefined
 
-loadMS :: BitSeries -> (BitSeries, DStmt a)
+loadMS :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadMS = undefined
 
-loadFS :: BitSeries -> (BitSeries, DStmt a)
-loadFS s
-  | snd ts = let (b,((c,BStatement),t))=loadTS s in (b,((tso++c,BStatement),t))
-  | snd ms = let (b,((c,BStatement),t))=loadMS s in (b,((mso++c,BStatement),t))
+loadFS :: Integer -> BitSeries -> (BitSeries, DStmt a)
+loadFS i s
+  | snd ts = dpre tso $ loadTS i s
+  | snd ms = dpre mso $ loadMS i s
   where ts = hasOpcode s "TS"
         tso = opcodes M.! "TS"
         ms = hasOpcode s "MS"
         mso = opcodes M.! "MS"
 
-loadIO :: BitSeries -> (BitSeries, DStmt a)
+loadIO :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadIO = undefined
 
-loadStmt :: BitSeries -> (BitSeries, DStmt a)
-loadStmt s
-  | snd ls = let (b,((c,BStatement),t))=loadLS s in (b,((lso++c,BStatement),t))
-  | snd fs = let (b,((c,BStatement),t))=loadFS s in (b,((fso++c,BStatement),t))
-  | snd io = let (b,((c,BStatement),t))=loadIO s in (b,((ioo++c,BStatement),t))
+loadStmt :: Integer -> BitSeries -> (BitSeries, DStmt a)
+loadStmt i s
+  | snd ls = dpre lso $ loadLS i s
+  | snd fs = dpre fso $ loadFS i s
+  | snd io = dpre ioo $ loadIO i s
   where ls = hasOpcode s "LS"
         lso = opcodes M.! "LS"
         fs = hasOpcode s "FS"
@@ -102,4 +105,5 @@ loadStmt s
         ioo = opcodes M.! "IO"
 
 loadEStmt :: BitSeries -> (BitSeries, DStmt a)
-loadEStmt = undefined
+loadEStmt p = dpre q $ loadStmt n r
+  where (r,(q,BInteger n))=pinteger p
