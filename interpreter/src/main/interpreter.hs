@@ -24,8 +24,11 @@ THE SOFTWARE.
 module Main where
 
 import BitSeries
-import DataType
+import Data.Bits
+import qualified Data.ByteString.Lazy as B
+import Data.Word
 import Options.Applicative
+import Statement
 
 data Cmdline = Cmdline
   { file :: String
@@ -33,9 +36,25 @@ data Cmdline = Cmdline
 cmdline :: Parser Cmdline
 cmdline = Cmdline <$> strArgument (metavar "file")
 
+up :: Word8 -> [Bit]
+up w = [a,b,c,d,e,f,g,h]
+  where z x=if x== 0 then F else T
+        a=z$w.&.0x1
+        b=z$w.&.0x2
+        c=z$w.&.0x4
+        d=z$w.&.0x8
+        e=z$w.&.0x10
+        f=z$w.&.0x20
+        g=z$w.&.0x40
+        h=z$w.&.0x80
+
+
 run :: Cmdline -> IO ()
 run c = do
-  print (linteger $ T:(concat (replicate 32 [T,T,T,T,T])) ++[T,F,T,T,T,F])
+  p <- B.readFile $ file c
+  let prog = B.foldr (\b ac -> (up b)++ac) [] p
+  let mnst = loadEStmt prog
+  print mnst
 
 main :: IO ()
 main = execParser opts >>= run

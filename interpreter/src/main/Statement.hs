@@ -29,7 +29,13 @@ import qualified Data.Map as M
 import DataType
 import Opcodes
 
-data Free f n = Free f (Free f n) | Pure n deriving Show
+data Free f n = Free (f (Free f n)) | Pure n 
+instance (Functor f, Show a) => Show (Free f a) where
+  showsPrec d (Pure a) = showParen (d > 10) $
+    showString "Pure " . showsPrec 11 a
+  showsPrec d (Free m) = showParen (d > 10) $
+    showString "Free " . showsPrec 11 m
+
 {-
 instance (Functor f) => Monad (Free f) where
   return = Pure
@@ -51,7 +57,7 @@ data Stmt next = LS DataType
               -- IO Statements
                | IOS next
                deriving Show
-type DStmt a = (DataType,Free (Stmt a) ())
+type DStmt a = (DataType,Free Stmt ())
 
 dpre :: BitSeries -> (BitSeries,DStmt a) -> (BitSeries,DStmt a)
 dpre a (b,((c,BStatement i),t)) = (b,((a++c,BStatement i),t))
