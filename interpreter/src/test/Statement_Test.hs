@@ -58,8 +58,77 @@ testLsS = TestLabel "Test loading literal string" $
         p=(o "LT")++p1
         o t=opcodes M.! t
 
+testLsSE = TestLabel "Test loading literal string with extra" $
+  TestCase $ assertEqual "" (p2,((p,BStatement 0),Free (LS (p1, BString s))))
+    (loadLS 0 $ p++p2)
+  where s=[T,T,F,F]
+        p1=(o "CS")++s++(o "ES")
+        p2=replicate 10 T
+        p=(o "LT")++p1
+        o t=opcodes M.! t
+
+testLsI = TestLabel "Test loading literal integer" $
+  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BInteger 9))))
+    (loadLS 0 p)
+  where p1=[F]++(o "CS")++[T,F,F,T]++(o "ES")
+        p=(o "LI")++p1
+        o t=opcodes M.! t
+
+testLsR = TestLabel "Test loading literal rational" $
+  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BRational 2 3))))
+    (loadLS 0 p)
+  where p1= [F]++(o "CS")++[F,F,T,F]++(o "ES")
+          ++[F]++(o "CS")++[F,F,T,T]++(o "ES")
+        p=(o "LR")++p1
+        o t=opcodes M.! t
+
+testLsN = TestLabel "Test loading literal namespace" $
+  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BNmspId $ Left []))))
+    (loadLS 0 p)
+  where p1=(o "AN")++(o "EN")
+        p=(o "LN")++p1
+        o t=opcodes M.! t
+
+testLsM = TestLabel "Test loading literal statement" $
+  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BStatement 1))))
+    (loadLS 0 p)
+  where p1a=[F]++(o "CS")++[F,F,F,T]++(o "ES")
+        p1b=(o "LS")++(o "LI")++[T]++(o "ES")
+        p1=p1a++p1b
+        p=(o "LM")++p1
+        o t=opcodes M.! t
+
+testLsME = TestLabel "Test loading literal statement with extra" $
+  TestCase $ assertEqual "" (p2,((p,BStatement 0),Free (LS (p1, BStatement 1))))
+    (loadLS 0 $ p++p2)
+  where p1a=[F]++(o "CS")++[F,F,F,T]++(o "ES")
+        p1b=(o "LS")++(o "LI")++[T]++(o "ES")
+        p1=p1a++p1b
+        p2=[T,F,F,F,Terminate,Terminate,F,T,F]
+        p=(o "LM")++p1
+        o t=opcodes M.! t
+
+-- Load Statement Tests
+testLtS = TestLabel "Test loading embedded literal string" $
+  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BString s))))
+    (loadStmt 0 p)
+  where s=[T,T,F,F]
+        p1=(o "CS")++s++(o "ES")
+        p=(o "LS")++(o "LT")++p1
+        o t=opcodes M.! t
+
+testLtRE = TestLabel "Test loading embedded literal rational with extra" $
+  TestCase $ assertEqual "" (p2,((p,BStatement 0),Free (LS (p1, BRational 0 0))))
+    (loadStmt 0 $ p++p2)
+  where p1=[T]++(o "CS")++[F,F,T,T]++(o "ES")++[F]++(o "ES")
+        p2=replicate 10 T
+        p=(o "LS")++(o "LR")++p1
+        o t=opcodes M.! t
+
 mainList = TestLabel "Statements" $
-  TestList [ testLsS ]
+  TestList [ testLsS, testLsSE, testLsI, testLsR, testLsN, testLsM, testLsME
+           , testLtS, testLtRE
+           ]
 
 main = runTestTT $
   TestList [ B.mainList, O.mainList, D.mainList, N.mainList, mainList ]

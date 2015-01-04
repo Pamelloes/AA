@@ -157,8 +157,8 @@ loadMS = undefined
 
 loadFS :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadFS i s
-  | snd ts = dpre tso $ loadTS i s
-  | snd ms = dpre mso $ loadMS i s
+  | snd ts = dpre tso $ loadTS i $ fst ts
+  | snd ms = dpre mso $ loadMS i $ fst ms
   where ts = hasOpcode s "TS"
         tso = opcodes M.! "TS"
         ms = hasOpcode s "MS"
@@ -169,9 +169,9 @@ loadIO = undefined
 
 loadStmt :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadStmt i s
-  | snd ls = dpre lso $ loadLS i s
-  | snd fs = dpre fso $ loadFS i s
-  | snd io = dpre ioo $ loadIO i s
+  | snd ls = dpre lso $ loadLS i $ fst ls
+  | snd fs = dpre fso $ loadFS i $ fst fs
+  | snd io = dpre ioo $ loadIO i $ fst io
   where ls = hasOpcode s "LS"
         lso = opcodes M.! "LS"
         fs = hasOpcode s "FS"
