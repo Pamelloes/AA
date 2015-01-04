@@ -36,24 +36,30 @@ import Statement
 import Test.HUnit
 import TestException
 
-{-
-instance (Eq a, Eq b) => Eq (Free a b)
-instance (Eq a) => Eq (Stmt a)
---instance Eq (Stmt a)
+instance (Eq a) => Eq (Stmt a) where
+  (LS a)==(LS b)=a==b
+  (AS a b)==(AS c d)=(a==c)&&(b==d)
+  (RS a)==(RS b)=a==b
+  (ET a)==(ET b)=a==b
+  (SQ a b)==(SQ c d)=(a==c)&&(b==d)
+  (IF a b c)==(IF d e f)=(a==d)&&(b==e)&&(c==f)
+  (DW a b)==(DW c d)=(a==c)&&(b==d)
+  (MSA a b)==(MSA c d)=(a==c)&&(b==d)
+  (MSB a b c)==(MSB d e f)=(a==d)&&(b==e)&&(c==f)
+  (IOS a)==(IOS b)=(a==b)
+  _==_=False
 
 -- Literal Statement Tests
 testLsS = TestLabel "Test loading literal string" $
-  TestCase $ assertEqual "" 
-    (([],Free (LS (p,BString s)) $ Pure ())::(Eq a,Show a)=>(BitSeries,Free
-    (Stmt a) ()))
-    ((loadLS p)::(Eq a,Show a)=>(BitSeries,Free (Stmt a) ()))
+  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BString s))))
+    (loadLS 0 p)
   where s=[T,T,F,F]
-        p=(o "LT")++(o "CS")++s++(o "ES")
+        p1=(o "CS")++s++(o "ES")
+        p=(o "LT")++p1
         o t=opcodes M.! t
--}
 
 mainList = TestLabel "Statements" $
-  TestList [] -- testLsS ]
+  TestList [ testLsS ]
 
 main = runTestTT $
   TestList [ B.mainList, O.mainList, D.mainList, N.mainList, mainList ]

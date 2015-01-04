@@ -37,7 +37,7 @@ cmdline :: Parser Cmdline
 cmdline = Cmdline <$> strArgument (metavar "file")
 
 up :: Word8 -> [Bit]
-up w = [a,b,c,d,e,f,g,h]
+up w = [h,g,f,e,d,c,b,a]
   where z x=if x== 0 then F else T
         a=z$w.&.0x1
         b=z$w.&.0x2
@@ -53,6 +53,7 @@ run :: Cmdline -> IO ()
 run c = do
   p <- B.readFile $ file c
   let prog = B.foldr (\b ac -> (up b)++ac) [] p
+  print prog
   let mnst = loadEStmt prog
   print mnst
 

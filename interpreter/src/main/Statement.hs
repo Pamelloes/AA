@@ -21,27 +21,85 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
 -- This module generates a program's AST in accordance with Section VI of the
+
 -- Advanced Assembly 0.5.0 specification.
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Statement where
 
 import BitSeries
 import qualified Data.Map as M
+import Control.Applicative
 import DataType
 import Opcodes
 
-data Free f n = Free (f (Free f n)) | Pure n 
-instance (Functor f, Show a) => Show (Free f a) where
-  showsPrec d (Pure a) = showParen (d > 10) $
-    showString "Pure " . showsPrec 11 a
-  showsPrec d (Free m) = showParen (d > 10) $
-    showString "Free " . showsPrec 11 m
+----------------------------------
+--  START OF Free Monad EXCERPT --
+----------------------------------
+
+-- The following lines of code have been adapted from the
+-- Free Monad package: https://hackage.haskell.org/package/free
 
 {-
+Copyright 2008-2013 Edward Kmett
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+
+3. Neither the name of the author nor the names of his contributors
+   may be used to endorse or promote products derived from this software
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED.  IN NO EVENT SHALL THE AUTHORS OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+-}
+
+data Free f n = Free (f (Free f n)) | Pure n 
+instance (Functor f) => Functor (Free f) where
+ fmap f = go where
+   go (Pure a)  = Pure (f a)
+   go (Free fa) = Free (go <$> fa)
+instance (Functor f) => Applicative (Free f) where
+  pure = Pure
+  Pure a <*> Pure b = Pure $ a b
+  Pure a <*> Free b = Free $ fmap (fmap a) b
+  Free a <*> b = Free $ fmap (<*> b) a
 instance (Functor f) => Monad (Free f) where
   return = Pure
   (Free x) >>= f = Free (fmap (>>= f) x)
   (Pure r) >>= f = f r
--}
+
+instance (Eq (f (Free f a)), Eq a) => Eq (Free f a) where
+  Pure a == Pure b = a == b
+  Free fa == Free fb = fa == fb
+  _ == _ = False
+instance (Show (f (Free f a)), Show a) => Show (Free f a) where
+  showsPrec d (Pure a) = showParen (d > 10) $
+    showString "Pure " . showsPrec 11 a
+  showsPrec d (Free m) = showParen (d > 10) $
+    showString "Free " . showsPrec 11 m
+--------------------------------
+--  END OF Free Monad EXCERPT --
+--------------------------------
 
 data Stmt next = LS DataType
               -- Control Statements
@@ -57,6 +115,17 @@ data Stmt next = LS DataType
               -- IO Statements
                | IOS next
                deriving Show
+instance Functor Stmt where
+  fmap f (LS z) = LS z
+  fmap f (AS a b) = AS (f a) (f b)
+  fmap f (RS a) = RS (f a)
+  fmap f (ET a) = ET (fmap f a)
+  fmap f (SQ a b) = SQ (f a) (f b)
+  fmap f (IF a b c) = IF (f a) (f b) (f c)
+  fmap f (DW a b) = DW (f a) (f b)
+  fmap f (MSA z a) = MSA z (f a)
+  fmap f (MSB z a b) = MSB z (f a) (f b)
+  fmap f (IOS a) = IOS (f a)
 type DStmt a = (DataType,Free Stmt ())
 
 dpre :: BitSeries -> (BitSeries,DStmt a) -> (BitSeries,DStmt a)
@@ -78,7 +147,7 @@ loadLS i s
         pr o (t,d) = (t,ds)
           where p=(opcodes M.! o)++(fst d)
                 dt=(p,BStatement i)
-                ds=(dt,Free (LS d) $ Pure ())
+                ds=(dt,Free (LS d))
 
 loadTS :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadTS = undefined
