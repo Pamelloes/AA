@@ -51,16 +51,16 @@ instance (Eq a) => Eq (Stmt a) where
 
 -- Literal Statement Tests
 testLsS = TestLabel "Test loading literal string" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BString s))))
-    (loadLS 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),Free (LS (p1, BString s))))
+    (loadLS p)
   where s=[T,T,F,F]
         p1=(o "CS")++s++(o "ES")
         p=(o "LT")++p1
         o t=opcodes M.! t
 
 testLsSE = TestLabel "Test loading literal string with extra" $
-  TestCase $ assertEqual "" (p2,((p,BStatement 0),Free (LS (p1, BString s))))
-    (loadLS 0 $ p++p2)
+  TestCase $ assertEqual "" (p2,((p,BStatement),Free (LS (p1, BString s))))
+    (loadLS $ p++p2)
   where s=[T,T,F,F]
         p1=(o "CS")++s++(o "ES")
         p2=replicate 10 T
@@ -68,56 +68,52 @@ testLsSE = TestLabel "Test loading literal string with extra" $
         o t=opcodes M.! t
 
 testLsI = TestLabel "Test loading literal integer" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BInteger 9))))
-    (loadLS 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),Free (LS (p1, BInteger 9))))
+    (loadLS p)
   where p1=[F]++(o "CS")++[T,F,F,T]++(o "ES")
         p=(o "LI")++p1
         o t=opcodes M.! t
 
 testLsR = TestLabel "Test loading literal rational" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BRational 2 3))))
-    (loadLS 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),Free (LS (p1, BRational 2 3))))
+    (loadLS p)
   where p1= [F]++(o "CS")++[F,F,T,F]++(o "ES")
           ++[F]++(o "CS")++[F,F,T,T]++(o "ES")
         p=(o "LR")++p1
         o t=opcodes M.! t
 
 testLsN = TestLabel "Test loading literal namespace" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BNmspId $ Left []))))
-    (loadLS 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),Free (LS (p1, BNmspId $ Left []))))
+    (loadLS p)
   where p1=(o "AN")++(o "EN")
         p=(o "LN")++p1
         o t=opcodes M.! t
 
 testLsM = TestLabel "Test loading literal statement" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BStatement 1))))
-    (loadLS 0 p)
-  where p1a=[F]++(o "CS")++[F,F,F,T]++(o "ES")
-        p1b=(o "LS")++(o "LI")++[T]++(o "ES")
-        p1=p1a++p1b
+  TestCase $ assertEqual "" ([],((p,BStatement),Free (LS (p1, BStatement))))
+    (loadLS p)
+  where p1=(o "LS")++(o "LI")++[T]++(o "ES")
         p=(o "LM")++p1
         o t=opcodes M.! t
 
 testLsME = TestLabel "Test loading literal statement with extra" $
-  TestCase $ assertEqual "" (p2,((p,BStatement 0),Free (LS (p1, BStatement 1))))
-    (loadLS 0 $ p++p2)
-  where p1a=[F]++(o "CS")++[F,F,F,T]++(o "ES")
-        p1b=(o "LS")++(o "LI")++[T]++(o "ES")
-        p1=p1a++p1b
+  TestCase $ assertEqual "" (p2,((p,BStatement),Free (LS (p1, BStatement))))
+    (loadLS $ p++p2)
+  where p1=(o "LS")++(o "LI")++[T]++(o "ES")
         p2=[T,F,F,F,Terminate,Terminate,F,T,F]
         p=(o "LM")++p1
         o t=opcodes M.! t
 
 -- Math Statement Test
 testMA = TestLabel "Test loading 1-var mathematical statement" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),r)) (loadMS 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadMS p)
   where r=Free (MSA "BN" (Free (LS (q, BInteger (-4)))))
         q=[T]++(o "CS")++[T,T,F,F]++(o "ES")
         p=(o "BN")++(o "LS")++(o "LI")++q
         o t=opcodes M.! t
 
 testMAE = TestLabel "Test loading 1-var mathematical statement with extra" $
-  TestCase $ assertEqual "" (p2,((p,BStatement 0),r)) (loadMS 0 $ p++p2)
+  TestCase $ assertEqual "" (p2,((p,BStatement),r)) (loadMS $ p++p2)
   where r=Free (MSA "TN" (Free (LS (q, BString [T,T,T,F]))))
         q=(o "CS")++[T,T,T,F]++(o "ES")
         p=(o "TN")++(o "LS")++(o "LT")++q
@@ -125,7 +121,7 @@ testMAE = TestLabel "Test loading 1-var mathematical statement with extra" $
         o t=opcodes M.! t
 
 testMB = TestLabel "Test loading 2-var mathematical statement" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),r)) (loadMS 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadMS p)
   where r=Free (MSB "BGE" (Free (LS (q, BInteger 12))) 
                          (Free (LS (q2, BString []))))
         q=[F]++(o "CS")++[T,T,F,F]++(o "ES")
@@ -134,24 +130,24 @@ testMB = TestLabel "Test loading 2-var mathematical statement" $
         o t=opcodes M.! t
 
 testMBE = TestLabel "Test loading 2-var mathematical statement with extra" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),r)) (loadMS 0 p)
-  where r=Free (MSB "TR" (Free (LS (q, BStatement 2))) 
+  TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadMS p)
+  where r=Free (MSB "TR" (Free (LS (q, BStatement))) 
                          (Free (LS (q2, BNmspId $ Left $ [[F,F,T,F]]))))
-        q=[F]++(o "CS")++[F,F,T,F]++(o "ES")++(o "LS")++(o "LT")++(o "ES")
+        q=(o "LS")++(o "LT")++(o "ES")
         q2=(o "AN")++(o "CN")++(o "CS")++[F,F,T,F]++(o "ES")++(o "EN")
         p=(o "TR")++(o "LS")++(o "LM")++q++(o "LS")++(o "LN")++q2
         o t=opcodes M.! t
 
 -- I/O Statement Tests
 testIO = TestLabel "Test loading i/o statement" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),r)) (loadIO 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadIO p)
   where r=Free (IOS (Free (LS (q, BInteger (-4)))))
         q=[T]++(o "CS")++[T,T,F,F]++(o "ES")
         p=(o "LS")++(o "LI")++q
         o t=opcodes M.! t
 
 testIOE = TestLabel "Test loading i/o statement with extra" $
-  TestCase $ assertEqual "" (p2,((p,BStatement 0),r)) (loadIO 0 $ p++p2)
+  TestCase $ assertEqual "" (p2,((p,BStatement),r)) (loadIO $ p++p2)
   where r=Free (IOS (Free (LS (q, BString s))))
         s=[T,T,F,F]
         q=(o "CS")++s++(o "ES")
@@ -162,30 +158,30 @@ testIOE = TestLabel "Test loading i/o statement with extra" $
 
 -- Load Statement Tests
 testLtS = TestLabel "Test loading embedded literal string" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BString s))))
-    (loadStmt 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),Free (LS (p1, BString s))))
+    (loadStmt p)
   where s=[T,T,F,F]
         p1=(o "CS")++s++(o "ES")
         p=(o "LS")++(o "LT")++p1
         o t=opcodes M.! t
 
 testLtRE = TestLabel "Test loading embedded literal rational with extra" $
-  TestCase $ assertEqual "" (p2,((p,BStatement 0),Free (LS (p1, BRational 0 0))))
-    (loadStmt 0 $ p++p2)
+  TestCase $ assertEqual "" (p2,((p,BStatement),Free (LS (p1, BRational 0 0))))
+    (loadStmt $ p++p2)
   where p1=[T]++(o "CS")++[F,F,T,T]++(o "ES")++[F]++(o "ES")
         p2=replicate 10 T
         p=(o "LS")++(o "LR")++p1
         o t=opcodes M.! t
 
 testLtI = TestLabel "Test loading embedded i/o statement" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),r)) (loadStmt 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadStmt p)
   where r=Free (IOS (Free (LS (q, BRational 7 (-9)))))
         q=[F]++(o "CS")++[F,T,T,T]++(o "ES")++[T]++(o "CS")++[F,T,T,T]++(o "ES")
         p=(o "IO")++(o "LS")++(o "LR")++q
         o t=opcodes M.! t
 
 testLtIE = TestLabel "Test loading embedded i/o statement with extra" $
-  TestCase $ assertEqual "" (p2,((p,BStatement 0),r)) (loadStmt 0 $ p++p2)
+  TestCase $ assertEqual "" (p2,((p,BStatement),r)) (loadStmt $ p++p2)
   where r=Free (IOS (Free (LS (q, BNmspId $ Right [Parent,Child [F,T,F,T]]))))
         q=(o "RN")++(o "PN")++(o "CN")++(o "CS")++[F,T,F,T]++(o "ES")++(o "ERN")
         p=(o "IO")++(o "LS")++(o "LN")++q
@@ -193,7 +189,7 @@ testLtIE = TestLabel "Test loading embedded i/o statement with extra" $
         o t=opcodes M.! t
 
 testLtM = TestLabel "Test loading embedded 2-var mathematical statement" $
-  TestCase $ assertEqual "" ([],((p,BStatement 0),r)) (loadStmt 0 p)
+  TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadStmt p)
   where r=Free (MSB "OD" (Free (LS (q, BInteger 7))) 
                          (Free (LS (q2, BRational 5 9))))
         q=[F]++(o "CS")++[F,T,T,T]++(o "ES")
@@ -203,7 +199,7 @@ testLtM = TestLabel "Test loading embedded 2-var mathematical statement" $
         o t=opcodes M.! t
 
 testLtME = TestLabel "Test loading embedded 1-var mathematical statement with extra" $
-  TestCase $ assertEqual "" (p2,((p,BStatement 0),r)) (loadStmt 0 $ p++p2)
+  TestCase $ assertEqual "" (p2,((p,BStatement),r)) (loadStmt $ p++p2)
   where r=Free (MSA "TN" (Free (LS (q, BString [T,F,T,F]))))
         q=(o "CS")++[T,F,T,F]++(o "ES")
         p=(o "FS")++(o "MS")++(o "TN")++(o "LS")++(o "LT")++q

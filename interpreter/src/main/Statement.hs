@@ -21,8 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
 -- This module generates a program's AST in accordance with Section VI of the
-
--- Advanced Assembly 0.5.0 specification.
+-- Advanced Assembly 0.5.1 specification.
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Statement where
@@ -129,15 +128,15 @@ instance Functor Stmt where
 type DStmt a = (DataType,Free Stmt ())
 
 dpre :: BitSeries -> (BitSeries,DStmt a) -> (BitSeries,DStmt a)
-dpre a (b,((c,BStatement i),t)) = (b,((a++c,BStatement i),t))
+dpre a (b,((c,BStatement),t)) = (b,((a++c,BStatement),t))
 
-loadLS :: Integer -> BitSeries -> (BitSeries,DStmt n)
-loadLS i s 
+loadLS :: BitSeries -> (BitSeries,DStmt n)
+loadLS s 
   | snd lt = pr "LT" $ pstring (fst lt)
   | snd li = pr "LI" $ pinteger (fst li)
   | snd lr = pr "LR" $ prational (fst lr)
   | snd ln = pr "LN" $ pnmsp (fst ln)
-  | snd lm = pr "LM" $ let (b,(d,_))=loadEStmt (fst lm) in (b,d)
+  | snd lm = pr "LM" $ let (b,(d,_))=loadStmt (fst lm) in (b,d)
   where lt = hasOpcode s "LT"
         li = hasOpcode s "LI"
         lr = hasOpcode s "LR"
@@ -146,10 +145,10 @@ loadLS i s
         pr :: Opcode -> (BitSeries,DataType) -> (BitSeries,DStmt n)
         pr o (t,d) = (t,ds)
           where p=(opcodes M.! o)++(fst d)
-                dt=(p,BStatement i)
+                dt=(p,BStatement)
                 ds=(dt,Free (LS d))
 
-loadTS :: Integer -> BitSeries -> (BitSeries, DStmt a)
+loadTS :: BitSeries -> (BitSeries, DStmt a)
 loadTS = undefined
 
 abomap =
@@ -175,16 +174,16 @@ abomap =
   , ("TS" ,True )
   , ("TR" ,True )
   ]
-loadMS :: Integer -> BitSeries -> (BitSeries, DStmt a)
-loadMS i bs
-  | b = (fst s2,((os++s1b++s2b,BStatement i),Free (MSB o s1s s2s)))
-  | otherwise = (fst s1,((os++s1b,BStatement i),Free (MSA o s1s)))
+loadMS :: BitSeries -> (BitSeries, DStmt a)
+loadMS bs
+  | b = (fst s2,((os++s1b++s2b,BStatement),Free (MSB o s1s s2s)))
+  | otherwise = (fst s1,((os++s1b,BStatement),Free (MSA o s1s)))
   where (s,o,b) = opc bs abomap
         os = opcodes M.! o
-        s1 = loadStmt i s
+        s1 = loadStmt s
         s1b = fst $ fst $ snd s1
         s1s = snd $ snd s1
-        s2 = loadStmt i $ fst s1
+        s2 = loadStmt $ fst s1
         s2b = fst $ fst $ snd s2
         s2s = snd $ snd s2
         opc :: BitSeries -> [(String,Bool)] -> (BitSeries,String,Bool)
@@ -192,30 +191,26 @@ loadMS i bs
         opc bt (o:os) = if snd res then (fst res,fst o,snd o) else opc bt os
           where res = hasOpcode bt (fst o)
 
-loadFS :: Integer -> BitSeries -> (BitSeries, DStmt a)
-loadFS i s
-  | snd ts = dpre tso $ loadTS i $ fst ts
-  | snd ms = dpre mso $ loadMS i $ fst ms
+loadFS :: BitSeries -> (BitSeries, DStmt a)
+loadFS s
+  | snd ts = dpre tso $ loadTS $ fst ts
+  | snd ms = dpre mso $ loadMS $ fst ms
   where ts = hasOpcode s "TS"
         tso = opcodes M.! "TS"
         ms = hasOpcode s "MS"
         mso = opcodes M.! "MS"
 
-loadIO :: Integer -> BitSeries -> (BitSeries, DStmt a)
-loadIO i b = let (e,(d,s))=loadStmt i b in (e,(d,Free (IOS s)))
+loadIO :: BitSeries -> (BitSeries, DStmt a)
+loadIO b = let (e,(d,s))=loadStmt b in (e,(d,Free (IOS s)))
 
-loadStmt :: Integer -> BitSeries -> (BitSeries, DStmt a)
-loadStmt i s
-  | snd ls = dpre lso $ loadLS i $ fst ls
-  | snd fs = dpre fso $ loadFS i $ fst fs
-  | snd io = dpre ioo $ loadIO i $ fst io
+loadStmt :: BitSeries -> (BitSeries, DStmt a)
+loadStmt s
+  | snd ls = dpre lso $ loadLS $ fst ls
+  | snd fs = dpre fso $ loadFS $ fst fs
+  | snd io = dpre ioo $ loadIO $ fst io
   where ls = hasOpcode s "LS"
         lso = opcodes M.! "LS"
         fs = hasOpcode s "FS"
         fso = opcodes M.! "FS"
         io = hasOpcode s "IO"
         ioo = opcodes M.! "IO"
-
-loadEStmt :: BitSeries -> (BitSeries, DStmt a)
-loadEStmt p = dpre q $ loadStmt n r
-  where (r,(q,BInteger n))=pinteger p

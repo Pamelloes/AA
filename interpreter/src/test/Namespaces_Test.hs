@@ -63,15 +63,15 @@ utilList = TestLabel "Namespaces_Test Utilities" $
 
 -- Namespace Functionality Tests
 testDefaultNamespace = TestLabel "Test default namespace" $
-  TestCase $ assertEqual "" (M.fromList [([],(p,BStatement 0))]) (defaultNamespace p)
+  TestCase $ assertEqual "" (M.fromList [([],(p,BStatement))]) (defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++[F,F,F,F]
 
 testANmspValue = TestLabel "Test absolute value retrieval" $
-  TestCase $ assertEqual "" (p,BStatement 0) (nmspValue [] (maid []) $ defaultNamespace p)
+  TestCase $ assertEqual "" (p,BStatement) (nmspValue [] (maid []) $ defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++replicate 5 T
 
 testRNmspValue = TestLabel "Test relative value retrieval" $
-  TestCase $ assertEqual "" (p,BStatement 0) (nmspValue [[T,T,T,T]] (mrid [Parent]) $ defaultNamespace p)
+  TestCase $ assertEqual "" (p,BStatement) (nmspValue [[T,T,T,T]] (mrid [Parent]) $ defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++[T,F,F,F,T,F,T,T,F,Terminate]
 
 testANmspDefValue = TestLabel "Test absolute default value retrieval" $
@@ -85,14 +85,14 @@ testRNmspDefValue = TestLabel "Test relative default value retrieval" $
         (a,b)=(nmspValue [[T,F,T,F]] (mrid [Parent,Child [F,F,F,F]]) $ defaultNamespace p)
   
 testANmspValueSet = TestLabel "Test absolute value set" $
-  TestCase $ assertEqual "" (M.fromList [([],(p,BStatement 0)),(k,v)])
+  TestCase $ assertEqual "" (M.fromList [([],(p,BStatement)),(k,v)])
     (nmspValueSet [] (maid k) v $ defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++replicate 10 F
         k=[[T,T,T,T],[F,T,T,F]]
         v=((opcodes M.! "CS")++[F,T,T,T]++(opcodes M.! "ES"),BString [F,T,T,T])
 
 testRNmspValueSet = TestLabel "Test relative value set" $
-  TestCase $ assertEqual "" (M.fromList [([],(p,BStatement 0)),(k2,v)])
+  TestCase $ assertEqual "" (M.fromList [([],(p,BStatement)),(k2,v)])
     (nmspValueSet [[F,F,F,F]] (mrid k) v $ defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++replicate 10 F
         k=[Parent, Child [T,T,T,T],Child [F,T,T,F]]
@@ -104,7 +104,7 @@ testANmspValue2 = TestLabel "Test absolute value retrieval 2" $
   (nmspValue [] (maid k) $ nmspValueSet [] (maid k) v $ defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++replicate 5 T
         k=[[F,T,F,T],[T,F,T,F],replicate 4 Terminate]
-        v=([F,F,T,T,F,F,T,T,T],BStatement 0)
+        v=([F,F,T,T,F,F,T,T,T],BStatement)
 
 testRNmspValue2 = TestLabel "Test relative value retrieval 2" $
   TestCase $ assertEqual "" v
@@ -113,7 +113,7 @@ testRNmspValue2 = TestLabel "Test relative value retrieval 2" $
         k=[[F,T,F,T],[T,F,T,F],replicate 4 Terminate]
         k2=[[F,T,F,T],[T,T,T,T],[T,T,T,T]]
         k3=[Parent,Parent,Child [T,F,T,F],Child $ replicate 4 Terminate]
-        v=([T,F,T,F,F,T,F],BStatement 0)
+        v=([T,F,T,F,F,T,F],BStatement)
 
 testFTEq = TestLabel "Test False/Terminate equivalence" $
   TestCase $ assertEqual "" v
@@ -121,7 +121,7 @@ testFTEq = TestLabel "Test False/Terminate equivalence" $
   where p=[F]++(opcodes M.! "ES")++replicate 5 T
         k=[[F,T,F,T],[T,F,T,F],replicate 4 Terminate]
         k2=[[F,T,F,T],[T,F,T,F],replicate 4 F]
-        v=([F,F,T,T,F,F,T,T,T],BStatement 0)
+        v=([F,F,T,T,F,F,T,T,T],BStatement)
 
 -- Namespace Parsing Tests
 testPNmspA = TestLabel "Test loading absolute namespace" $
@@ -165,7 +165,7 @@ testCn1 = TestLabel "Test cnmsp 1" $
   where id=[[T,T,F,F]]
 
 testCn2 = TestLabel "Test cnmsp 2" $
-  TestCase $ assertEqual "" (p,snd $ maid id) (cnmsp (p,BStatement 0))
+  TestCase $ assertEqual "" (p,snd $ maid id) (cnmsp (p,BStatement))
   where id=[[F,T,F,F],[T,F,F,F]]
         p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
          ++(o "CS")++id!!1++(o "ES")++(o "EN")

@@ -1,4 +1,4 @@
-# Advanced Assembly 0.5.0
+# Advanced Assembly 0.5.1
 
 Advanced Assembly is a programming language that roughly resembles an assembly programming language. However, unlike standard assembly languages, Advanced Assembly is not designed to be run on a specific processor. Instead, it has been designed so that any series of bits--any combination of "1" and "0"--is a valid program.
 

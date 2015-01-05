@@ -22,7 +22,7 @@ THE SOFTWARE.
 -}
 -- This module defines the DataTypes and provides associated functionality for
 -- Strings, Integers, Rationals, and Namespaces in accordance with Sections IV
--- and V of the Advanced Assembly 0.5.0 language specification.
+-- and V of the Advanced Assembly 0.5.1 language specification.
 module DataType where
 
 import BitSeries
@@ -35,7 +35,7 @@ type RNmsp = [RNmspS]
 type ANmsp = [BitSeries]
 -- Global Types
 data Primitive = BString BitSeries | BInteger Integer | BRational Integer Integer
-               | BNmspId (Either ANmsp RNmsp) | BStatement Integer deriving Show
+               | BNmspId (Either ANmsp RNmsp) | BStatement deriving Show
 type DataType = (BitSeries,Primitive) 
 
 type Namespaces = M.Map ANmsp DataType
@@ -141,8 +141,7 @@ gnmsp b (s,BNmspId (Right r)) = gnmsp b (s,BNmspId (Left (anmsp b r)))
 gnmsp b s = gnmsp b (cnmsp s)
 
 defaultNamespace :: BitSeries -> Namespaces
-defaultNamespace p = M.fromList [([],(p,BStatement n))]
-  where BInteger n=linteger p
+defaultNamespace p = M.fromList [([],(p,BStatement))]
 
 nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
 nmspValue a d n = if M.member i n then n M.! i else (repeat Terminate,BString [])

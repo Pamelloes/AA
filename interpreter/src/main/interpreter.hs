@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This is the interpreter for Advanced Assembly version 0.4
+-- This is the interpreter for Advanced Assembly version 0.5.1
 module Main where
 
 import BitSeries
@@ -54,7 +54,7 @@ run c = do
   p <- B.readFile $ file c
   let prog = B.foldr (\b ac -> (up b)++ac) [] p
   print prog
-  let mnst = loadEStmt prog
+  let mnst = loadStmt prog
   print mnst
 
 main :: IO ()
@@ -62,5 +62,5 @@ main = execParser opts >>= run
   where opts = info (helper <*> cmdline)
           ( fullDesc 
          <> progDesc "Run the program stored in file"
-         <> header "Advanced Assembly 0.5.0 Interpreter"
+         <> header "Advanced Assembly 0.5.1 Interpreter"
           )

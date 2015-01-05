@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
 -- This module defines the Opcodes and associated functionality in accordance
--- with Appendix A of the Advanced Assembly 0.5.0 specification.
+-- with Appendix A of the Advanced Assembly 0.5.1 specification.
 module Opcodes where
 
 import BitSeries

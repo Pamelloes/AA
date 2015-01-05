@@ -47,7 +47,7 @@ instance Eq Primitive where
   (BInteger a)==(BInteger b)=a==b
   (BRational a b)==(BRational c d)=(a==c) && (b==d)
   (BNmspId a)==(BNmspId b)=a==b
-  (BStatement a)==(BStatement b)=a==b
+  (BStatement)==(BStatement)=True
 
 -- String Tests
 strError = ErrorCall "lstring: Reached program end"
@@ -83,7 +83,7 @@ testLstring = TestLabel "Test lstring" $
   TestCase $ assertEqual "" (BString [T,T,T,T]) (lstring p)
   where p=(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
 testCs1 = TestLabel "Test cstring from BStatement" $
-  TestCase $ assertEqual "" (p,BString s) (cstring (p,BStatement 0))
+  TestCase $ assertEqual "" (p,BString s) (cstring (p,BStatement))
   where s=[T,T,T,T]
         p=(opcodes M.! "CS")++s++(opcodes M.! "ES")
 testCs2 = TestLabel "Test cstring from BString" $
@@ -138,7 +138,7 @@ testLinteger = TestLabel "Test linteger " $
   TestCase $ assertEqual "" (BInteger 15) (linteger p)
   where p=[F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
 testCi1 = TestLabel "Test cinteger from BStatement" $
-  TestCase $ assertEqual "" (p,BInteger (-4)) (cinteger (p,BStatement 0))
+  TestCase $ assertEqual "" (p,BInteger (-4)) (cinteger (p,BStatement))
   where p=[T]++(opcodes M.! "CS")++[T,T,F,F]++(opcodes M.! "ES")
 testCi2 = TestLabel "Test cinteger from BInteger" $
   TestCase $ assertEqual "" (p,BInteger (-9)) (cinteger (p,BInteger (-9)))
@@ -211,7 +211,7 @@ testLrational = TestLabel "Test lrational" $
   where p= [F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
          ++[T]++(opcodes M.! "CS")++[T,T,F,T]++(opcodes M.! "ES")
 testCr1 = TestLabel "Test crational from BStatement" $
-  TestCase $ assertEqual "" (p,BRational (-4) 1) (crational (p,BStatement 0))
+  TestCase $ assertEqual "" (p,BRational (-4) 1) (crational (p,BStatement))
   where p= [T]++(opcodes M.! "CS")++[T,T,F,F]++(opcodes M.! "ES")
          ++[F]++(opcodes M.! "CS")++[F,F,F,T]++(opcodes M.! "ES")
 testCr2 = TestLabel "Test crational from BRational" $
