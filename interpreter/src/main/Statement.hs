@@ -171,17 +171,17 @@ abomap =
   , ("TN" ,False)
   , ("TO" ,True )
   , ("TX" ,True )
-  , ("TA" ,False)
+  , ("TA" ,True )
   , ("TS" ,True )
   , ("TR" ,True )
   ]
 loadMS :: Integer -> BitSeries -> (BitSeries, DStmt a)
-loadMS i bs 
+loadMS i bs
   | b = (fst s2,((os++s1b++s2b,BStatement i),Free (MSB o s1s s2s)))
   | otherwise = (fst s1,((os++s1b,BStatement i),Free (MSA o s1s)))
   where (s,o,b) = opc bs abomap
         os = opcodes M.! o
-        s1 = loadStmt i bs
+        s1 = loadStmt i s
         s1b = fst $ fst $ snd s1
         s1s = snd $ snd s1
         s2 = loadStmt i $ fst s1
@@ -189,8 +189,8 @@ loadMS i bs
         s2s = snd $ snd s2
         opc :: BitSeries -> [(String,Bool)] -> (BitSeries,String,Bool)
         opc _ [] = error "No matched opcode!"
-        opc b (o:os) = if snd res then (fst res,fst o,snd o) else opc b os
-          where res = hasOpcode b (fst o)
+        opc bt (o:os) = if snd res then (fst res,fst o,snd o) else opc bt os
+          where res = hasOpcode bt (fst o)
 
 loadFS :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadFS i s
