@@ -165,7 +165,7 @@ loadFS i s
         mso = opcodes M.! "MS"
 
 loadIO :: Integer -> BitSeries -> (BitSeries, DStmt a)
-loadIO = undefined
+loadIO i b = let (e,(d,s))=loadStmt i b in (e,(d,Free (IOS s)))
 
 loadStmt :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadStmt i s

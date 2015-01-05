@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This module profides tests for the Statement module
+-- This module provides tests for the Statement module
 module Statement_Test where
 
 import BitSeries
@@ -108,6 +108,24 @@ testLsME = TestLabel "Test loading literal statement with extra" $
         p=(o "LM")++p1
         o t=opcodes M.! t
 
+-- I/O Statement Tests
+testIO = TestLabel "Test loading i/o statement" $
+  TestCase $ assertEqual "" ([],((p,BStatement 0),r)) (loadIO 0 p)
+  where r=Free (IOS (Free (LS (q, BInteger (-4)))))
+        q=[T]++(o "CS")++[T,T,F,F]++(o "ES")
+        p=(o "LS")++(o "LI")++q
+        o t=opcodes M.! t
+
+testIOE = TestLabel "Test loading i/o statement with extra" $
+  TestCase $ assertEqual "" (p2,((p,BStatement 0),r)) (loadIO 0 $ p++p2)
+  where r=Free (IOS (Free (LS (q, BString s))))
+        s=[T,T,F,F]
+        q=(o "CS")++s++(o "ES")
+        p=(o "LS")++(o "LT")++q
+        p2=[F,F,F,T,T,T,F,T,F,F,T,Terminate]
+        o t=opcodes M.! t
+
+
 -- Load Statement Tests
 testLtS = TestLabel "Test loading embedded literal string" $
   TestCase $ assertEqual "" ([],((p,BStatement 0),Free (LS (p1, BString s))))
@@ -125,9 +143,24 @@ testLtRE = TestLabel "Test loading embedded literal rational with extra" $
         p=(o "LS")++(o "LR")++p1
         o t=opcodes M.! t
 
+testLtI = TestLabel "Test loading embedded i/o statement" $
+  TestCase $ assertEqual "" ([],((p,BStatement 0),r)) (loadStmt 0 p)
+  where r=Free (IOS (Free (LS (q, BRational 7 (-9)))))
+        q=[F]++(o "CS")++[F,T,T,T]++(o "ES")++[T]++(o "CS")++[F,T,T,T]++(o "ES")
+        p=(o "IO")++(o "LS")++(o "LR")++q
+        o t=opcodes M.! t
+
+testLtIE = TestLabel "Test loading embedded i/o statement with extra" $
+  TestCase $ assertEqual "" (p2,((p,BStatement 0),r)) (loadStmt 0 $ p++p2)
+  where r=Free (IOS (Free (LS (q, BNmspId $ Right [Parent,Child [F,T,F,T]]))))
+        q=(o "RN")++(o "PN")++(o "CN")++(o "CS")++[F,T,F,T]++(o "ES")++(o "ERN")
+        p=(o "IO")++(o "LS")++(o "LN")++q
+        p2=[F,F,F,T,T,T,F,T,F,F,T,Terminate]
+        o t=opcodes M.! t
+
 mainList = TestLabel "Statements" $
   TestList [ testLsS, testLsSE, testLsI, testLsR, testLsN, testLsM, testLsME
-           , testLtS, testLtRE
+           , testIO, testIOE, testLtS, testLtRE, testLtI, testLtIE
            ]
 
 main = runTestTT $
