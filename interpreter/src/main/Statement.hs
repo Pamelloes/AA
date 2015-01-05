@@ -152,8 +152,45 @@ loadLS i s
 loadTS :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadTS = undefined
 
+abomap =
+  [ ("OP" ,True )
+  , ("OM" ,True )
+  , ("OT" ,True )
+  , ("OD" ,True )
+  , ("OE" ,True )
+  , ("OU" ,True )
+  , ("BN" ,False)
+  , ("BO" ,True )
+  , ("BX" ,True )
+  , ("BA" ,True )
+  , ("BE" ,True )
+  , ("BL" ,True )
+  , ("BLE",True )
+  , ("BG" ,True )
+  , ("BGE",True )
+  , ("TN" ,False)
+  , ("TO" ,True )
+  , ("TX" ,True )
+  , ("TA" ,False)
+  , ("TS" ,True )
+  , ("TR" ,True )
+  ]
 loadMS :: Integer -> BitSeries -> (BitSeries, DStmt a)
-loadMS = undefined
+loadMS i bs 
+  | b = (fst s2,((os++s1b++s2b,BStatement i),Free (MSB o s1s s2s)))
+  | otherwise = (fst s1,((os++s1b,BStatement i),Free (MSA o s1s)))
+  where (s,o,b) = opc bs abomap
+        os = opcodes M.! o
+        s1 = loadStmt i bs
+        s1b = fst $ fst $ snd s1
+        s1s = snd $ snd s1
+        s2 = loadStmt i $ fst s1
+        s2b = fst $ fst $ snd s2
+        s2s = snd $ snd s2
+        opc :: BitSeries -> [(String,Bool)] -> (BitSeries,String,Bool)
+        opc _ [] = error "No matched opcode!"
+        opc b (o:os) = if snd res then (fst res,fst o,snd o) else opc b os
+          where res = hasOpcode b (fst o)
 
 loadFS :: Integer -> BitSeries -> (BitSeries, DStmt a)
 loadFS i s
