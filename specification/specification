@@ -1,5 +1,5 @@
 ================================================================
-==   ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.5.0   ==
+==   ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.5.1   ==
 ================================================================
 
 ----
@@ -140,7 +140,8 @@ Examples:
 VI. Statements
 
   The statement data type is used to detail one or more actions that evaluate to a value. A complete statement is represented by the conceptual opcode STMT. Statements are broken up into three types: literal statements, which evaluate to the literal value of their contents; functional statements, which evaluate to a value derived from one or more other statements; and Input/Output statements, which pass a value out of the program and get a response.
-  Statements can be grouped into embedded and executable statements. Embedded statements are found within another statement. Unless explicitly stated otherwise, all statements are assumed to be embedded statements. Executable statements are "top-level" statements--they are not embedded in any other statement and are run directly. All executable statements are prefaced by an integer. The absolute value of this integer is the number of parameters for the executable statement. All executable statements have an associated Destination Namespace. An executable statement's Destination Namespace is the namespace that would become the Current Namespace if the executable statement was evaluated. The values of parameters are stored in children of the Destination Namespace. Each parameter's index is interpretted as a string and used as the name of the namespace that the parameter's value is stored in. Parameters' indexes are zero-based, so the first parameter will be stored in "0 ES", the second in "0 CS 0001 ES", and so forth. 
+  Statements can be grouped into embedded and executable statements. Embedded statements are found within another statement. Unless explicitly stated otherwise, all statements are assumed to be embedded statements. Executable statements are "top-level" statements--they are not embedded in any other statement and are run directly. Executable statements have an associated Destination Namespace--the namespace that would become the Current Namespace if the executable statement was evaluated.
+  When an executable statement is evaluated, an arbitrary number of parameters are provided. The values of parameters are stored in children of the Destination Namespace. The first parameter is stored in the child with the name "0001", the second in "0010", and so forth. The indexes are expanded in groups of four bits little-endian style, so the sixteenth parameter will be in the namespace with the name "00001000". The number of parameters is determined by the statement evaluating the executable statement, not by the executable statement itself. Parameters not provided will have the default value.
 
 A. Literal Statements
 
@@ -162,12 +163,12 @@ B. Functional Statements
   Control statements serve two purposes: to manipulate namespaces' values and to conditionally execute statements. Control statements begin, after the FS opcode, with the TS (0) opcode.
   The first two control statements directly manipulate the value of a namespace. The assign statement consists of the AS (00) opcode followed by two statements. The first statements' value is interpeted as a namespace id. The value of the namespace identified by the first statement is set to the result of the second statement. An assign statement evaluates to the value assigned to the namespace.
   The read statement consists of the RS (01) opcode followed by one statement. This statement's value is interpreted as a namespace id. The read statement evaluates to the value of the namespace identified by the statement.
-  The evaluate statement consists of with the ET (100) opcode followed by one or more statements. The first statement is interpreted as a namespace id. The identified namespace is then interpreted as an executable statement and executed. The remaining statements are the values of the executable statement's parameters. There is one statement per parameter. For instance, if the indicated namespace contains an executable statement with zero parameters, the evaluate statement will only have one statement and if the indicated namespace contains an executable statement with with four parameters, the evaluate statement will have five statements.
+  The evaluate statement consists of with the ET (100) opcode followed by two or more statements. The first statement is interpreted as a namespace id and the second statement is determined as an integer. The magnitude of the second statement determines how many parameters will be provided to the executable statement. There will be one additional statement per parameter. When evaluating an executable statement, all parameter namespaces are set to the specified values and then the executable statement is executed.
 
 Examples:
-  FS TS AS LS LN NMSP LS LI INT            Sets the value of NMSP to INT
-  FS TS RS LS LN NMSP                      Evaluates to the value of NMSP
-  FS TS ET LS LN NMSP STMT STMT STMT       Interprets NMSP as an executable statement and executes it. The executable statement has three inputs, and each one is specified by an STMT. This statement evaluates to the result of the executable statement
+  FS TS AS LS LN NMSP LS LI INT                      Sets the value of NMSP to INT
+  FS TS RS LS LN NMSP                                Evaluates to the value of NMSP
+  FS TS ET LS LN NMSP LS LI 0 CS 0010 ES STMT STMT   Interprets NMSP as an executable statement and executes it. The second statement has a magnitude of two, thus there are two additional statements for the parameters "0001" and "0010" respectively.
 
   The next three statements execute statements sequentially. The sequence statement consists of the SQ (101) opcode followed by two statements. The sequence statement evaluates the first statement, discards its value, and then evaluates to the value of the second statement.
   The if statement consists of the IF (110) opcode followed by three statements. The if statement starts by evaluating the first statement. If it evaluates to true, then the if statement evaluates to the value of the second statement. Otherwise, the if statement evaluates to the value of the third statement.
@@ -299,6 +300,8 @@ Appendix B. Conceptual Opcodes
 ----
 Appendix C. Change Log
 
+0.5.1
+- Moved the number of parameters in an executable statement from the statement's definition to the statement evaluating the statement.
 0.5
 - Made several breaking opcode changes
 - Removed unneeded sections and completed missing ones.
