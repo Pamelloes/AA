@@ -40,7 +40,7 @@ instance (Eq a) => Eq (Stmt a) where
   (LS a)==(LS b)=a==b
   (AS a b)==(AS c d)=(a==c)&&(b==d)
   (RS a)==(RS b)=a==b
-  (ET a)==(ET b)=a==b
+  (ET a b)==(ET c d)=(a==c)&&(b==d)
   (SQ a b)==(SQ c d)=(a==c)&&(b==d)
   (IF a b c)==(IF d e f)=(a==d)&&(b==e)&&(c==f)
   (DW a b)==(DW c d)=(a==c)&&(b==d)

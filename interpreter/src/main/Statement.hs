@@ -118,7 +118,7 @@ instance Functor Stmt where
   fmap f (LS z) = LS z
   fmap f (AS a b) = AS (f a) (f b)
   fmap f (RS a) = RS (f a)
-  fmap f (ET a) = ET (fmap f a)
+  fmap f (ET a b) = ET (f a) (fmap f b)
   fmap f (SQ a b) = SQ (f a) (f b)
   fmap f (IF a b c) = IF (f a) (f b) (f c)
   fmap f (DW a b) = DW (f a) (f b)
