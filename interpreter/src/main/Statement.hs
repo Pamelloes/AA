@@ -104,7 +104,7 @@ data Stmt next = LS DataType
               -- Control Statements
                | AS next next
                | RS next
-               | ET [next]
+               | ET next [next]
                | SQ next next
                | IF next next next
                | DW next next
@@ -149,7 +149,38 @@ loadLS s
                 ds=(dt,Free (LS d))
 
 loadTS :: BitSeries -> (BitSeries, DStmt a)
-loadTS = undefined
+loadTS s
+  | snd as = let s1 = loadStmt $ fst as in
+    let s2 = loadStmt $ fst s1 in
+      (fst s2,((aso++bts s1++bts s2,BStatement),Free (AS (btf s1) (btf s2))))
+  | snd rs = let s1 = loadStmt $ fst rs in
+    (fst s1,((rso++bts s1,BStatement),Free (RS (btf s1))))
+  | snd et = undefined
+  | snd sq = let s1 = loadStmt $ fst sq in
+    let s2 = loadStmt $ fst s1 in
+      (fst s2,((sqo++bts s1++bts s2,BStatement),Free (SQ (btf s1) (btf s2))))
+  | snd iff = let s1 = loadStmt $ fst iff in
+    let s2 = loadStmt $ fst s1 in
+      let s3 = loadStmt $ fst s2 in
+        (fst s3,((ifo++bts s1++bts s2++bts s3,BStatement),
+          Free (IF (btf s1) (btf s2) (btf s3))))
+  | snd dw = let s1 = loadStmt $ fst dw in
+    let s2 = loadStmt $ fst s1 in
+      (fst s2,((dwo++bts s1++bts s2,BStatement),Free (DW (btf s1) (btf s2))))
+  where bts = fst . fst .snd
+        btf = snd . snd
+        as = hasOpcode s "AS"
+        aso = opcodes M.! "AS"
+        rs = hasOpcode s "RS"
+        rso = opcodes M.! "RS"
+        et = hasOpcode s "ET"
+        eto = opcodes M.! "ET"
+        sq = hasOpcode s "SQ"
+        sqo = opcodes M.! "SQ"
+        iff = hasOpcode s "IF"
+        ifo = opcodes M.! "IF"
+        dw = hasOpcode s "DW"
+        dwo = opcodes M.! "DW"
 
 abomap =
   [ ("OP" ,True )
