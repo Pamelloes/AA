@@ -168,7 +168,7 @@ loadTS s
       (fst s2,((dwo++bts s1++bts s2,BStatement),Free (DW (btf s1) (btf s2))))
   | snd et = let s1 = loadStmt $ fst et in
     let (s2a,(s2,BInteger x)) = pinteger $ fst s1 in
-      let (s3,st,r) = ld s2a x in
+      let (s3,st,r) = ld s2a (abs x) in
         (r,((eto++bts s1++s2++s3,BStatement),Free (ET (btf s1) st)))
   where bts = fst . fst .snd
         btf = snd . snd
