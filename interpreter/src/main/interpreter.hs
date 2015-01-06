@@ -28,6 +28,7 @@ import Data.Bits
 import qualified Data.ByteString.Lazy as B
 import Data.Word
 import Options.Applicative
+import Pretty
 import Statement
 
 data Cmdline = Cmdline
@@ -52,10 +53,10 @@ up w = [h,g,f,e,d,c,b,a]
 run :: Cmdline -> IO ()
 run c = do
   p <- B.readFile $ file c
-  let prog = B.foldr (\b ac -> (up b)++ac) [] p
-  print prog
+  let prog = (B.foldr (\b ac -> (up b)++ac) [] p)++(repeat Terminate)
   let mnst = loadStmt prog
-  print mnst
+  --print (snd mnst) -- We can't print the first part because it's infinite...
+  pretty (snd $ snd mnst)
 
 main :: IO ()
 main = execParser opts >>= run
