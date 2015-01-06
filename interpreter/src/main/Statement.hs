@@ -155,7 +155,6 @@ loadTS s
       (fst s2,((aso++bts s1++bts s2,BStatement),Free (AS (btf s1) (btf s2))))
   | snd rs = let s1 = loadStmt $ fst rs in
     (fst s1,((rso++bts s1,BStatement),Free (RS (btf s1))))
-  | snd et = undefined
   | snd sq = let s1 = loadStmt $ fst sq in
     let s2 = loadStmt $ fst s1 in
       (fst s2,((sqo++bts s1++bts s2,BStatement),Free (SQ (btf s1) (btf s2))))
@@ -167,20 +166,29 @@ loadTS s
   | snd dw = let s1 = loadStmt $ fst dw in
     let s2 = loadStmt $ fst s1 in
       (fst s2,((dwo++bts s1++bts s2,BStatement),Free (DW (btf s1) (btf s2))))
+  | snd et = let s1 = loadStmt $ fst et in
+    let (s2a,(s2,BInteger x)) = pinteger $ fst s1 in
+      let (s3,st,r) = ld s2a x in
+        (r,((eto++bts s1++s2++s3,BStatement),Free (ET (btf s1) st)))
   where bts = fst . fst .snd
         btf = snd . snd
+        ld :: BitSeries -> Integer -> (BitSeries,[Free Stmt ()],BitSeries)
+        ld s 0 = ([],[],s)
+        ld s n = let s1 = loadStmt s in
+          let (a,b,c) = ld (fst s1) (n-1) in
+            (bts s1++a,(btf s1):b,c)
         as = hasOpcode s "AS"
         aso = opcodes M.! "AS"
         rs = hasOpcode s "RS"
         rso = opcodes M.! "RS"
-        et = hasOpcode s "ET"
-        eto = opcodes M.! "ET"
         sq = hasOpcode s "SQ"
         sqo = opcodes M.! "SQ"
         iff = hasOpcode s "IF"
         ifo = opcodes M.! "IF"
         dw = hasOpcode s "DW"
         dwo = opcodes M.! "DW"
+        et = hasOpcode s "ET"
+        eto = opcodes M.! "ET"
 
 abomap =
   [ ("OP" ,True )
