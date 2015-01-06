@@ -294,7 +294,7 @@ testMBE = TestLabel "Test loading 2-var mathematical statement with extra" $
 
 -- Functional Statement Tests
 testTsE1 = TestLabel "Test loading functional execute statement - 1 parameters" $
-  TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadTS p)
+  TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadFS p)
   where r=Free (ET (Free (LS (q, BRational 15 (-1)))) [
            Free (LS (q1,BString [T,T,F,F]))
            ])
@@ -315,7 +315,7 @@ testTsDE = TestLabel "Test loading functional do while statement with extra" $
         p2=[T,F,F,F,F,F,T,F,T,Terminate]
         o t=opcodes M.! t
 
-testTsM = TestLabel "Test loading functinoal 2-var mathematical statement" $
+testTsM = TestLabel "Test loading functional 2-var mathematical statement" $
   TestCase $ assertEqual "" ([],((p,BStatement),r)) (loadFS p)
   where r=Free (MSB "OD" (Free (LS (q, BInteger 7))) 
                          (Free (LS (q2, BRational 5 9))))

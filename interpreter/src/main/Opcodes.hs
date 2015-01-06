@@ -86,7 +86,7 @@ opcodes=M.fromList
  ,("TO",[T,T,T,T,F,F,F])
  ,("TX",[T,T,T,T,F,F,T])
  ,("TA",[T,T,T,T,F,T,F])
- ,("TS",[T,T,T,T,F,T,T])
+ ,("TH",[T,T,T,T,F,T,T])
  ,("TR",[T,T,T,T,T])
  ]
 

@@ -210,7 +210,7 @@ abomap =
   , ("TO" ,True )
   , ("TX" ,True )
   , ("TA" ,True )
-  , ("TS" ,True )
+  , ("TH" ,True )
   , ("TR" ,True )
   ]
 loadMS :: BitSeries -> (BitSeries, DStmt a)
