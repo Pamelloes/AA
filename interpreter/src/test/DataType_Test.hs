@@ -225,5 +225,65 @@ rationalTests = TestLabel "Rational" $
            , testRL48, testRL88, testRExtra, testLrational, testCr1, testCr2
            ]
 
-mainList = TestLabel "Primitives" $ TestList [ strTests, intTests, rationalTests ]
+-- Namespace Tests
+maid :: ANmsp -> DataType
+maid x = ([],BNmspId $ Left x)
+
+mrid :: RNmsp -> DataType
+mrid x = ([],BNmspId $ Right x)
+
+testPNmspA = TestLabel "Test loading absolute namespace" $
+  TestCase $ assertEqual "" ([],(p,snd $ maid id)) (pnmsp p)
+  where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
+        p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
+          ++(o "CS")++id!!1++(o "ES")++(o "CN")++(o "CS")++id!!2
+          ++(o "ES")++(o "EN")
+        o s=opcodes M.! s
+
+testPNmspR = TestLabel "Test loading relative namespace" $
+  TestCase $ assertEqual "" ([],(p,snd $ mrid id)) (pnmsp p)
+  where id=[Parent,Child [F,F,F,F], Child [T,T,T,T]]
+        p=(o "RN")++(o "PN")++(o "CN")++(o "CS")++[F,F,F,F]++(o "ES")
+          ++(o "CN")++(o "CS")++[T,T,T,T]++(o "ES")++(o "ERN")
+        o s=opcodes M.! s
+
+testPNmspExtra = TestLabel "Test loading namespace with extra program" $
+  TestCase $ assertEqual "" (e,(p,snd $ maid id)) (pnmsp (p++e))
+    where id=[]
+          p=(o "AN")++(o "EN")
+          e=replicate 103 F 
+          o s=opcodes M.! s
+
+testPNmspF = TestLabel "Test loading short namespace" $
+  TestCase $ assertException P.opError (pnmsp [])
+
+testPNmspF2 = TestLabel "Test loading short namespace 2" $
+  TestCase $ assertException strError (pnmsp p)
+  where p=(o "AN")++(o "CN")++(o "CS")
+        o s=opcodes M.! s
+
+testLNmsp = TestLabel "Test lnmsp" $
+  TestCase $ assertEqual "" (snd $ maid id) (lnmsp p)
+  where id=[[T,T,T,T]]
+        p=(o "AN")++(o "CN")++(o "CS")++[T,T,T,T]++(o "ES")++(o "EN")
+        o s=opcodes M.! s
+
+testCn1 = TestLabel "Test cnmsp 1" $
+  TestCase $ assertEqual "" (maid id) (cnmsp $ maid id)
+  where id=[[T,T,F,F]]
+
+testCn2 = TestLabel "Test cnmsp 2" $
+  TestCase $ assertEqual "" (p,snd $ maid id) (cnmsp (p,BStatement))
+  where id=[[F,T,F,F],[T,F,F,F]]
+        p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
+         ++(o "CS")++id!!1++(o "ES")++(o "EN")
+        o s=opcodes M.! s
+
+nmspTests = TestLabel "Namespace" $
+  TestList [ testPNmspA, testPNmspR, testPNmspExtra, testPNmspF, testPNmspF2
+           , testLNmsp, testCn1, testCn2 
+           ]
+
+mainList = TestLabel "Primitives" $ 
+  TestList [ strTests, intTests, rationalTests, nmspTests ]
 main = runTestTT $ TestList [ B.mainList, P.mainList, mainList]

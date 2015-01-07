@@ -29,7 +29,6 @@ import Control.Exception
 import qualified Data.Map as M
 import DataType
 import qualified DataType_Test as D
-import qualified Namespaces_Test as N
 import Opcodes
 import qualified Opcodes_Test as O
 import Statement
@@ -412,4 +411,4 @@ mainList = TestLabel "Statements" $
            ]
 
 main = runTestTT $
-  TestList [ B.mainList, O.mainList, D.mainList, N.mainList, mainList ]
+  TestList [ B.mainList, O.mainList, D.mainList, mainList ]

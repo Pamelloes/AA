@@ -20,20 +20,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This is the bridge between HUnit tests and Cabal.
-module Main where
+-- This module evaluates a program's AST in accordance with Sections VI and VII
+-- of the Advanced Assembly 0.5.1 specification.
+module Evaluate where
 
-import qualified BitSeries_Test as B
-import qualified DataType_Test as D
-import qualified Evaluate_Test as E
-import qualified Opcodes_Test as O
-import qualified Statement_Test as S
-import System.Exit (exitFailure)
-import Test.HUnit
+import BitSeries
+import qualified Data.Map as M
+import DataType
+import Opcodes
+import Statement
 
-main = do
-  counts <- runTestTT $ 
-      TestList [ B.mainList, O.mainList, D.mainList, S.mainList, E.mainList ]
-  if (errors counts/= 0) || (failures counts /= 0) then
-    exitFailure
-  else return ()
+-- Namespace definitions
+type Namespaces = M.Map ANmsp DataType
+
+defaultNamespace :: BitSeries -> Namespaces
+defaultNamespace p = M.fromList [([],(p,BStatement))]
+
+nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
+nmspValue a d n = if M.member i n then n M.! i else (repeat Terminate,BString [])
+  where i=gnmsp a d
+
+nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
+nmspValueSet a d = M.insert i
+  where i = gnmsp a d

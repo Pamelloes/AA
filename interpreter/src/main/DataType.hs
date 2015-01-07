@@ -38,8 +38,6 @@ data Primitive = BString BitSeries | BInteger Integer | BRational Integer Intege
                | BNmspId (Either ANmsp RNmsp) | BStatement deriving Show
 type DataType = (BitSeries,Primitive) 
 
-type Namespaces = M.Map ANmsp DataType
-
 -- Strings
 pstring :: BitSeries -> (BitSeries,DataType)
 pstring [] = error "lstring: Reached program end"
@@ -139,14 +137,3 @@ gnmsp :: ANmsp -> DataType -> ANmsp
 gnmsp _ (_,BNmspId (Left i)) = i
 gnmsp b (s,BNmspId (Right r)) = gnmsp b (s,BNmspId (Left (anmsp b r)))
 gnmsp b s = gnmsp b (cnmsp s)
-
-defaultNamespace :: BitSeries -> Namespaces
-defaultNamespace p = M.fromList [([],(p,BStatement))]
-
-nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
-nmspValue a d n = if M.member i n then n M.! i else (repeat Terminate,BString [])
-  where i=gnmsp a d
-
-nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
-nmspValueSet a d = M.insert i
-  where i = gnmsp a d

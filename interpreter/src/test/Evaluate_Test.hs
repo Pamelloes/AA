@@ -20,8 +20,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This Module contains tests for the DataType module's Namespace section.
-module Namespaces_Test where
+-- This module provides tests for the Evaluate module
+module Evaluate_Test where
 
 import BitSeries
 import qualified BitSeries_Test as B
@@ -29,8 +29,11 @@ import Control.Exception
 import qualified Data.Map as M
 import DataType
 import qualified DataType_Test as D
+import Evaluate
 import Opcodes
 import qualified Opcodes_Test as O
+import Statement
+import qualified Statement_Test as S
 import Test.HUnit
 import TestException
 
@@ -123,59 +126,11 @@ testFTEq = TestLabel "Test False/Terminate equivalence" $
         k2=[[F,T,F,T],[T,F,T,F],replicate 4 F]
         v=([F,F,T,T,F,F,T,T,T],BStatement)
 
--- Namespace Parsing Tests
-testPNmspA = TestLabel "Test loading absolute namespace" $
-  TestCase $ assertEqual "" ([],(p,snd $ maid id)) (pnmsp p)
-  where id=[[T,F,T,F],replicate 4 F,replicate 4 T]
-        p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
-          ++(o "CS")++id!!1++(o "ES")++(o "CN")++(o "CS")++id!!2
-          ++(o "ES")++(o "EN")
-        o s=opcodes M.! s
-
-testPNmspR = TestLabel "Test loading relative namespace" $
-  TestCase $ assertEqual "" ([],(p,snd $ mrid id)) (pnmsp p)
-  where id=[Parent,Child [F,F,F,F], Child [T,T,T,T]]
-        p=(o "RN")++(o "PN")++(o "CN")++(o "CS")++[F,F,F,F]++(o "ES")
-          ++(o "CN")++(o "CS")++[T,T,T,T]++(o "ES")++(o "ERN")
-        o s=opcodes M.! s
-
-testPNmspExtra = TestLabel "Test loading namespace with extra program" $
-  TestCase $ assertEqual "" (e,(p,snd $ maid id)) (pnmsp (p++e))
-    where id=[]
-          p=(o "AN")++(o "EN")
-          e=replicate 103 F 
-          o s=opcodes M.! s
-
-testPNmspF = TestLabel "Test loading short namespace" $
-  TestCase $ assertException O.opError (pnmsp [])
-
-testPNmspF2 = TestLabel "Test loading short namespace 2" $
-  TestCase $ assertException D.strError (pnmsp p)
-  where p=(o "AN")++(o "CN")++(o "CS")
-        o s=opcodes M.! s
-
-testLNmsp = TestLabel "Test lnmsp" $
-  TestCase $ assertEqual "" (snd $ maid id) (lnmsp p)
-  where id=[[T,T,T,T]]
-        p=(o "AN")++(o "CN")++(o "CS")++[T,T,T,T]++(o "ES")++(o "EN")
-        o s=opcodes M.! s
-
-testCn1 = TestLabel "Test cnmsp 1" $
-  TestCase $ assertEqual "" (maid id) (cnmsp $ maid id)
-  where id=[[T,T,F,F]]
-
-testCn2 = TestLabel "Test cnmsp 2" $
-  TestCase $ assertEqual "" (p,snd $ maid id) (cnmsp (p,BStatement))
-  where id=[[F,T,F,F],[T,F,F,F]]
-        p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
-         ++(o "CS")++id!!1++(o "ES")++(o "EN")
-        o s=opcodes M.! s
-
-mainList = TestLabel "Namespaces" $
+mainList = TestLabel "Evaluate" $
   TestList [ utilList, testDefaultNamespace, testANmspValue, testRNmspValue
            , testANmspDefValue, testRNmspDefValue, testANmspValueSet
            , testRNmspValueSet, testANmspValue2, testRNmspValue2, testFTEq
-           , testPNmspA, testPNmspR, testPNmspExtra, testPNmspF, testPNmspF2
-           , testLNmsp, testCn1, testCn2 
            ]
-main = runTestTT $ TestList [ B.mainList, O.mainList, D.mainList, mainList ]
+
+main = runTestTT $
+  TestList [ B.mainList, O.mainList, D.mainList, S.mainList, mainList ]
