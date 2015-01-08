@@ -33,11 +33,12 @@ type Opcode = String
 -- If BitSeries starts with Opcode, result BitSeries has the opcode removed.
 hasOpcode :: BitSeries -> Opcode -> (BitSeries,Bool)
 hasOpcode s k 
-  | length s>=length pattern = if match then (reduced, True) else (s, False)
+  | length (take l s) == l = if m then (r,True) else (s,False)
   | otherwise = error "hasOpcode: Reached program end"
-  where pattern=opcodes M.! k
-        match = isPrefixOf pattern s
-        reduced = drop (length pattern) s
+  where p = opcodes M.! k
+        m = isPrefixOf p s
+        l = length p
+        r = drop l s
 
 opcodes=M.fromList
  [("ES",[F])

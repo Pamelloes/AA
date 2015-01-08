@@ -104,7 +104,7 @@ evaluate (Free (IF a b c)) s = if dtToBool av then rb else rc
   where (s2,av)    = evaluate a s
         rb         = evaluate b s2
         rc         = evaluate c s2
-evaluate (Free (DW a b))   s = 
+evaluate (Free (DW a b))   s = dw s
   where dw s = let (s2,v) = exc s in
                  let (s3,c) = cnd s in
                    if dtToBool c then dw s3 else (s3,v)
