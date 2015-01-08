@@ -53,6 +53,14 @@ nmspValueSet' a b c = (s a,c)
   where s = second . const $ nmspValueSet (fst a) b c (snd a)
 
 -- Utilities
+intToBS :: Integer -> [Bit]
+intToBS 0 = []
+intToBS x = let (i,bs) = fbit x [] in bs++intToBS i
+  where fbit :: Integer -> [Bit] -> (Integer,[Bit])
+        fbit i s
+          | length s == 4  = (i,s)
+          | otherwise       = fbit (i`div`2) (b:s) 
+          where b = if i `mod` 2 == 0 then F else T
 {-
 estring   a = first cstring   . (evaluate a)
 einteger  a = first cinteger  . (evaluate a)
@@ -64,23 +72,30 @@ enmsp     a = first cnmsp     . (evaluate a)
 evaluate :: Free Stmt () -> State -> (State,DataType)
 evaluate (Free (LS a))   s = (s,a)
 evaluate (Free (AS a b)) s = nmspValueSet' s3 av bv
-  where (s2,av) = evaluate a s
-        (s3,bv) = evaluate b s2
+  where (s2,av)   = evaluate a s
+        (s3,bv)   = evaluate b s2
 evaluate (Free (RS a))   s = nmspValue' s2 av
-  where (s2,av) = evaluate a s
+  where (s2,av)   = evaluate a s
+evaluate (Free (ET a b)) s = evaluate f s3
+  where (s2,av)   = evaluate a s
+        n         = gnmsp (fst s2) av
+        nid i     = n++[intToBS i]
+        (s3,_)    = foldl (\(s,i) a -> let (t,u) = evaluate a s in
+                          ((fst t,M.insert (nid i) u (snd t)),i+1))
+                        (s2,1) b
+        (_,(_,f)) = loadStmt $ fst $ nmspValue (fst s3) av (snd s3)
 {-
-evaluate (Free (RS a)) = "\nRetrieve: "++showProgram a
-showProgram (Free (ET a b)) = "\nExecute:\nNmsp: "++showProgram a++snd c
+evaluate (Free (ET a b)) = "\nExecute:\nNmsp: "++showProgram a++snd c
   where c = foldl (\(i,s) a->(i+1,s++"\n("++show (i+1)++") "++showProgram a))
                   (0,"") b
-showProgram (Free (SQ a b)) = "\nSequence:\n(1) "++showProgram a++"\b(2) "
+evaluate (Free (SQ a b)) = "\nSequence:\n(1) "++showProgram a++"\b(2) "
   ++showProgram b
-showProgram (Free (IF a b c)) = "\nIf: "++showProgram a++"\nThen: "++showProgram b
+evaluate (Free (IF a b c)) = "\nIf: "++showProgram a++"\nThen: "++showProgram b
   ++"\nElse: "++showProgram c
-showProgram (Free (DW a b)) = "\nDo: "++showProgram a++"\nWhile: "
+evaluate (Free (DW a b)) = "\nDo: "++showProgram a++"\nWhile: "
   ++showProgram b
-showProgram (Free (MSA a b)) = "\nOperation "++a++": "++showProgram b
-showProgram (Free (MSB a b c)) = "\nOperation "++a++":\n(1) "++showProgram b
+evaluate (Free (MSA a b)) = "\nOperation "++a++": "++showProgram b
+evalute (Free (MSB a b c)) = "\nOperation "++a++":\n(1) "++showProgram b
   ++"\n(2) "++showProgram c
-showProgram (Free (IOS a)) = "\nI/O: "++showProgram a
+evaluate (Free (IOS a)) = "\nI/O: "++showProgram a
 -}
