@@ -26,6 +26,7 @@ module Evaluate where
 
 import BitSeries
 import Control.Arrow
+import Data.List
 import qualified Data.Map as M
 import DataType
 import Opcodes
@@ -61,6 +62,18 @@ intToBS x = let (i,bs) = fbit x [] in bs++intToBS i
           | length s == 4  = (i,s)
           | otherwise       = fbit (i`div`2) (b:s) 
           where b = if i `mod` 2 == 0 then F else T
+
+dtToBool :: DataType -> Bool
+dtToBool (_,BString []) = False
+dtToBool (_,BInteger 0) = False
+dtToBool (_,BRational 0 x) = x == 0
+dtToBool (_,BNmspId (Left [])) = False
+dtToBool (x,BStatement)
+  | isPrefixOf ((o "LS")++(o "LT")++(o "ES")) x = False
+  | otherwise = True
+  where o t = opcodes M.! t
+dtToBool _ = True
+
 {-
 estring   a = first cstring   . (evaluate a)
 einteger  a = first cinteger  . (evaluate a)
@@ -70,30 +83,34 @@ enmsp     a = first cnmsp     . (evaluate a)
 
 -- Evaluate definitions
 evaluate :: Free Stmt () -> State -> (State,DataType)
-evaluate (Free (LS a))   s = (s,a)
-evaluate (Free (AS a b)) s = nmspValueSet' s3 av bv
-  where (s2,av)   = evaluate a s
-        (s3,bv)   = evaluate b s2
-evaluate (Free (RS a))   s = nmspValue' s2 av
-  where (s2,av)   = evaluate a s
-evaluate (Free (ET a b)) s = evaluate f s3
-  where (s2,av)   = evaluate a s
-        n         = gnmsp (fst s2) av
-        nid i     = n++[intToBS i]
-        (s3,_)    = foldl (\(s,i) a -> let (t,u) = evaluate a s in
+evaluate (Free (LS a))     s = (s,a)
+evaluate (Free (AS a b))   s = nmspValueSet' s3 av bv
+  where (s2,av)    = evaluate a s
+        (s3,bv)    = evaluate b s2
+evaluate (Free (RS a))     s = nmspValue' s2 av
+  where (s2,av)    = evaluate a s
+evaluate (Free (ET a b))   s = ((fst s,nm),d)
+  where (s2,av)    = evaluate a s
+        n          = gnmsp (fst s2) av
+        nid i      = n++[intToBS i]
+        (s3,_)     = foldl (\(s,i) a -> let (t,u) = evaluate a s in
                           ((fst t,M.insert (nid i) u (snd t)),i+1))
                         (s2,1) b
-        (_,(_,f)) = loadStmt $ fst $ nmspValue (fst s3) av (snd s3)
+        (_,(_,f))  = loadStmt $ fst $ nmspValue (fst s3) av (snd s3)
+        ((_,nm),d) = evaluate f (n,snd s3)
+evaluate (Free (SQ a b))   s = evaluate b s2
+  where (s2,_)     = evaluate a s
+evaluate (Free (IF a b c)) s = if dtToBool av then rb else rc
+  where (s2,av)    = evaluate a s
+        rb         = evaluate b s2
+        rc         = evaluate c s2
+evaluate (Free (DW a b))   s = 
+  where dw s = let (s2,v) = exc s in
+                 let (s3,c) = cnd s in
+                   if dtToBool c then dw s3 else (s3,v)
+        exc s = evaluate a s
+        cnd s = evaluate b s
 {-
-evaluate (Free (ET a b)) = "\nExecute:\nNmsp: "++showProgram a++snd c
-  where c = foldl (\(i,s) a->(i+1,s++"\n("++show (i+1)++") "++showProgram a))
-                  (0,"") b
-evaluate (Free (SQ a b)) = "\nSequence:\n(1) "++showProgram a++"\b(2) "
-  ++showProgram b
-evaluate (Free (IF a b c)) = "\nIf: "++showProgram a++"\nThen: "++showProgram b
-  ++"\nElse: "++showProgram c
-evaluate (Free (DW a b)) = "\nDo: "++showProgram a++"\nWhile: "
-  ++showProgram b
 evaluate (Free (MSA a b)) = "\nOperation "++a++": "++showProgram b
 evalute (Free (MSB a b c)) = "\nOperation "++a++":\n(1) "++showProgram b
   ++"\n(2) "++showProgram c

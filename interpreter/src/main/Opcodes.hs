@@ -25,6 +25,7 @@ THE SOFTWARE.
 module Opcodes where
 
 import BitSeries
+import Data.List
 import qualified Data.Map as M
 
 type Opcode = String
@@ -32,11 +33,10 @@ type Opcode = String
 -- If BitSeries starts with Opcode, result BitSeries has the opcode removed.
 hasOpcode :: BitSeries -> Opcode -> (BitSeries,Bool)
 hasOpcode s k 
-  | length z==length pattern = if match then (reduced, True) else (s, False)
+  | length s>=length pattern = if match then (reduced, True) else (s, False)
   | otherwise = error "hasOpcode: Reached program end"
   where pattern=opcodes M.! k
-        z = zip pattern s
-        match = fst (foldl (\(a,_) (x,y) -> (a&&x==y,False)) (True,False) z) == True
+        match = isPrefixOf pattern s
         reduced = drop (length pattern) s
 
 opcodes=M.fromList
