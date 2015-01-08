@@ -26,6 +26,7 @@ module Evaluate where
 
 import BitSeries
 import Control.Arrow
+import Data.Char
 import Data.List
 import qualified Data.Map as M
 import DataType
@@ -81,35 +82,60 @@ erational a = first crational . (evaluate a)
 enmsp     a = first cnmsp     . (evaluate a)
 -}
 
+-- Stopgap I/O handler
+handleIO :: DataType -> IO DataType
+handleIO a@(_,BString s) = lg a s
+  where lg :: DataType -> BitSeries -> IO DataType
+        lg a [] = do
+          putChar '\n'
+          return a
+        lg d s = do
+          let (a,b) = splitAt 8 s
+          putChar $ chr (fromIntegral $ bsToInt a)
+          lg d b
+handleIO d = handleIO (cstring d)
+
 -- Evaluate definitions
-evaluate :: Free Stmt () -> State -> (State,DataType)
-evaluate (Free (LS a))     s = (s,a)
-evaluate (Free (AS a b))   s = nmspValueSet' s3 av bv
-  where (s2,av)    = evaluate a s
-        (s3,bv)    = evaluate b s2
-evaluate (Free (RS a))     s = nmspValue' s2 av
-  where (s2,av)    = evaluate a s
-evaluate (Free (ET a b))   s = ((fst s,nm),d)
-  where (s2,av)    = evaluate a s
-        n          = gnmsp (fst s2) av
-        nid i      = n++[intToBS i]
-        (s3,_)     = foldl (\(s,i) a -> let (t,u) = evaluate a s in
-                          ((fst t,M.insert (nid i) u (snd t)),i+1))
-                        (s2,1) b
-        (_,(_,f))  = loadStmt $ fst $ nmspValue (fst s3) av (snd s3)
-        ((_,nm),d) = evaluate f (n,snd s3)
-evaluate (Free (SQ a b))   s = evaluate b s2
-  where (s2,_)     = evaluate a s
-evaluate (Free (IF a b c)) s = if dtToBool av then rb else rc
-  where (s2,av)    = evaluate a s
-        rb         = evaluate b s2
-        rc         = evaluate c s2
-evaluate (Free (DW a b))   s = dw s
-  where dw s = let (s2,v) = exc s in
-                 let (s3,c) = cnd s in
-                   if dtToBool c then dw s3 else (s3,v)
-        exc s = evaluate a s
-        cnd s = evaluate b s
+evaluate :: Free Stmt () -> State -> IO (State,DataType)
+evaluate (Free (LS a))     s = return (s,a)
+evaluate (Free (AS a b))   s = do
+  (s2,av) <- evaluate a s
+  (s3,bv) <- evaluate b s2
+  return $ nmspValueSet' s3 av bv
+evaluate (Free (RS a))     s = do
+  (s2,av) <- evaluate a s
+  return $ nmspValue' s2 av
+evaluate (Free (ET a b))   s = do
+  (s2,av) <- evaluate a s
+  let n = gnmsp (fst s2) av
+  let nid i = n++[intToBS i]
+  (s3,_) <- foldl (\v a -> do {
+      (s,i)<-v;
+      (t,u) <- evaluate a s;
+      return ((fst t,M.insert (nid i) u (snd t)),i+1)
+    }) (return (s2,1)) b
+  let (_,(_,f)) = loadStmt $ fst $ nmspValue (fst s3) av (snd s3)
+  ((_,nm),d) <- evaluate f (n,snd s3)
+  return $ ((fst s,nm),d)
+evaluate (Free (SQ a b))   s = do
+  (s2,_) <- evaluate a s
+  evaluate b s2
+evaluate (Free (IF a b c)) s = do
+  (s2,av) <- evaluate a s
+  if dtToBool av
+    then evaluate b s2
+    else evaluate c s2
+evaluate (Free (DW a b))   s = do
+  let dw s = do {
+    (s2,v) <- evaluate a s; 
+    (s3,c) <- evaluate b s2;
+    if dtToBool c then dw s3 else return (s3,v)
+  }
+  dw s
+evaluate (Free (IOS a))    s = do
+  (s2,av) <- evaluate a s
+  r <- handleIO av
+  return $ (s2,r)
 {-
 evaluate (Free (MSA a b)) = "\nOperation "++a++": "++showProgram b
 evalute (Free (MSB a b c)) = "\nOperation "++a++":\n(1) "++showProgram b
