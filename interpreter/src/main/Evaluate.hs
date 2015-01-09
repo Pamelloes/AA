@@ -27,6 +27,7 @@ module Evaluate where
 import BitSeries
 import Control.Arrow
 import Data.Char
+import qualified Data.Data as D
 import Data.List
 import qualified Data.Map as M
 import DataType
@@ -55,14 +56,19 @@ nmspValueSet' a b c = (s a,c)
   where s = second . const $ nmspValueSet (fst a) b c (snd a)
 
 -- Utilities
+cstmt :: DataType -> DataType
+cstmt a@(_,BStatement) = a
+cstmt (a,_) = (a,BStatement)
+
+fbit :: Integer -> [Bit] -> (Integer,[Bit])
+fbit i s
+  | length s == 4 = (i,s)
+  | otherwise     = fbit (i`div`2) (b:s)
+  where b = if (i`mod`2==0)/=(i<0) then F else T
+
 intToBS :: Integer -> [Bit]
 intToBS 0 = []
 intToBS x = let (i,bs) = fbit x [] in bs++intToBS i
-  where fbit :: Integer -> [Bit] -> (Integer,[Bit])
-        fbit i s
-          | length s == 4  = (i,s)
-          | otherwise       = fbit (i`div`2) (b:s) 
-          where b = if i `mod` 2 == 0 then F else T
 
 dtToBool :: DataType -> Bool
 dtToBool (_,BString []) = False
@@ -75,6 +81,21 @@ dtToBool (x,BStatement)
   where o t = opcodes M.! t
 dtToBool _ = True
 
+-- Operations
+prlst = [ D.toConstr $ BRational 0 0, D.toConstr $ BInteger 0
+        , D.toConstr $ BString [],    D.toConstr $ BNmspId $ Left []
+        , D.toConstr $ BStatement
+        ]
+prcnv = [ crational, cinteger, cstring, cnmsp, cstmt ]
+prior :: Primitive -> Int
+prior p = maybe (error "Unknown Primitive constructor!") id $ 
+  elemIndex (D.toConstr p) prlst
+prior' :: DataType -> Int
+prior' = prior . snd
+
+ensureMin :: Primitive -> DataType -> DataType
+ensureMin a b = if p > (prior' b) then (prcnv!!p) b else b
+  where p = prior a
 {-
 estring   a = first cstring   . (evaluate a)
 einteger  a = first cinteger  . (evaluate a)

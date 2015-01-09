@@ -23,19 +23,23 @@ THE SOFTWARE.
 -- This module defines the DataTypes and provides associated functionality for
 -- Strings, Integers, Rationals, and Namespaces in accordance with Sections IV
 -- and V of the Advanced Assembly 0.5.1 language specification.
+{-# LANGUAGE DeriveDataTypeable #-}
 module DataType where
 
 import BitSeries
+import qualified Data.Data as D
 import qualified Data.Map as M
+import Data.Typeable
 import Opcodes
 
 -- Namespace Types
-data RNmspS = Child BitSeries | Parent deriving Show
+data RNmspS = Child BitSeries | Parent deriving (Show,D.Data,Typeable)
 type RNmsp = [RNmspS]
 type ANmsp = [BitSeries]
 -- Global Types
 data Primitive = BString BitSeries | BInteger Integer | BRational Integer Integer
-               | BNmspId (Either ANmsp RNmsp) | BStatement deriving Show
+               | BNmspId (Either ANmsp RNmsp) | BStatement 
+               deriving (Show,D.Data,Typeable)
 type DataType = (BitSeries,Primitive) 
 
 -- Strings

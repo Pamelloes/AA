@@ -22,11 +22,15 @@ THE SOFTWARE.
 -}
 -- This module defines a Bit and BitSeries. A special Bit implementation is used
 -- to accomodate lists that end with a repeating false value.
+{-# LANGUAGE DeriveDataTypeable #-}
 module BitSeries where
+
+import Data.Data
+import Data.Typeable
 
 -- A Bit can be either T (True) or F (False). Terminate is used in infinite
 -- lists to indicate the end of non-repeating data.
-data Bit = T | F | Terminate deriving Show
+data Bit = T | F | Terminate deriving (Show,Data,Typeable)
 instance Eq Bit where
   T /= F = True
   F /= T = True
