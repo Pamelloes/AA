@@ -68,7 +68,7 @@ bsToString a = foldr (\c a -> (o "CS")++c++a) (o "ES") $ chunksOf 4 a
   where o t = opcodes M.! t
 
 bsToString' :: BitSeries -> DataType
-bsToString' s = (bsToString s, BString s)
+bsToString' s = (bsToString s++repeat Terminate, BString s)
 
 fbit :: Integer -> [Bit] -> (Integer,[Bit])
 fbit i s
@@ -85,7 +85,7 @@ intToBS' i = [s]++bsToString (intToBS i)
   where s=if i<0 then T else F
 
 intToDT :: Integer -> DataType
-intToDT i = (intToBS' i,BInteger i)
+intToDT i = (intToBS' i++repeat Terminate,BInteger i)
 
 rtlToBS :: Rational -> BitSeries
 rtlToBS a = rtlToBS' (numerator a) (denominator a)
@@ -94,10 +94,10 @@ rtlToBS' :: Integer -> Integer -> BitSeries
 rtlToBS' a b = (intToBS' a)++(intToBS' b)
 
 rtlToDT :: Rational -> DataType
-rtlToDT a = (rtlToBS a,BRational (numerator a) (denominator a))
+rtlToDT a = (rtlToBS a++repeat Terminate,BRational (numerator a) (denominator a))
 
 rtlToDT' :: Integer -> Integer-> DataType
-rtlToDT' a b = (rtlToBS' a b,BRational a b)
+rtlToDT' a b = (rtlToBS' a b++repeat Terminate,BRational a b)
 
 dtToBool :: DataType -> Bool
 dtToBool (_,BString []) = False
@@ -109,6 +109,26 @@ dtToBool (x,BStatement)
   | otherwise = True
   where o t = opcodes M.! t
 dtToBool _ = True
+
+boolToDT :: Primitive -> Bool -> DataType
+boolToDT (BString _)     False = bsToString' []
+boolToDT (BString _)     True  = bsToString' [F,F,F,F]
+boolToDT (BInteger _)    False = intToDT 0
+boolToDT (BInteger _)    True  = intToDT 1
+boolToDT (BRational _ _) False = rtlToDT (0%1)
+boolToDT (BRational _ _) True  = rtlToDT ((-1)%(-1))
+boolToDT (BNmspId _)     False = (p,BNmspId $ Left [])
+  where p = (o "AN")++(o "EN")++repeat Terminate
+        o t = opcodes M.! t
+boolToDT (BNmspId _)     True  = (p,BNmspId $ Left [[]])
+  where p = (o "AN")++(o "CN")++(o "ES")++(o "EN")++repeat Terminate
+        o t = opcodes M.! t
+boolToDT (BStatement)    False = (p,BStatement)
+  where p = (o "LS")++(o "LT")++(o "ES")++repeat Terminate
+        o t = opcodes M.! t
+boolToDT (BStatement)    True  = (p,BStatement)
+  where p = (o "LS")++(o "LT")++(o "CS")++[F,F,F,F]++(o "ES")++repeat Terminate
+        o t = opcodes M.! t
 
 -- Operations
 prlst = [ D.toConstr $ BStatement, D.toConstr $ BNmspId $ Left []
@@ -166,6 +186,12 @@ evaluateMSB (Free (MSB p a b)) s = do
               rtlToDT' 0 0 else intToDT $ abs (t`rem`u)
             ((_,BRational t u),(_,BRational v w)) -> if u==0||w==0||v==0 then 
               rtlToDT' 0 0 else rtlToDT ((abs$t%u)`mod'`(abs$v%w))
+          "BO" -> boolToDT (snd av') $ (dtToBool av') || (dtToBool bv')
+            where (av',bv')=normDt av bv
+          "BX" -> boolToDT (snd av') $ (dtToBool av') `xor` (dtToBool bv')
+            where (av',bv')=normDt av bv
+          "BA" -> boolToDT (snd av') $ (dtToBool av') && (dtToBool bv')
+            where (av',bv')=normDt av bv
   return (s3,v)
 simpleOP a b = evaluate a b
 
@@ -223,10 +249,9 @@ evaluate (Free (IOS a))       s = do
   (s2,av) <- evaluate a s
   r <- handleIO av
   return $ (s2,r)
+evaluate (Free (MSA p a))     s = do
+  (s2,av) <- evaluate a s
+  let v=case p of
+          "BN" -> boolToDT (snd av) . not . dtToBool $ av
+  return (s2,v)
 evaluate a@(Free (MSB _ _ _)) s = evaluateMSB a s
-{-
-evaluate (Free (MSA a b)) = "\nOperation "++a++": "++showProgram b
-evalute (Free (MSB a b c)) = "\nOperation "++a++":\n(1) "++showProgram b
-  ++"\n(2) "++showProgram c
-evaluate (Free (IOS a)) = "\nI/O: "++showProgram a
--}
