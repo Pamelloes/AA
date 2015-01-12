@@ -63,6 +63,29 @@ cstmt :: DataType -> DataType
 cstmt a@(_,BStatement) = a
 cstmt (a,_) = (a,BStatement)
 
+arraycmp :: Ord a => [a] -> [a] -> Ordering
+arraycmp []     []     = EQ
+arraycmp _      []     = GT
+arraycmp []     _      = LT
+arraycmp (a:as) (b:bs) = if c == EQ then arraycmp as bs else c
+  where c = a `compare` b
+  
+nmspcmp :: ANmsp -> ANmsp -> Ordering
+nmspcmp []     []     = EQ
+nmspcmp _      []     = LT
+nmspcmp []     _      = GT
+nmspcmp (a:as) (b:bs) = if c == EQ then arraycmp as bs else c
+  where c = arraycmp a b
+
+cmpdt :: DataType -> DataType -> ANmsp -> Ordering
+cmpdt (_,BString a)     (_,BString b)     _ = arraycmp a b
+cmpdt (_,BInteger a)    (_,BInteger b)    _ = compare a b
+cmpdt (_,BRational a b) (_,BRational c d) _ = compare (a%b) (c%d)
+cmpdt a@(_,BNmspId _)   b@(_,BNmspId _)   s = nmspcmp av bv
+  where av = gnmsp s a
+        bv = gnmsp s b
+cmpdt (a,BStatement)    (b,BStatement)    _ = arraycmp a b
+
 bsToString :: BitSeries -> BitSeries
 bsToString a = foldr (\c a -> (o "CS")++c++a) (o "ES") $ chunksOf 4 a
   where o t = opcodes M.! t
@@ -192,6 +215,18 @@ evaluateMSB (Free (MSB p a b)) s = do
             where (av',bv')=normDt av bv
           "BA" -> boolToDT (snd av') $ (dtToBool av') && (dtToBool bv')
             where (av',bv')=normDt av bv
+          "BE" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==EQ
+            where (av',bv')=normDt av bv
+          "BL" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==LT
+            where (av',bv')=normDt av bv
+          "BLE" -> boolToDT (snd av') $ (c==LT)||(c==EQ)
+            where (av',bv')=normDt av bv
+                  c=(cmpdt av' bv' $ fst s3)
+          "BG" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==GT
+            where (av',bv')=normDt av bv
+          "BGE" -> boolToDT (snd av') $ (c==GT)||(c==EQ)
+            where (av',bv')=normDt av bv
+                  c=(cmpdt av' bv' $ fst s3)
   return (s3,v)
 simpleOP a b = evaluate a b
 
