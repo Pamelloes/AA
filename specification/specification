@@ -152,7 +152,7 @@ Examples:
   LS LI 0 CS 0001 ES                  Evaluates to an integer with a value of 1
   LS LR 0 CS 0001 ES 1 CS 1111 ES     Evaluates to a rational with a value of negative 1/1
   LS LN AN EN                         Evaluates to the Global Namespace
-  LS LM 0 CS 0001 ES LS LT CS ES      Evaluates to the statement "LS LT CS ES" with one parameter
+  LS LM ES LS LT CS ES      Evaluates to the statement "LS LT CS ES"
 
 B. Functional Statements
 
@@ -193,7 +193,7 @@ Examples:
   FS MS OD LS LI 0 CS 1000 ES LS LI 0 CS 0011 ES                     Divides eight (integer) by three (integer) to two (integer)
   FS MS OD LS LI 1 CS 1010 CS 1110 ES LS LI 0 ES                     Divides negative 22 (integer) by zero (integer) to zero divide by zero (rational).
 
-  Exponentiation's opcode is OE (0100); exponentiation takes two inputs--the first input is numerical and the second input will always be interpreted as an integer--and evaluates to the first input raised to the power of the second input. Modulus's opcode is OU (0101); modulus takes two, numerical inputs and evaluates to the the smallest positive value of a multiple of the second input being subtracted from the first input. If the second input, the divisor, is equal to zero, the statement will evaluate to the rational zero divided by zero (see Section V.B).
+  Exponentiation's opcode is OE (0100); exponentiation takes two inputs--the first input is numerical and the second input will always be interpreted as an integer--and evaluates to the first input raised to the power of the second input. If the first input is an integer, then the second input will be raised to the power of the absolute value of hte second input. Modulus's opcode is OU (0101); modulus takes two, numerical inputs and evaluates to the the smallest positive value of a multiple of the second input being subtracted from the first input. If the second input, the divisor, is equal to zero, the statement will evaluate to the rational zero divided by zero (see Section V.B).
   
 Examples:
   FS MS OE LS LI 0 CS 0010 ES LS LI 0 CS 1000 ES                Raises two (integer) to the eighth (integer) powere to 256 (integer)

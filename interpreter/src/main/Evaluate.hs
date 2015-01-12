@@ -28,6 +28,7 @@ import BitSeries
 import Control.Arrow
 import Data.Char
 import qualified Data.Data as D
+import Data.Fixed
 import Data.List
 import Data.List.Split
 import qualified Data.Map as M
@@ -156,6 +157,15 @@ evaluateMSB (Free (MSB p a b)) s = do
               rtlToDT' 0 0 else intToDT $ t`div`u
             ((_,BRational t u),(_,BRational v w)) -> if u==0||w==0||v==0 then 
               rtlToDT' 0 0 else rtlToDT ((t%u)/(v%w))
+          "OE" -> case (ensureMin' (BInteger 0) av,cinteger bv) of
+            ((_,BInteger t),(_,BInteger u)) -> intToDT (t^(abs$u))
+            ((_,BRational t u),(_,BInteger v)) -> if u==0 then 
+              rtlToDT' 0 0 else rtlToDT ((t%u)^^v)
+          "OU" -> case (normMDt (BInteger 0) av bv) of
+            ((_,BInteger t),(_,BInteger u)) -> if u==0 then
+              rtlToDT' 0 0 else intToDT $ abs (t`rem`u)
+            ((_,BRational t u),(_,BRational v w)) -> if u==0||w==0||v==0 then 
+              rtlToDT' 0 0 else rtlToDT ((abs$t%u)`mod'`(abs$v%w))
   return (s3,v)
 simpleOP a b = evaluate a b
 
