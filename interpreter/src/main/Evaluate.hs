@@ -188,7 +188,7 @@ evaluateMSB (Free (MSB p a b)) s = do
               rtlToDT' 0 0 else rtlToDT ((abs$t%u)`mod'`(abs$v%w))
           "BO" -> boolToDT (snd av') $ (dtToBool av') || (dtToBool bv')
             where (av',bv')=normDt av bv
-          "BX" -> boolToDT (snd av') $ (dtToBool av') `xor` (dtToBool bv')
+          "BX" -> boolToDT (snd av') $ (dtToBool av') /= (dtToBool bv')
             where (av',bv')=normDt av bv
           "BA" -> boolToDT (snd av') $ (dtToBool av') && (dtToBool bv')
             where (av',bv')=normDt av bv
