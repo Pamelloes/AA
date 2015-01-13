@@ -126,10 +126,24 @@ testFTEq = TestLabel "Test False/Terminate equivalence" $
         k2=[[F,T,F,T],[T,F,T,F],replicate 4 F]
         v=([F,F,T,T,F,F,T,T,T],BStatement)
 
+-- Utility Tests
+-- Operations Tests
+testPrior0 = TestLabel "Test priority 0" $
+  TestCase $ assertEqual "" 0 (prior BStatement)
+testPrior1 = TestLabel "Test priority 1" $
+  TestCase $ assertEqual "" 1 (prior $ BNmspId $ Left [])
+testPrior2 = TestLabel "Test priority 2" $
+  TestCase $ assertEqual "" 2 (prior $ BString [])
+testPrior3 = TestLabel "Test priority 3" $
+  TestCase $ assertEqual "" 3 (prior $ BInteger 0)
+testPrior4 = TestLabel "Test priority 4" $
+  TestCase $ assertEqual "" 4 (prior $ BRational 0 0)
+
 mainList = TestLabel "Evaluate" $
   TestList [ utilList, testDefaultNamespace, testANmspValue, testRNmspValue
            , testANmspDefValue, testRNmspDefValue, testANmspValueSet
            , testRNmspValueSet, testANmspValue2, testRNmspValue2, testFTEq
+           , testPrior0, testPrior1, testPrior2, testPrior3, testPrior4
            ]
 
 main = runTestTT $

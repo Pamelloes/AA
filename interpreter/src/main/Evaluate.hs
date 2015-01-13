@@ -34,6 +34,7 @@ import Data.List.Split
 import qualified Data.Map as M
 import Data.Ratio
 import DataType
+import DataType.Util
 import Opcodes
 import Statement
 
@@ -58,101 +59,6 @@ nmspValueSet' :: State -> DataType -> DataType -> (State,DataType)
 nmspValueSet' a b c = (s a,c)
   where s = second . const $ nmspValueSet (fst a) b c (snd a)
 
--- Utilities
-cstmt :: DataType -> DataType
-cstmt a@(_,BStatement) = a
-cstmt (a,_) = (a,BStatement)
-
-arraycmp :: Ord a => [a] -> [a] -> Ordering
-arraycmp []     []     = EQ
-arraycmp _      []     = GT
-arraycmp []     _      = LT
-arraycmp (a:as) (b:bs) = if c == EQ then arraycmp as bs else c
-  where c = a `compare` b
-  
-nmspcmp :: ANmsp -> ANmsp -> Ordering
-nmspcmp []     []     = EQ
-nmspcmp _      []     = LT
-nmspcmp []     _      = GT
-nmspcmp (a:as) (b:bs) = if c == EQ then arraycmp as bs else c
-  where c = arraycmp a b
-
-cmpdt :: DataType -> DataType -> ANmsp -> Ordering
-cmpdt (_,BString a)     (_,BString b)     _ = arraycmp a b
-cmpdt (_,BInteger a)    (_,BInteger b)    _ = compare a b
-cmpdt (_,BRational a b) (_,BRational c d) _ = compare (a%b) (c%d)
-cmpdt a@(_,BNmspId _)   b@(_,BNmspId _)   s = nmspcmp av bv
-  where av = gnmsp s a
-        bv = gnmsp s b
-cmpdt (a,BStatement)    (b,BStatement)    _ = arraycmp a b
-
-bsToString :: BitSeries -> BitSeries
-bsToString a = foldr (\c a -> (o "CS")++c++a) (o "ES") $ chunksOf 4 a
-  where o t = opcodes M.! t
-
-bsToString' :: BitSeries -> DataType
-bsToString' s = (bsToString s++repeat Terminate, BString s)
-
-fbit :: Integer -> [Bit] -> (Integer,[Bit])
-fbit i s
-  | length s == 4 = (i,s)
-  | otherwise     = fbit (i`div`2) (b:s)
-  where b = if (i`mod`2==0)/=(i<0) then F else T
-
-intToBS :: Integer -> [Bit]
-intToBS 0 = []
-intToBS x = let (i,bs) = fbit x [] in bs++intToBS i
-
-intToBS' :: Integer -> BitSeries
-intToBS' i = [s]++bsToString (intToBS i)
-  where s=if i<0 then T else F
-
-intToDT :: Integer -> DataType
-intToDT i = (intToBS' i++repeat Terminate,BInteger i)
-
-rtlToBS :: Rational -> BitSeries
-rtlToBS a = rtlToBS' (numerator a) (denominator a)
-
-rtlToBS' :: Integer -> Integer -> BitSeries
-rtlToBS' a b = (intToBS' a)++(intToBS' b)
-
-rtlToDT :: Rational -> DataType
-rtlToDT a = (rtlToBS a++repeat Terminate,BRational (numerator a) (denominator a))
-
-rtlToDT' :: Integer -> Integer-> DataType
-rtlToDT' a b = (rtlToBS' a b++repeat Terminate,BRational a b)
-
-dtToBool :: DataType -> Bool
-dtToBool (_,BString []) = False
-dtToBool (_,BInteger 0) = False
-dtToBool (_,BRational 0 x) = x == 0
-dtToBool (_,BNmspId (Left [])) = False
-dtToBool (x,BStatement)
-  | isPrefixOf ((o "LS")++(o "LT")++(o "ES")) x = False
-  | otherwise = True
-  where o t = opcodes M.! t
-dtToBool _ = True
-
-boolToDT :: Primitive -> Bool -> DataType
-boolToDT (BString _)     False = bsToString' []
-boolToDT (BString _)     True  = bsToString' [F,F,F,F]
-boolToDT (BInteger _)    False = intToDT 0
-boolToDT (BInteger _)    True  = intToDT 1
-boolToDT (BRational _ _) False = rtlToDT (0%1)
-boolToDT (BRational _ _) True  = rtlToDT ((-1)%(-1))
-boolToDT (BNmspId _)     False = (p,BNmspId $ Left [])
-  where p = (o "AN")++(o "EN")++repeat Terminate
-        o t = opcodes M.! t
-boolToDT (BNmspId _)     True  = (p,BNmspId $ Left [[]])
-  where p = (o "AN")++(o "CN")++(o "ES")++(o "EN")++repeat Terminate
-        o t = opcodes M.! t
-boolToDT (BStatement)    False = (p,BStatement)
-  where p = (o "LS")++(o "LT")++(o "ES")++repeat Terminate
-        o t = opcodes M.! t
-boolToDT (BStatement)    True  = (p,BStatement)
-  where p = (o "LS")++(o "LT")++(o "CS")++[F,F,F,F]++(o "ES")++repeat Terminate
-        o t = opcodes M.! t
-
 -- Operations
 prlst = [ D.toConstr $ BStatement, D.toConstr $ BNmspId $ Left []
         , D.toConstr $ BString [], D.toConstr $ BInteger 0
@@ -170,62 +76,62 @@ ensureMin a b = if a > (prior' b) then (prcnv!!a) b else b
 ensureMin' :: Primitive -> DataType -> DataType
 ensureMin' a = ensureMin (prior a)
 
-normDt :: DataType -> DataType -> (DataType,DataType)
-normDt a b = (ensureMin m a, ensureMin m b)
+normDT :: DataType -> DataType -> (DataType,DataType)
+normDT a b = (ensureMin m a, ensureMin m b)
   where m = max (prior' a) (prior' b)
 
-normMDt :: Primitive -> DataType -> DataType -> (DataType,DataType)
-normMDt a b = normDt (ensureMin' a b)
+normMDT :: Primitive -> DataType -> DataType -> (DataType,DataType)
+normMDT a b = normDT (ensureMin' a b)
 
 evaluateMSB :: Free Stmt () -> State -> IO (State,DataType)
 evaluateMSB (Free (MSB p a b)) s = do
   (s2,av) <- evaluate a s
   (s3,bv) <- evaluate b s2
   let v=case p of
-          "OP" -> case (normMDt (BString []) av bv) of
-            ((_,BString t),(_,BString u)) -> bsToString' (t++u)
+          "OP" -> case (normMDT (BString []) av bv) of
+            ((_,BString t),(_,BString u)) -> bsToDT (t++u)
             ((_,BInteger t),(_,BInteger u)) -> intToDT (t+u)
             ((_,BRational t u),(_,BRational v w)) -> if u==0||w==0 then 
-              rtlToDT' 0 0 else rtlToDT ((t%u)+(v%w))
-          "OM" -> case (normMDt (BInteger 0) av bv) of
+              rtlToDT 0 0 else rtlToDT' ((t%u)+(v%w))
+          "OM" -> case (normMDT (BInteger 0) av bv) of
             ((_,BInteger t),(_,BInteger u)) -> intToDT (t-u)
             ((_,BRational t u),(_,BRational v w)) -> if u==0||w==0 then 
-              rtlToDT' 0 0 else rtlToDT ((t%u)-(v%w))
-          "OT" -> case (normMDt (BInteger 0) av bv) of
+              rtlToDT 0 0 else rtlToDT' ((t%u)-(v%w))
+          "OT" -> case (normMDT (BInteger 0) av bv) of
             ((_,BInteger t),(_,BInteger u)) -> intToDT (t*u)
             ((_,BRational t u),(_,BRational v w)) -> if u==0||w==0 then 
-              rtlToDT' 0 0 else rtlToDT ((t%u)*(v%w))
-          "OD" -> case (normMDt (BInteger 0) av bv) of
+              rtlToDT 0 0 else rtlToDT' ((t%u)*(v%w))
+          "OD" -> case (normMDT (BInteger 0) av bv) of
             ((_,BInteger t),(_,BInteger u)) -> if u==0 then
-              rtlToDT' 0 0 else intToDT $ t`div`u
+              rtlToDT 0 0 else intToDT $ t`div`u
             ((_,BRational t u),(_,BRational v w)) -> if u==0||w==0||v==0 then 
-              rtlToDT' 0 0 else rtlToDT ((t%u)/(v%w))
+              rtlToDT 0 0 else rtlToDT' ((t%u)/(v%w))
           "OE" -> case (ensureMin' (BInteger 0) av,cinteger bv) of
             ((_,BInteger t),(_,BInteger u)) -> intToDT (t^(abs$u))
             ((_,BRational t u),(_,BInteger v)) -> if u==0 then 
-              rtlToDT' 0 0 else rtlToDT ((t%u)^^v)
-          "OU" -> case (normMDt (BInteger 0) av bv) of
+              rtlToDT 0 0 else rtlToDT' ((t%u)^^v)
+          "OU" -> case (normMDT (BInteger 0) av bv) of
             ((_,BInteger t),(_,BInteger u)) -> if u==0 then
-              rtlToDT' 0 0 else intToDT $ abs (t`rem`u)
+              rtlToDT 0 0 else intToDT $ abs (t`rem`u)
             ((_,BRational t u),(_,BRational v w)) -> if u==0||w==0||v==0 then 
-              rtlToDT' 0 0 else rtlToDT ((abs$t%u)`mod'`(abs$v%w))
+              rtlToDT 0 0 else rtlToDT' ((abs$t%u)`mod'`(abs$v%w))
           "BO" -> boolToDT (snd av') $ (dtToBool av') || (dtToBool bv')
-            where (av',bv')=normDt av bv
+            where (av',bv')=normDT av bv
           "BX" -> boolToDT (snd av') $ (dtToBool av') /= (dtToBool bv')
-            where (av',bv')=normDt av bv
+            where (av',bv')=normDT av bv
           "BA" -> boolToDT (snd av') $ (dtToBool av') && (dtToBool bv')
-            where (av',bv')=normDt av bv
+            where (av',bv')=normDT av bv
           "BE" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==EQ
-            where (av',bv')=normDt av bv
+            where (av',bv')=normDT av bv
           "BL" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==LT
-            where (av',bv')=normDt av bv
+            where (av',bv')=normDT av bv
           "BLE" -> boolToDT (snd av') $ (c==LT)||(c==EQ)
-            where (av',bv')=normDt av bv
+            where (av',bv')=normDT av bv
                   c=(cmpdt av' bv' $ fst s3)
           "BG" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==GT
-            where (av',bv')=normDt av bv
+            where (av',bv')=normDT av bv
           "BGE" -> boolToDT (snd av') $ (c==GT)||(c==EQ)
-            where (av',bv')=normDt av bv
+            where (av',bv')=normDT av bv
                   c=(cmpdt av' bv' $ fst s3)
   return (s3,v)
 simpleOP a b = evaluate a b

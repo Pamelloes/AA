@@ -32,6 +32,7 @@ import qualified Data.Map as M
 import Opcodes
 import qualified Opcodes_Test as P
 import DataType
+import DataType.Util
 import Test.HUnit
 import TestException
 

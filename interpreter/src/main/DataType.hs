@@ -20,13 +20,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This module defines the DataTypes and provides associated functionality for
+-- This module defines the data types and provides functions for loading
 -- Strings, Integers, Rationals, and Namespaces in accordance with Sections IV
--- and V of the Advanced Assembly 0.5.1 language specification.
+-- and V of the Advanced Assembly 0.5.1 language specification. The Statement
+-- module contains functions for loading Statements. The DataType.Util module
+-- contains additional functions which may be useful when processing DataTypes.
 {-# LANGUAGE DeriveDataTypeable #-}
 module DataType where
 
 import BitSeries
+import Control.Arrow
 import qualified Data.Data as D
 import qualified Data.Map as M
 import Data.Typeable
@@ -52,12 +55,6 @@ pstring s
         cs=hasOpcode s "CS"
         (str,prog) = splitAt 4 (fst cs)
 
-lstring = snd . snd . pstring
-
-cstring :: DataType -> DataType
-cstring a@(_,BString _) = a
-cstring (b,_) = (b,lstring b)
-
 -- Integers
 bsToInt :: [Bit] -> Integer
 bsToInt [] = 0
@@ -71,12 +68,6 @@ pinteger (sign:remainder) = (prog,(sign:p,BInteger (sgn $ bsToInt str)))
   where (prog,(p,BString str))=pstring remainder
         sgn=if sign==T then (\x->x-2^(length str)) else (\x->x)
 
-linteger = snd . snd . pinteger
-
-cinteger :: DataType -> DataType
-cinteger a@(_,BInteger _) = a
-cinteger (b,_) = (b,linteger b)
-
 -- Rationals
 prational :: BitSeries -> (BitSeries,DataType)
 prational [] = error "lrational: Reached program end"
@@ -84,12 +75,6 @@ prational s = (prog,(p++p2,BRational i1 i2))
   where (p1,(p,BInteger i1a))=pinteger s
         (prog,(p2,BInteger i2))=pinteger p1
         i1=if i2 == 0 then 0 else i1a
-
-lrational = snd . snd . prational
-
-crational :: DataType -> DataType
-crational a@(_,BRational _ _) = a
-crational (b,_) = (b,lrational b)
 
 -- Namespaces
 panmsp :: BitSeries -> (BitSeries,(BitSeries,ANmsp))
@@ -121,23 +106,3 @@ pnmsp p
         an=opcodes M.! "AN"
         rel=hasOpcode p "RN"
         rn=opcodes M.! "RN"
-
-lnmsp = snd . snd . pnmsp
-
-cnmsp :: DataType -> DataType
-cnmsp a@(_,BNmspId _) = a
-cnmsp (b,_) = (b,lnmsp b)
-
-rnmsp :: ANmsp -> RNmsp
-rnmsp = fmap (\x -> Child x)
-
-anmsp :: ANmsp -> RNmsp -> ANmsp
-anmsp a [] = a 
-anmsp a ((Child s):cs) = anmsp (a++[s]) cs
-anmsp [] (Parent:cs) = anmsp [] cs
-anmsp a (Parent:cs) = anmsp (init a) cs
-
-gnmsp :: ANmsp -> DataType -> ANmsp
-gnmsp _ (_,BNmspId (Left i)) = i
-gnmsp b (s,BNmspId (Right r)) = gnmsp b (s,BNmspId (Left (anmsp b r)))
-gnmsp b s = gnmsp b (cnmsp s)
