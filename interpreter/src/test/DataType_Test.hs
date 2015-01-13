@@ -32,7 +32,6 @@ import qualified Data.Map as M
 import Opcodes
 import qualified Opcodes_Test as P
 import DataType
-import DataType.Util
 import Test.HUnit
 import TestException
 
@@ -80,21 +79,9 @@ testExtra = TestLabel "Test Program Deletion" $
         p1=(opcodes M.! "CS")++str++(opcodes M.! "ES")
         p2=replicate 23 F
 
-testLstring = TestLabel "Test lstring" $
-  TestCase $ assertEqual "" (BString [T,T,T,T]) (lstring p)
-  where p=(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
-testCs1 = TestLabel "Test cstring from BStatement" $
-  TestCase $ assertEqual "" (p,BString s) (cstring (p,BStatement))
-  where s=[T,T,T,T]
-        p=(opcodes M.! "CS")++s++(opcodes M.! "ES")
-testCs2 = TestLabel "Test cstring from BString" $
-  TestCase $ assertEqual "" (p,BString s) (cstring (p,BString s))
-  where s=[T,T,T,T]
-        p=(opcodes M.! "CS")++[F,T,F,T]++(opcodes M.! "ES")
-
 strTests = TestLabel "String" $
   TestList[ testEmptyP, testIncomplete, testUnfinished, testEmpty, testL4, testL8
-          , testExtra, testLstring, testCs1, testCs2 ]
+          , testExtra ]
 
 -- Integer Tests
 intError = ErrorCall "linteger: Reached program end"
@@ -135,20 +122,9 @@ testIExtra = TestLabel "Test Program Deletion" $
           ++(opcodes M.! "ES")
         p2 = replicate 100 T
 
-testLinteger = TestLabel "Test linteger " $
-  TestCase $ assertEqual "" (BInteger 15) (linteger p)
-  where p=[F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
-testCi1 = TestLabel "Test cinteger from BStatement" $
-  TestCase $ assertEqual "" (p,BInteger (-4)) (cinteger (p,BStatement))
-  where p=[T]++(opcodes M.! "CS")++[T,T,F,F]++(opcodes M.! "ES")
-testCi2 = TestLabel "Test cinteger from BInteger" $
-  TestCase $ assertEqual "" (p,BInteger (-9)) (cinteger (p,BInteger (-9)))
-  where p=[F]++(opcodes M.! "CS")++[F,T,F,T]++(opcodes M.! "ES")
-
 intTests = TestLabel "Integer" $
   TestList [ testIEmptyP, testIIncomplete1, testIIncomplete2, testIUnfinished
-           , testIEmpty1, testIEmpty2, testIL4, testIL8, testINeg, testIExtra
-           , testLinteger, testCi1, testCi2 ]
+           , testIEmpty1, testIEmpty2, testIL4, testIL8, testINeg, testIExtra ]
 
 -- Rational Tests
 rationalError = ErrorCall "lrational: Reached program end"
@@ -207,24 +183,10 @@ testRExtra = TestLabel "Test Program Deletion" $
           ++[F,F,F,T]++(opcodes M.! "ES")
         p2 = replicate 100 T
 
-testLrational = TestLabel "Test lrational" $
-  TestCase $ assertEqual "" (BRational 15 (-3)) (lrational p)
-  where p= [F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
-         ++[T]++(opcodes M.! "CS")++[T,T,F,T]++(opcodes M.! "ES")
-testCr1 = TestLabel "Test crational from BStatement" $
-  TestCase $ assertEqual "" (p,BRational (-4) 1) (crational (p,BStatement))
-  where p= [T]++(opcodes M.! "CS")++[T,T,F,F]++(opcodes M.! "ES")
-         ++[F]++(opcodes M.! "CS")++[F,F,F,T]++(opcodes M.! "ES")
-testCr2 = TestLabel "Test crational from BRational" $
-  TestCase $ assertEqual "" (p,BRational 7 1234) (crational (p,BRational 7 1234))
-  where p= [F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
-         ++[F]++(opcodes M.! "ES")
-
 rationalTests = TestLabel "Rational" $
   TestList [ testREmptyP, testRIncomplete1, testRIncomplete2, testRUnfinished
            , testREDiv0, testRDiv0, testREmpty1, testREmpty2, testRL44, testRL84
-           , testRL48, testRL88, testRExtra, testLrational, testCr1, testCr2
-           ]
+           , testRL48, testRL88, testRExtra ]
 
 -- Namespace Tests
 maid :: ANmsp -> DataType
@@ -263,27 +225,8 @@ testPNmspF2 = TestLabel "Test loading short namespace 2" $
   where p=(o "AN")++(o "CN")++(o "CS")
         o s=opcodes M.! s
 
-testLNmsp = TestLabel "Test lnmsp" $
-  TestCase $ assertEqual "" (snd $ maid id) (lnmsp p)
-  where id=[[T,T,T,T]]
-        p=(o "AN")++(o "CN")++(o "CS")++[T,T,T,T]++(o "ES")++(o "EN")
-        o s=opcodes M.! s
-
-testCn1 = TestLabel "Test cnmsp 1" $
-  TestCase $ assertEqual "" (maid id) (cnmsp $ maid id)
-  where id=[[T,T,F,F]]
-
-testCn2 = TestLabel "Test cnmsp 2" $
-  TestCase $ assertEqual "" (p,snd $ maid id) (cnmsp (p,BStatement))
-  where id=[[F,T,F,F],[T,F,F,F]]
-        p=(o "AN")++(o "CN")++(o "CS")++id!!0++(o "ES")++(o "CN")
-         ++(o "CS")++id!!1++(o "ES")++(o "EN")
-        o s=opcodes M.! s
-
 nmspTests = TestLabel "Namespace" $
-  TestList [ testPNmspA, testPNmspR, testPNmspExtra, testPNmspF, testPNmspF2
-           , testLNmsp, testCn1, testCn2 
-           ]
+  TestList [ testPNmspA, testPNmspR, testPNmspExtra, testPNmspF, testPNmspF2 ]
 
 mainList = TestLabel "Primitives" $ 
   TestList [ strTests, intTests, rationalTests, nmspTests ]

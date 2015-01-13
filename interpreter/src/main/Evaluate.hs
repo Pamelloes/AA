@@ -30,7 +30,6 @@ import Data.Char
 import qualified Data.Data as D
 import Data.Fixed
 import Data.List
-import Data.List.Split
 import qualified Data.Map as M
 import Data.Ratio
 import DataType
@@ -65,6 +64,7 @@ prlst = [ D.toConstr $ BStatement, D.toConstr $ BNmspId $ Left []
         , D.toConstr $ BRational 0 0
         ]
 prcnv = [ crational, cinteger, cstring, cnmsp, cstmt ]
+
 prior :: Primitive -> Int
 prior p = maybe (error "Unknown Primitive constructor!") id $ 
   elemIndex (D.toConstr p) prlst
