@@ -36,6 +36,15 @@ import DataType.Util
 import Test.HUnit
 import TestException
 
+tT :: BitSeries -> BitSeries
+tT (Terminate:as)=[Terminate]
+tT (a:as)=a:(tT as)
+
+testTt = TestLabel "Verify tT" $
+  TestCase $ assertEqual "" [T,T,F,F,Terminate] (tT $ [T,T,F,F,Terminate,F,T,F]
+  ++ (repeat Terminate))
+
+
 -- String Tests
 testLstring = TestLabel "Test lstring" $
   TestCase $ assertEqual "" (BString [T,T,T,T]) (lstring p)
@@ -55,14 +64,28 @@ testBtS = TestLabel "Test inserting BString opcodes into BitSeries" $
   where s=[T,T,F,F]++[T,T,F,F]
         p=(o "CS")++[T,T,F,F]++(o "CS")++[T,T,F,F]++(o "ES")
         o t = opcodes M.! t
+testBtS2 = TestLabel "Test inserting BString opcodes into uneven BitSeries" $
+  TestCase $ assertEqual "" p (bsToString s)
+  where s=[T,T,F,F]++[T,T,F,F]++[T]
+        p= (o "CS")++[T,T,F,F]++(o "CS")++[T,T,F,F]++(o "CS")++[T,F,F,F]
+         ++(o "ES")
+        o t = opcodes M.! t
+
+testBtDT = TestLabel "Test converting BitSeries to BString DataType" $
+  TestCase $ assertEqual "" (p',BString s) (let (b,r)=bsToDT s in (tT b,r))
+  where s=[F,F,T,T]++[F,F,F,T]
+        p=(o "CS")++[F,F,T,T]++(o "CS")++[F,F,F,T]++(o "ES")
+        p'=p++[Terminate]
+        o t = opcodes M.! t
 
 strTests = TestLabel "String" $
-  TestList[ testLstring, testCs1, testCs2, testBtS ]
+  TestList[ testLstring, testCs1, testCs2, testBtS, testBtS2, testBtDT ]
 
 -- Integer Tests
 testLinteger = TestLabel "Test linteger " $
   TestCase $ assertEqual "" (BInteger 15) (linteger p)
   where p=[F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
+
 testCi1 = TestLabel "Test cinteger from BStatement" $
   TestCase $ assertEqual "" (p,BInteger (-4)) (cinteger (p,BStatement))
   where p=[T]++(opcodes M.! "CS")++[T,T,F,F]++(opcodes M.! "ES")
@@ -70,8 +93,40 @@ testCi2 = TestLabel "Test cinteger from BInteger" $
   TestCase $ assertEqual "" (p,BInteger (-9)) (cinteger (p,BInteger (-9)))
   where p=[F]++(opcodes M.! "CS")++[F,T,F,T]++(opcodes M.! "ES")
 
+testItBn = TestLabel "Test converting int to binary" $
+  TestCase $ assertEqual "" p (intToBin 4132)
+  where p=[F,T,F,F]++[F,F,T,F]++[F,F,F,F]++[F,F,F,T]
+testItBn2 = TestLabel "Test converting negative int to binary" $
+  TestCase $ assertEqual "" p (intToBin $ -976)
+  where p=[F,F,F,F]++[F,F,T,T]++[T,T,F,F]
+testItBn0 = TestLabel "Test converting 0 to binary" $
+  TestCase $ assertEqual "" p (intToBin 0)
+  where p=[]
+
+testItB = TestLabel "Test converting int to BitSeries" $
+  TestCase $ assertEqual "" p (intToBS 10)
+  where p = [F]++(o "CS")++[T,F,T,F]++(o "ES")
+        o t = opcodes M.! t
+testItB2 = TestLabel "Test converting negative int to BitSeries" $
+  TestCase $ assertEqual "" p (intToBS (-55))
+  where p = [T]++(o "CS")++[T,F,F,T]++(o "CS")++[T,T,F,F]++(o "ES")
+        o t = opcodes M.! t
+testItB0 = TestLabel "Test converting -1 to BitSeries" $
+  TestCase $ assertEqual "" p (intToBS (-1))
+  where p = [T]++(o "ES")
+        o t = opcodes M.! t
+
+testItDT = TestLabel "Test converting integer to BInteger DataType" $
+  TestCase $ assertEqual "" (p',BInteger i) (let (b,r)=intToDT i in (tT b,r))
+  where i=256
+        p= [F]++(o "CS")++[F,F,F,F]++(o "CS")++[F,F,F,F]++(o "CS")
+         ++[F,F,F,T]++(o "ES")
+        p'=p++[Terminate]
+        o t = opcodes M.! t
+
 intTests = TestLabel "Integer" $
-  TestList [ testLinteger, testCi1, testCi2 ]
+  TestList [ testLinteger, testCi1, testCi2, testItBn, testItBn2, testItBn0
+           , testItB, testItB2, testItB0, testItDT ]
 
 -- Rational Tests
 testLrational = TestLabel "Test lrational" $
@@ -117,6 +172,12 @@ testCn2 = TestLabel "Test cnmsp 2" $
 nmspTests = TestLabel "Namespace" $
   TestList [ testLNmsp, testCn1, testCn2 ]
 
+{-
+-- Comparison Tests
+testCmpS1 = TestLabel "Test comparing strings 1" $
+  TestCase $ assertEqual "" LT $ 
+-}
+
 mainList = TestLabel "DataType.Util" $ 
-  TestList [ strTests, intTests, rationalTests, nmspTests ]
+  TestList [ testTt, strTests, intTests, rationalTests, nmspTests ]
 main = runTestTT $ TestList [ B.mainList, P.mainList, D.mainList, mainList]

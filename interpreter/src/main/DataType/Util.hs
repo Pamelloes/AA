@@ -32,65 +32,23 @@ import qualified Data.Map as M
 import Data.Ratio
 import Opcodes
 
-arraycmp :: Ord a => [a] -> [a] -> Ordering
-arraycmp []     []     = EQ
-arraycmp _      []     = GT
-arraycmp []     _      = LT
-arraycmp (a:as) (b:bs) = if c == EQ then arraycmp as bs else c
-  where c = a `compare` b
-  
 nmspcmp :: ANmsp -> ANmsp -> Ordering
 nmspcmp []     []     = EQ
 nmspcmp _      []     = LT
 nmspcmp []     _      = GT
-nmspcmp (a:as) (b:bs) = if c == EQ then arraycmp as bs else c
-  where c = arraycmp a b
+nmspcmp (a:as) (b:bs) = if c == EQ then nmspcmp as bs else c
+  where c = compare a b
 
 -- Compares two DataTypes in accordance with Section VI.B.2 of the Advanced
 -- Assembly 0.5.1 Specification
 cmpdt :: DataType -> DataType -> ANmsp -> Ordering
-cmpdt (_,BString a)     (_,BString b)     _ = arraycmp a b
+cmpdt (_,BString a)     (_,BString b)     _ = compare a b
 cmpdt (_,BInteger a)    (_,BInteger b)    _ = compare a b
 cmpdt (_,BRational a b) (_,BRational c d) _ = compare (a%b) (c%d)
 cmpdt a@(_,BNmspId _)   b@(_,BNmspId _)   s = nmspcmp av bv
   where av = gnmsp s a
         bv = gnmsp s b
-cmpdt (a,BStatement)    (b,BStatement)    _ = arraycmp a b
-
--- Converts a DataType to a Bool in accordance with Section IV of the Advanced
--- Assembly 0.5.1 Specification
-dtToBool :: DataType -> Bool
-dtToBool (_,BString []) = False
-dtToBool (_,BInteger 0) = False
-dtToBool (_,BRational 0 x) = x == 0
-dtToBool (_,BNmspId (Left [])) = False
-dtToBool (x,BStatement)
-  | isPrefixOf ((o "LS")++(o "LT")++(o "ES")) x = False
-  | otherwise = True
-  where o t = opcodes M.! t
-dtToBool _ = True
-
--- Converts a Bool to a DataType in accordance with Section IV of the Advanced
--- Assembly 0.5.1 Specification
-boolToDT :: Primitive -> Bool -> DataType
-boolToDT (BString _)     False = bsToDT []
-boolToDT (BString _)     True  = bsToDT [F,F,F,F]
-boolToDT (BInteger _)    False = intToDT 0
-boolToDT (BInteger _)    True  = intToDT 1
-boolToDT (BRational _ _) False = rtlToDT 0 1
-boolToDT (BRational _ _) True  = rtlToDT (-1) (-1)
-boolToDT (BNmspId _)     False = (p,BNmspId $ Left [])
-  where p = (o "AN")++(o "EN")++repeat Terminate
-        o t = opcodes M.! t
-boolToDT (BNmspId _)     True  = (p,BNmspId $ Left [[]])
-  where p = (o "AN")++(o "CN")++(o "ES")++(o "EN")++repeat Terminate
-        o t = opcodes M.! t
-boolToDT (BStatement)    False = (p,BStatement)
-  where p = (o "LS")++(o "LT")++(o "ES")++repeat Terminate
-        o t = opcodes M.! t
-boolToDT (BStatement)    True  = (p,BStatement)
-  where p = (o "LS")++(o "LT")++(o "CS")++[F,F,F,F]++(o "ES")++repeat Terminate
-        o t = opcodes M.! t
+cmpdt (a,BStatement)    (b,BStatement)    _ = compare a b
 
 -- String Utilities
 lstring = snd . snd . pstring
@@ -115,11 +73,12 @@ cinteger a@(_,BInteger _) = a
 cinteger (b,_) = (b,linteger b)
 
 intToBin :: Integer -> BitSeries
-intToBin 0 = []
-intToBin x = let (i,bs) = fbit x [] in bs++intToBin i
-  where fbit i s | length s == 4 = (i,s)
-                 | otherwise     = fbit (i`div`2) (b:s)
-                 where b = if (i`mod`2==0)/=(i<0) then F else T
+intToBin x = snd $ until ((==0).fst) (\(i,s)->second (s++)$ fbit i []) (x',[])
+  where neg = x < 0
+        fbit i s | length s == 4 = (i,s)
+                 | otherwise     = fbit (i`quot`2) (b:s)
+                 where b = if (i`mod`2==0)/=neg then F else T
+        x' = if neg then x+1 else x
 
 intToBS :: Integer -> BitSeries
 intToBS i = [s]++bsToString (intToBin i)
@@ -169,3 +128,37 @@ gnmsp b s = gnmsp b (cnmsp s)
 -- Statement Utilities
 cstmt :: DataType -> DataType
 cstmt = second (const BStatement)
+
+-- Boolean Utilities
+-- Convert DataType to and from Bool in accordance with Section IV of the Advanced
+-- Assembly 0.5.1 Specification
+dtToBool :: DataType -> Bool
+dtToBool (_,BString []) = False
+dtToBool (_,BInteger 0) = False
+dtToBool (_,BRational 0 x) = x == 0
+dtToBool (_,BNmspId (Left [])) = False
+dtToBool (x,BStatement)
+  | isPrefixOf ((o "LS")++(o "LT")++(o "ES")) x = False
+  | otherwise = True
+  where o t = opcodes M.! t
+dtToBool _ = True
+
+boolToDT :: Primitive -> Bool -> DataType
+boolToDT (BString _)     False = bsToDT []
+boolToDT (BString _)     True  = bsToDT [F,F,F,F]
+boolToDT (BInteger _)    False = intToDT 0
+boolToDT (BInteger _)    True  = intToDT 1
+boolToDT (BRational _ _) False = rtlToDT 0 1
+boolToDT (BRational _ _) True  = rtlToDT (-1) (-1)
+boolToDT (BNmspId _)     False = (p,BNmspId $ Left [])
+  where p = (o "AN")++(o "EN")++repeat Terminate
+        o t = opcodes M.! t
+boolToDT (BNmspId _)     True  = (p,BNmspId $ Left [[]])
+  where p = (o "AN")++(o "CN")++(o "ES")++(o "EN")++repeat Terminate
+        o t = opcodes M.! t
+boolToDT (BStatement)    False = (p,BStatement)
+  where p = (o "LS")++(o "LT")++(o "ES")++repeat Terminate
+        o t = opcodes M.! t
+boolToDT (BStatement)    True  = (p,BStatement)
+  where p = (o "LS")++(o "LT")++(o "CS")++[F,F,F,F]++(o "ES")++repeat Terminate
+        o t = opcodes M.! t
