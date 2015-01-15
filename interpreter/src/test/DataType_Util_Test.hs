@@ -278,6 +278,45 @@ cmpTests = TestLabel "Comparisons" $
            , testCmpN1, testCmpN2, testCmpN3, testCmpT1, testCmpT2, testCmpT3
            ]
 
+-- Boolean Tests
+testBtSF = TestLabel "Test converting False to BString" $
+  TestCase $ assertEqual "" (bsToDT []) (boolToDT (BString []) False)
+testBtST = TestLabel "Test converting True to BString" $
+  TestCase $ assertEqual "" (bsToDT [F,F,F,F]) (boolToDT (BString []) True)
+
+testBtIF = TestLabel "Test converting False to BInteger" $
+  TestCase $ assertEqual "" (intToDT 0) (boolToDT (BInteger 0) False)
+testBtIT = TestLabel "Test converting True to BInteger" $
+  TestCase $ assertEqual "" (intToDT 1) (boolToDT (BInteger 0) True)
+
+testBtRF = TestLabel "Test converting False to BRational" $
+  TestCase $ assertEqual "" (rtlToDT 0 1) (boolToDT (BRational 0 0) False)
+testBtRT = TestLabel "Test converting True to BRational" $
+  TestCase $ assertEqual "" (rtlToDT (-1) (-1)) (boolToDT (BRational 0 0) True)
+
+testBtNF = TestLabel "Test converting False to BNmspID" $
+  TestCase $ assertEqual "" dt (boolToDT (BNmspId $ Left []) False)
+  where dt=((o "AN")++(o "EN"),BNmspId $ Left [])
+        o t = opcodes M.! t
+testBtNT = TestLabel "Test converting True to BNmspID" $
+  TestCase $ assertEqual "" dt (boolToDT (BNmspId $ Left [])  True)
+  where dt=((o "AN")++(o "CN")++(o "ES")++(o "EN"),BNmspId $ Left [[]])
+        o t = opcodes M.! t
+
+testBtTF = TestLabel "Test converting False to BStatement" $
+  TestCase $ assertEqual "" st (boolToDT (BStatement) False)
+  where st=((o "LS")++(o "LT")++(o "ES"),BStatement)
+        o t = opcodes M.! t
+testBtTT = TestLabel "Test converting True to BStatement" $
+  TestCase $ assertEqual "" st (boolToDT (BStatement) True)
+  where st=((o "LS")++(o "LT")++(o "CS")++[F,F,F,F]++(o "ES"),BStatement)
+        o t = opcodes M.! t
+
+boolTests = TestLabel "Booleans" $
+  TestList [ testBtSF, testBtST, testBtIF, testBtIT, testBtRF, testBtRT
+           , testBtNF, testBtNT, testBtTF, testBtTT
+           ]
+
 mainList = TestLabel "DataType.Util" $ 
   TestList [ testTt, strTests, intTests, rationalTests, nmspTests, stmtTests
            , cmpTests ]
