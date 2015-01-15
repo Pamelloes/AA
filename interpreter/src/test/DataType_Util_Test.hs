@@ -312,9 +312,44 @@ testBtTT = TestLabel "Test converting True to BStatement" $
   where st=((o "LS")++(o "LT")++(o "CS")++[F,F,F,F]++(o "ES"),BStatement)
         o t = opcodes M.! t
 
+testStF = TestLabel "Test converting BString to False" $
+  TestCase $ assertEqual "" False (dtToBool $ bsToDT [])
+testStT = TestLabel "Test converting BString to True" $
+  TestCase $ assertEqual "" True (dtToBool $ bsToDT (replicate 100 F))
+
+testItF = TestLabel "Test converting BInteger to False" $
+  TestCase $ assertEqual "" False (dtToBool $ intToDT 0)
+testItT = TestLabel "Test converting BInteger to True" $
+  TestCase $ assertEqual "" True (dtToBool $ intToDT (-1356314))
+
+testRtF = TestLabel "Test converting BRational to False" $
+  TestCase $ assertEqual "" False (dtToBool $ rtlToDT 0 392587)
+testRtT = TestLabel "Test converting BRational to True" $
+  TestCase $ assertEqual "" True (dtToBool $ rtlToDT 12345 43210)
+
+testNtF = TestLabel "Test converting BNmspId to False" $
+  TestCase $ assertEqual "" False (dtToBool $ ns)
+  where ns = ((o "AN")++(o "EN"),BNmspId $ Left [])
+        o t = opcodes M.! t
+testNtT = TestLabel "Test converting BNmspId to True" $
+  TestCase $ assertEqual "" True (dtToBool $ ns)
+  where ns = ((o "RN")++(o "ERN"),BNmspId $ Right [])
+        o t = opcodes M.! t
+
+testTtF = TestLabel "Test converting BStatement to False" $
+  TestCase $ assertEqual "" False (dtToBool $ s)
+  where s = ((o "LS")++(o "LT")++(o "ES"),BStatement)
+        o t = opcodes M.! t
+testTtT = TestLabel "Test converting BStatement to True" $
+  TestCase $ assertEqual "" True (dtToBool $ s)
+  where s = ((o "FS")++(o "TS")++(o "LS")++(o "LT")++(o "ES")++(o "LS")
+           ++(o "LN")++(o "AN")++(o "EN"),BStatement)
+        o t = opcodes M.! t
+
 boolTests = TestLabel "Booleans" $
   TestList [ testBtSF, testBtST, testBtIF, testBtIT, testBtRF, testBtRT
-           , testBtNF, testBtNT, testBtTF, testBtTT
+           , testBtNF, testBtNT, testBtTF, testBtTT, testStF, testStT, testItF
+           , testItT, testRtF, testRtT, testNtF, testNtT, testTtF, testTtT
            ]
 
 mainList = TestLabel "DataType.Util" $ 
