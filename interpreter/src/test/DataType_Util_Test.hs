@@ -204,12 +204,54 @@ testCn2 = TestLabel "Test cnmsp 2" $
 nmspTests = TestLabel "Namespace" $
   TestList [ testLNmsp, testCn1, testCn2 ]
 
-{-
+-- Statement Tests
+testCt1 = TestLabel "Test cstmt 1" $
+  TestCase $ assertEqual "" (p,BStatement) (cstmt (p,BString [T,T,T,F,T]))
+  where p=replicate 55 T++[F,T,F,Terminate]
+testCt2 = TestLabel "Test cstmt 2" $
+  TestCase $ assertEqual "" (p,BStatement) (cstmt (p,BStatement))
+  where p=replicate 23 F++[T,F,T,Terminate]
+
+stmtTests = TestLabel "Statement" $
+  TestList [ testCt1, testCt2 ]
+
 -- Comparison Tests
 testCmpS1 = TestLabel "Test comparing strings 1" $
-  TestCase $ assertEqual "" LT $ 
--}
+  TestCase $ assertEqual "" LT $ cmpdt (bsToDT [F,F,T,T]) (bsToDT [T,F,F,F]) []
+testCmpS2 = TestLabel "Test comparing strings 2" $
+  TestCase $ assertEqual "" GT $ cmpdt (bsToDT [F,F,T,T,F])
+                                       (bsToDT [F,F,T,T]) []
+testCmpS3 = TestLabel "Test comparing strings 3" $
+  TestCase $ assertEqual "" EQ $ cmpdt (bsToDT [F,T,T,T,F]) 
+                                       (bsToDT [F,T,T,T,Terminate]) []
+
+testCmpI1 = TestLabel "Test comparing integers 1" $
+  TestCase $ assertEqual "" LT $ cmpdt (intToDT 22) (intToDT 9000) []
+testCmpI2 = TestLabel "Test comparing integers 2" $
+  TestCase $ assertEqual "" GT $ cmpdt (intToDT 0) (intToDT (-1)) []
+testCmpI3 = TestLabel "Test comparing integers 3" $
+  TestCase $ assertEqual "" EQ $ cmpdt (intToDT (-12345678910)) 
+                                       (intToDT (-12345678910)) []
+
+testCmpR1 = TestLabel "Test comparing rationals 1" $
+  TestCase $ assertEqual "" LT $ cmpdt (rtlToDT 900 0) (rtlToDT 1 1) []
+testCmpR2 = TestLabel "Test comparing rationals 2" $
+  TestCase $ assertEqual "" GT $ cmpdt (rtlToDT 25 24) (rtlToDT 0 0) []
+testCmpR3 = TestLabel "Test comparing rationals 3" $
+  TestCase $ assertEqual "" EQ $ cmpdt (rtlToDT 95 0) (rtlToDT (-22) 0) []
+testCmpR4 = TestLabel "Test comparing rationals 4" $
+  TestCase $ assertEqual "" LT $ cmpdt (rtlToDT 90 (-1)) (rtlToDT 4 3) []
+testCmpR5 = TestLabel "Test comparing rationals 5" $
+  TestCase $ assertEqual "" GT $ cmpdt (rtlToDT 25 24) (rtlToDT 153 154) []
+testCmpR6 = TestLabel "Test comparing rationals 6" $
+  TestCase $ assertEqual "" EQ $ cmpdt (rtlToDT 95 5) (rtlToDT 38 2) []
+
+cmpTests = TestLabel "Comparisons" $
+  TestList [ testCmpS1, testCmpS2, testCmpS3, testCmpI1, testCmpI2, testCmpI3
+           , testCmpR1, testCmpR2, testCmpR3, testCmpR4, testCmpR5, testCmpR6
+           ]
 
 mainList = TestLabel "DataType.Util" $ 
-  TestList [ testTt, strTests, intTests, rationalTests, nmspTests ]
+  TestList [ testTt, strTests, intTests, rationalTests, nmspTests, stmtTests
+           , cmpTests ]
 main = runTestTT $ TestList [ B.mainList, P.mainList, D.mainList, mainList]

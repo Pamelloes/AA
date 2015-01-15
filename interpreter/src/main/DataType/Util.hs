@@ -44,6 +44,9 @@ nmspcmp (a:as) (b:bs) = if c == EQ then nmspcmp as bs else c
 cmpdt :: DataType -> DataType -> ANmsp -> Ordering
 cmpdt (_,BString a)     (_,BString b)     _ = compare a b
 cmpdt (_,BInteger a)    (_,BInteger b)    _ = compare a b
+cmpdt (_,BRational _ 0) (_,BRational _ 0) _ = EQ
+cmpdt (_,BRational _ 0) (_,BRational _ _) _ = LT
+cmpdt (_,BRational _ _) (_,BRational _ 0) _ = GT
 cmpdt (_,BRational a b) (_,BRational c d) _ = compare (a%b) (c%d)
 cmpdt a@(_,BNmspId _)   b@(_,BNmspId _)   s = nmspcmp av bv
   where av = gnmsp s a
