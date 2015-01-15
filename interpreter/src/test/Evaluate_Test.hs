@@ -29,6 +29,8 @@ import Control.Exception
 import qualified Data.Map as M
 import DataType
 import qualified DataType_Test as D
+import DataType.Util
+import qualified DataType_Util_Test as DU
 import Evaluate
 import Opcodes
 import qualified Opcodes_Test as O
@@ -147,4 +149,4 @@ mainList = TestLabel "Evaluate" $
            ]
 
 main = runTestTT $
-  TestList [ B.mainList, O.mainList, D.mainList, S.mainList, mainList ]
+  TestList [ B.mainList, O.mainList, D.mainList, S.mainList, DU.mainList, mainList ]
