@@ -246,9 +246,36 @@ testCmpR5 = TestLabel "Test comparing rationals 5" $
 testCmpR6 = TestLabel "Test comparing rationals 6" $
   TestCase $ assertEqual "" EQ $ cmpdt (rtlToDT 95 5) (rtlToDT 38 2) []
 
+testCmpN1 = TestLabel "Test comparing namepsaces 1" $
+  TestCase $ assertEqual "" LT $ cmpdt n1 n2 []
+  where n1=([],BNmspId $ Left [[T,T,T,T],[T,F,T,F]])
+        n2=([],BNmspId $ Left [[T,T,T,T]])
+testCmpN2 = TestLabel "Test comparing namespaces 2" $
+  TestCase $ assertEqual "" GT $ cmpdt n1 n2 []
+  where n1=([],BNmspId $ Left [[T,T,T,T],[T,F,T,F]])
+        n2=([],BNmspId $ Left [[T,T,T,T],[T,F,F,F]])
+testCmpN3 = TestLabel "Test comparing namespaces 3" $
+  TestCase $ assertEqual "" EQ $ cmpdt n1 n2 [[T,T,T,T]]
+  where n1=([],BNmspId $ Left [[T,T,T,T],[T,F,T,F]])
+        n2=([],BNmspId $ Right [Child [T,F,T,F]])
+
+testCmpT1 = TestLabel "Test comparing statements 1" $
+  TestCase $ assertEqual "" LT $ cmpdt s1 s2 []
+  where s1=([T,T,F,T],BStatement)
+        s2=([T,T,T,F],BStatement)
+testCmpT2 = TestLabel "Test comparing statements 2" $
+  TestCase $ assertEqual "" GT $ cmpdt s1 s2 []
+  where s1=([T,T,T,T,F,F],BStatement)
+        s2=([T,T,T,T,F],BStatement)
+testCmpT3 = TestLabel "Test comparing statements 3" $
+  TestCase $ assertEqual "" EQ $ cmpdt s1 s2 []
+  where s1=(replicate 22 F++[T,Terminate],BStatement)
+        s2=(replicate 22 Terminate++[T,F],BStatement)
+
 cmpTests = TestLabel "Comparisons" $
   TestList [ testCmpS1, testCmpS2, testCmpS3, testCmpI1, testCmpI2, testCmpI3
            , testCmpR1, testCmpR2, testCmpR3, testCmpR4, testCmpR5, testCmpR6
+           , testCmpN1, testCmpN2, testCmpN3, testCmpT1, testCmpT2, testCmpT3
            ]
 
 mainList = TestLabel "DataType.Util" $ 
