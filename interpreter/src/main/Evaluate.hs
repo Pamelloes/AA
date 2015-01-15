@@ -63,7 +63,7 @@ prlst = [ D.toConstr $ BStatement, D.toConstr $ BNmspId $ Left []
         , D.toConstr $ BString [], D.toConstr $ BInteger 0
         , D.toConstr $ BRational 0 0
         ]
-prcnv = [ crational, cinteger, cstring, cnmsp, cstmt ]
+prcnv = [ cstmt, cnmsp, cstring, cinteger, crational ]
 
 prior :: Primitive -> Int
 prior p = maybe (error "Unknown Primitive constructor!") id $ 
@@ -83,7 +83,7 @@ normDT a b = (ensureMin m a, ensureMin m b)
 normMDT :: Primitive -> DataType -> DataType -> (DataType,DataType)
 normMDT a b = normDT (ensureMin' a b)
 
-evaluateMSB :: Free Stmt () -> State -> IO (State,DataType)
+evaluateMSB :: Free Stmt DataType -> State -> IO (State,DataType)
 evaluateMSB (Free (MSB p a b)) s = do
   (s2,av) <- evaluate a s
   (s3,bv) <- evaluate b s2
@@ -150,8 +150,8 @@ handleIO a@(_,BString s) = lg a s
 handleIO d = handleIO (cstring d)
 
 -- Evaluate definitions
-evaluate :: Free Stmt () -> State -> IO (State,DataType)
-evaluate (Free (LS a))        s = return (s,a)
+evaluate :: Free Stmt DataType -> State -> IO (State,DataType)
+evaluate (Pure a)             s = return (s,a)
 evaluate (Free (AS a b))      s = do
   (s2,av) <- evaluate a s
   (s3,bv) <- evaluate b s2

@@ -58,7 +58,7 @@ run c = do
   let mnst = loadStmt prog
   --print (snd mnst) -- We can't print the first part because it's infinite...
   (fstate,res) <- evaluate (snd $ snd mnst) istate
-  print res
+  print (snd res)
 
 main :: IO ()
 main = execParser opts >>= run

@@ -100,9 +100,8 @@ instance (Show (f (Free f a)), Show a) => Show (Free f a) where
 --  END OF Free Monad EXCERPT --
 --------------------------------
 
-data Stmt next = LS DataType
               -- Control Statements
-               | AS next next
+data Stmt next = AS next next
                | RS next
                | ET next [next]
                | SQ next next
@@ -115,7 +114,6 @@ data Stmt next = LS DataType
                | IOS next
                deriving Show
 instance Functor Stmt where
-  fmap f (LS z) = LS z
   fmap f (AS a b) = AS (f a) (f b)
   fmap f (RS a) = RS (f a)
   fmap f (ET a b) = ET (f a) (fmap f b)
@@ -125,12 +123,12 @@ instance Functor Stmt where
   fmap f (MSA z a) = MSA z (f a)
   fmap f (MSB z a b) = MSB z (f a) (f b)
   fmap f (IOS a) = IOS (f a)
-type DStmt a = (DataType,Free Stmt ())
+type DStmt = (DataType,Free Stmt DataType)
 
-dpre :: BitSeries -> (BitSeries,DStmt a) -> (BitSeries,DStmt a)
+dpre :: BitSeries -> (BitSeries,DStmt) -> (BitSeries,DStmt)
 dpre a (b,((c,BStatement),t)) = (b,((a++c,BStatement),t))
 
-loadLS :: BitSeries -> (BitSeries,DStmt n)
+loadLS :: BitSeries -> (BitSeries,DStmt)
 loadLS s 
   | snd lt = pr "LT" $ pstring (fst lt)
   | snd li = pr "LI" $ pinteger (fst li)
@@ -142,13 +140,14 @@ loadLS s
         lr = hasOpcode s "LR"
         ln = hasOpcode s "LN"
         lm = hasOpcode s "LM"
-        pr :: Opcode -> (BitSeries,DataType) -> (BitSeries,DStmt n)
+        pr :: Opcode -> (BitSeries,DataType) -> (BitSeries,DStmt)
         pr o (t,d) = (t,ds)
           where p=(opcodes M.! o)++(fst d)
+                d'=(fst d++repeat Terminate,snd d)
                 dt=(p,BStatement)
-                ds=(dt,Free (LS d))
+                ds=(dt,Pure d')
 
-loadTS :: BitSeries -> (BitSeries, DStmt a)
+loadTS :: BitSeries -> (BitSeries, DStmt)
 loadTS s
   | snd as = let s1 = loadStmt $ fst as in
     let s2 = loadStmt $ fst s1 in
@@ -172,7 +171,7 @@ loadTS s
         (r,((eto++bts s1++s2++s3,BStatement),Free (ET (btf s1) st)))
   where bts = fst . fst .snd
         btf = snd . snd
-        ld :: BitSeries -> Integer -> (BitSeries,[Free Stmt ()],BitSeries)
+        ld :: BitSeries -> Integer -> (BitSeries,[Free Stmt DataType],BitSeries)
         ld s 0 = ([],[],s)
         ld s n = let s1 = loadStmt s in
           let (a,b,c) = ld (fst s1) (n-1) in
@@ -213,7 +212,7 @@ abomap =
   , ("TH" ,True )
   , ("TR" ,True )
   ]
-loadMS :: BitSeries -> (BitSeries, DStmt a)
+loadMS :: BitSeries -> (BitSeries, DStmt)
 loadMS bs
   | b = (fst s2,((os++s1b++s2b,BStatement),Free (MSB o s1s s2s)))
   | otherwise = (fst s1,((os++s1b,BStatement),Free (MSA o s1s)))
@@ -230,7 +229,7 @@ loadMS bs
         opc bt (o:os) = if snd res then (fst res,fst o,snd o) else opc bt os
           where res = hasOpcode bt (fst o)
 
-loadFS :: BitSeries -> (BitSeries, DStmt a)
+loadFS :: BitSeries -> (BitSeries, DStmt)
 loadFS s
   | snd ts = dpre tso $ loadTS $ fst ts
   | snd ms = dpre mso $ loadMS $ fst ms
@@ -239,10 +238,10 @@ loadFS s
         ms = hasOpcode s "MS"
         mso = opcodes M.! "MS"
 
-loadIO :: BitSeries -> (BitSeries, DStmt a)
+loadIO :: BitSeries -> (BitSeries, DStmt)
 loadIO b = let (e,(d,s))=loadStmt b in (e,(d,Free (IOS s)))
 
-loadStmt :: BitSeries -> (BitSeries, DStmt a)
+loadStmt :: BitSeries -> (BitSeries, DStmt)
 loadStmt s
   | snd ls = dpre lso $ loadLS $ fst ls
   | snd fs = dpre fso $ loadFS $ fst fs
