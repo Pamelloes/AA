@@ -58,13 +58,9 @@ testMrid = TestLabel "Verify mrid" $
   TestCase $ assertEqual "" ([],BNmspId$Right p) (mrid p)
   where p=[Parent,Parent,Child [F,F,F,F],Child [T,T,T,T]]
 
-testTt = TestLabel "Verify tT" $
-  TestCase $ assertEqual "" [T,T,F,F,Terminate] (tT $ [T,T,F,F,Terminate,F,T,F]
-  ++ (repeat Terminate))
 
 utilList = TestLabel "Namespaces_Test Utilities" $
-  TestList [ testMaid, testMrid, testTt
-           ]
+  TestList [ testMaid, testMrid ]
 
 -- Namespace Functionality Tests
 testDefaultNamespace = TestLabel "Test default namespace" $

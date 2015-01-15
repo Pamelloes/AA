@@ -49,6 +49,10 @@ instance Eq Primitive where
   (BNmspId a)==(BNmspId b)=a==b
   (BStatement)==(BStatement)=True
 
+-- DataType Terminate Truncator
+tD :: DataType -> DataType
+tD (b,p) = (B.tT b,p)
+
 -- String Tests
 strError = ErrorCall "lstring: Reached program end"
 

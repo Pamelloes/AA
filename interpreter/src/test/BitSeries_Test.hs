@@ -45,6 +45,16 @@ testBComp = TestLabel "Test bit comparisons" $
            , TestCase $ assertBool "" (T>Terminate)
            ]
 
+-- BitSeries Terminate Truncator
+tT :: BitSeries -> BitSeries
+tT [] = []
+tT (Terminate:as)=[Terminate]
+tT (a:as)=a:(tT as)
+
+testTt = TestLabel "Verify tT" $
+  TestCase $ assertEqual "" [T,T,F,F,Terminate] (tT $ [T,T,F,F,Terminate,F,T,F]
+  ++ (repeat Terminate))
+
 mainList = TestLabel "Bits" $
-  TestList [ testBEq, testBComp ]
+  TestList [ testBEq, testBComp, testTt ]
 main = runTestTT mainList

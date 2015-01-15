@@ -31,20 +31,12 @@ import qualified Data.Map as M
 import Data.Ratio
 import DataType
 import qualified DataType_Test as D
+import DataType_Test (tD)
 import DataType.Util
 import Opcodes
 import qualified Opcodes_Test as P
 import Test.HUnit
 import TestException
-
-tT :: BitSeries -> BitSeries
-tT (Terminate:as)=[Terminate]
-tT (a:as)=a:(tT as)
-
-testTt = TestLabel "Verify tT" $
-  TestCase $ assertEqual "" [T,T,F,F,Terminate] (tT $ [T,T,F,F,Terminate,F,T,F]
-  ++ (repeat Terminate))
-
 
 -- String Tests
 testLstring = TestLabel "Test lstring" $
@@ -73,7 +65,7 @@ testBtS2 = TestLabel "Test inserting BString opcodes into uneven BitSeries" $
         o t = opcodes M.! t
 
 testBtDT = TestLabel "Test converting BitSeries to BString DataType" $
-  TestCase $ assertEqual "" (p',BString s) (let (b,r)=bsToDT s in (tT b,r))
+  TestCase $ assertEqual "" (p',BString s) (tD $ bsToDT s)
   where s=[F,F,T,T]++[F,F,F,T]
         p=(o "CS")++[F,F,T,T]++(o "CS")++[F,F,F,T]++(o "ES")
         p'=p++[Terminate]
@@ -118,7 +110,7 @@ testItB0 = TestLabel "Test converting -1 to BitSeries" $
         o t = opcodes M.! t
 
 testItDT = TestLabel "Test converting integer to BInteger DataType" $
-  TestCase $ assertEqual "" (p',BInteger i) (let (b,r)=intToDT i in (tT b,r))
+  TestCase $ assertEqual "" (p',BInteger i) (tD $ intToDT i)
   where i=256
         p= [F]++(o "CS")++[F,F,F,F]++(o "CS")++[F,F,F,F]++(o "CS")
          ++[F,F,F,T]++(o "ES")
@@ -157,15 +149,14 @@ testRtB = TestLabel "Test converting rational into BitSeries" $
         o t = opcodes M.! t
 
 testIItDT = TestLabel "Test converting two-integer rational into DataType" $
-  TestCase $ assertEqual "" (p',BRational a b) 
-                         (let (c,r)=rtlToDT a b in (tT c,r))
+  TestCase $ assertEqual "" (p',BRational a b) (tD $ rtlToDT a b)
   where a=22
         b=(-1)
         p=[F]++(o "CS")++[F,T,T,F]++(o "CS")++[F,F,F,T]++(o "ES")++[T]++(o "ES")
         p'=p++[Terminate]
         o t = opcodes M.! t
 testRtDT = TestLabel "Test converting rational into DataType" $
-  TestCase $ assertEqual "" (p',BRational a b) (let (b,r)=rtlToDT' c in (tT b,r))
+  TestCase $ assertEqual "" (p',BRational a b) (tD $ rtlToDT' c)
   where a=13
         b=9
         c=a%b
@@ -353,6 +344,5 @@ boolTests = TestLabel "Booleans" $
            ]
 
 mainList = TestLabel "DataType.Util" $ 
-  TestList [ testTt, strTests, intTests, rationalTests, nmspTests, stmtTests
-           , cmpTests ]
+  TestList [ strTests, intTests, rationalTests, nmspTests, stmtTests, cmpTests ]
 main = runTestTT $ TestList [ B.mainList, P.mainList, D.mainList, mainList]

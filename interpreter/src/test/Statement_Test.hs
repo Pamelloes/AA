@@ -47,16 +47,11 @@ instance (Eq a) => Eq (Stmt a) where
   (IOS a)==(IOS b)=(a==b)
   _==_=False
 
-tT :: BitSeries -> BitSeries
-tT [] = []
-tT (Terminate:as)=[Terminate]
-tT (a:as)=a:(tT as)
-tD :: DataType -> DataType
-tD (b,p) = (tT b,p)
+-- DStmt and (BitSeries,DStmt) Terminate Truncators
 tDS :: DStmt -> DStmt
-tDS (d,f) = (tD d,fmap tD f)
+tDS (d,f) = (D.tD d,fmap D.tD f)
 tBD :: (BitSeries,DStmt) -> (BitSeries,DStmt)
-tBD (b,d) = (tT b,tDS d)
+tBD (b,d) = (B.tT b,tDS d)
 
 -- Literal Statement Tests
 testLsS = TestLabel "Test loading literal string" $
