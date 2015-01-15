@@ -28,11 +28,12 @@ import qualified BitSeries_Test as B
 import Control.DeepSeq
 import Control.Exception
 import qualified Data.Map as M
-import Opcodes
-import qualified Opcodes_Test as P
+import Data.Ratio
 import DataType
 import qualified DataType_Test as D
 import DataType.Util
+import Opcodes
+import qualified Opcodes_Test as P
 import Test.HUnit
 import TestException
 
@@ -142,8 +143,39 @@ testCr2 = TestLabel "Test crational from BRational" $
   where p= [F]++(opcodes M.! "CS")++[T,T,T,T]++(opcodes M.! "ES")
          ++[F]++(opcodes M.! "ES")
 
+testIItB = TestLabel "Test converting two-integer rational into BitSeries" $
+  TestCase $ assertEqual "" p (rtlToBS a b)
+  where a=(-127)
+        b=0
+        p=[T]++(o "CS")++[F,F,F,T]++(o "CS")++[T,F,F,F]++(o "ES")++[F]++(o "ES")
+        o t = opcodes M.! t
+testRtB = TestLabel "Test converting rational into BitSeries" $
+  TestCase $ assertEqual "" p (rtlToBS' a)
+  where a=(-12)%(29)
+        p= [T]++(o "CS")++[F,T,F,F]++(o "ES")++[F]++(o "CS")++[T,T,F,T]++(o "CS")
+         ++[F,F,F,T]++(o "ES")
+        o t = opcodes M.! t
+
+testIItDT = TestLabel "Test converting two-integer rational into DataType" $
+  TestCase $ assertEqual "" (p',BRational a b) 
+                         (let (c,r)=rtlToDT a b in (tT c,r))
+  where a=22
+        b=(-1)
+        p=[F]++(o "CS")++[F,T,T,F]++(o "CS")++[F,F,F,T]++(o "ES")++[T]++(o "ES")
+        p'=p++[Terminate]
+        o t = opcodes M.! t
+testRtDT = TestLabel "Test converting rational into DataType" $
+  TestCase $ assertEqual "" (p',BRational a b) (let (b,r)=rtlToDT' c in (tT b,r))
+  where a=13
+        b=9
+        c=a%b
+        p=[F]++(o "CS")++[T,T,F,T]++(o "ES")++[F]++(o "CS")++[T,F,F,T]++(o "ES")
+        p'=p++[Terminate]
+        o t = opcodes M.! t
+
 rationalTests = TestLabel "Rational" $
-  TestList [ testLrational, testCr1, testCr2 ]
+  TestList [ testLrational, testCr1, testCr2, testIItB, testRtB, testIItDT
+           , testRtDT ]
 
 -- Namespace Tests
 maid :: ANmsp -> DataType

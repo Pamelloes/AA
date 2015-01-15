@@ -73,7 +73,7 @@ cinteger a@(_,BInteger _) = a
 cinteger (b,_) = (b,linteger b)
 
 intToBin :: Integer -> BitSeries
-intToBin x = snd $ until ((==0).fst) (\(i,s)->second (s++)$ fbit i []) (x',[])
+intToBin x = snd $ until ((==0).fst) (\(i,s)->second (s++) $ fbit i []) (x',[])
   where neg = x < 0
         fbit i s | length s == 4 = (i,s)
                  | otherwise     = fbit (i`quot`2) (b:s)
