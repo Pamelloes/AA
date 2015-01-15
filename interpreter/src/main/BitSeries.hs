@@ -23,8 +23,10 @@ THE SOFTWARE.
 -- This module defines a Bit and BitSeries. A special Bit implementation is used
 -- to accomodate lists that end with a repeating false value.
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances #-}
 module BitSeries where
 
+import Data.Bits
 import Data.Data
 import Data.Typeable
 
@@ -43,3 +45,47 @@ instance Ord Bit where
   _ `compare` _ = EQ
 
 type BitSeries=[Bit]
+instance Bits BitSeries where
+  []     .&. _      = []
+  _      .&. []     = [] 
+  (T:as) .&. (T:bs) = T:(as.&.bs)
+  (_:as) .&. (_:bs) = F:(as.&.bs)
+
+  []     .|. _      = []
+  _      .|. []     = [] 
+  (T:as) .|. (_:bs) = T:(as.&.bs)
+  (_:as) .|. (T:bs) = T:(as.&.bs)
+  (_:as) .|. (_:bs) = F:(as.&.bs)
+
+  []     `xor` _      = []
+  _      `xor` []     = [] 
+  (T:as) `xor` (T:bs) = F:(as.&.bs)
+  (a:as) `xor` (b:bs) = c:(as.&.bs)
+    where c=if (a==F)&&(b==F) then F else T
+
+  complement (T        :as) = F:(complement as)
+  complement (F        :as) = T:(complement as)
+  complement (Terminate:as) = T:(complement as)
+
+  shift b 0 = b
+  shift b i
+    | i>0 = b++(replicate i F)
+    | i<0 && (abs i)<(length b) = take (i+length b) b
+    | otherwise = []
+
+  rotate [] _ = []
+  rotate b  0 = b
+  rotate b  i
+    | i>0 = rotate (tail b++[head b]) (i-1)
+    | i<0 = rotate (init b++[last b]) (i+1)
+
+  bitSize = length
+  bitSizeMaybe = return . bitSize
+
+  isSigned _ = False
+
+  testBit = ((== T).).(!!)
+
+  bit i = replicate i F++[T]
+
+  popCount = foldr (\a i -> if a==T then i+1 else i) 0
