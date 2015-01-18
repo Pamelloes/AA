@@ -27,6 +27,7 @@ module Opcodes where
 import BitSeries
 import Data.List
 import qualified Data.Map as M
+import Text.Parsec.Prim
 
 type Opcode = String
 
@@ -40,7 +41,8 @@ hasOpcode s k
         l = length p
         r = drop l s
 
-matchOpcode o = btokens (opcodes M.! o)
+mopc :: Opcode -> Parsec BitSeries u BitSeries
+mopc o = btokens (opcodes M.! o)
 
 opcodes=M.fromList
  [("ES",[F])
