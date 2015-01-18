@@ -31,6 +31,7 @@ import qualified Data.Map as M
 import Opcodes
 import Test.HUnit
 import TestException
+import TestUtil
 
 -- Opcode Tests
 opError = ErrorCall "hasOpcode: Reached program end"
@@ -40,6 +41,8 @@ testEmpty = TestCase $ assertException opError (hasOpcode [] "ES")
 testL1 = TestCase $ assertEqual
   "Should recognize opcode of length 1." ([],True) (hasOpcode (opcodes M.! "ES")
   "ES")
+testL1' = ptest "Should recognize opcode of length 1." (o "ES") (mopc "ES") 
+  (o "ES")
 
 testL2 = TestCase $ assertEqual
   "Should recognize opcode of length 2." ([],True) (hasOpcode (opcodes M.! "LI")
@@ -58,6 +61,7 @@ testL7 = TestCase $ assertEqual
   "TS")
 
 testPos = TestList [testL1, testL2, testL4, testL5, testL7]
+testPos' = TestList [testL1']--, testL2, testL4, testL5, testL7]
 
 testN1 = TestCase $ assertEqual
   "Should not recognize opcode of length 1." (pr,False) (hasOpcode pr "EN")
@@ -81,5 +85,5 @@ testN7 = TestCase $ assertEqual
 
 testNeg = TestList [testN1, testN2, testN4, testN5, testN7]
 
-mainList = TestList [testEmpty, testPos, testNeg] 
+mainList = TestList [testEmpty, testPos, testPos', testNeg] 
 main = runTestTT $ TestList [B.mainList, mainList]
