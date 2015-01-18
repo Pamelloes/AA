@@ -60,7 +60,7 @@ pstring s
 qstring = do 
   let cs = mopc "CS">>replicateM 4 anyToken
   parts <- many cs
-  mopc "ES">>return (foldr (++) [] parts)
+  mopc "ES">>return (BString $ foldr (++) [] parts)
 
 -- Integers
 bsToInt :: [Bit] -> Integer
@@ -75,6 +75,12 @@ pinteger (sign:remainder) = (prog,(sign:p,BInteger (sgn $ bsToInt str)))
   where (prog,(p,BString str))=pstring remainder
         sgn=if sign==T then (\x->x-2^(length str)) else (\x->x)
 
+qinteger = do
+  sign <- anyToken
+  (BString str) <- qstring
+  let sgn = if sign==T then (\x -> x-2^(length str)) else (id)
+  return (BInteger $ sgn $ bsToInt str)
+
 -- Rationals
 prational :: BitSeries -> (BitSeries,DataType)
 prational [] = error "lrational: Reached program end"
@@ -82,6 +88,11 @@ prational s = (prog,(p++p2,BRational i1 i2))
   where (p1,(p,BInteger i1a))=pinteger s
         (prog,(p2,BInteger i2))=pinteger p1
         i1=if i2 == 0 then 0 else i1a
+
+qrational = do
+  (BInteger a) <- qinteger
+  (BInteger b) <- qinteger
+  return $ BRational a b
 
 -- Namespaces
 panmsp :: BitSeries -> (BitSeries,(BitSeries,ANmsp))
