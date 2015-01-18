@@ -30,11 +30,13 @@ module DataType where
 
 import BitSeries
 import Control.Arrow
+import Control.Monad
 import qualified Data.Data as D
 import qualified Data.Map as M
 import Data.Typeable
 import Opcodes
-import Text.ParserCombinators.Parsec
+import Text.Parsec.Combinator
+import Text.Parsec.Prim
 
 -- Namespace Types
 data RNmspS = Child BitSeries | Parent deriving (Show,D.Data,Typeable)
@@ -55,6 +57,10 @@ pstring s
   where es=hasOpcode s "ES"
         cs=hasOpcode s "CS"
         (str,prog) = splitAt 4 (fst cs)
+qstring = do 
+  let cs = mopc "CS">>replicateM 4 anyToken
+  parts <- many cs
+  mopc "ES">>return (foldr (++) [] parts)
 
 -- Integers
 bsToInt :: [Bit] -> Integer
