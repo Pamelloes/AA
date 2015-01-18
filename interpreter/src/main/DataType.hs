@@ -34,6 +34,7 @@ import qualified Data.Data as D
 import qualified Data.Map as M
 import Data.Typeable
 import Opcodes
+import Text.ParserCombinators.Parsec
 
 -- Namespace Types
 data RNmspS = Child BitSeries | Parent deriving (Show,D.Data,Typeable)
