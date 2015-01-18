@@ -29,6 +29,8 @@ module BitSeries where
 import Data.Bits
 import Data.Data
 import Data.Typeable
+import Text.Parsec.Pos
+import Text.ParserCombinators.Parsec
 
 -- A Bit can be either T (True) or F (False). Terminate is used in infinite
 -- lists to indicate the end of non-repeating data.
@@ -43,6 +45,10 @@ instance Ord Bit where
   T `compare` a = if a == F then GT else EQ
   a `compare` T = if a == F then LT else EQ
   _ `compare` _ = EQ
+  
+btoken x = token (show) (const $ newPos "BitSeries" (-1) (-1)) 
+                 (\y -> if x==y then Just y else Nothing)
+btokens x = mapM btoken x
 
 type BitSeries=[Bit]
 instance Bits BitSeries where

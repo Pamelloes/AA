@@ -40,6 +40,8 @@ hasOpcode s k
         l = length p
         r = drop l s
 
+matchOpcode o = btokens (opcodes M.! o)
+
 opcodes=M.fromList
  [("ES",[F])
  ,("CS",[T])
