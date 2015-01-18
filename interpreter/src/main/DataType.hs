@@ -57,10 +57,19 @@ pstring s
   where es=hasOpcode s "ES"
         cs=hasOpcode s "CS"
         (str,prog) = splitAt 4 (fst cs)
+
+qstring :: Parsec BitSeries u DataType
 qstring = do 
-  let cs = mopc "CS">>replicateM 4 anyToken
-  parts <- many cs
-  mopc "ES">>return (BString $ foldr (++) [] parts)
+  let cs = do {
+    op <- mopc "CS";
+    cnt <- replicateM 4 anyToken;
+    return (op++cnt,cnt);
+  }
+  pts <- many cs
+  end <- mopc "ES"
+  let bs = foldr ((++).fst) [] pts
+  let st = foldr ((++).snd) [] pts
+  return (bs++end,BString st)
 
 -- Integers
 bsToInt :: [Bit] -> Integer
@@ -75,11 +84,12 @@ pinteger (sign:remainder) = (prog,(sign:p,BInteger (sgn $ bsToInt str)))
   where (prog,(p,BString str))=pstring remainder
         sgn=if sign==T then (\x->x-2^(length str)) else (\x->x)
 
+qinteger :: Parsec BitSeries u DataType
 qinteger = do
   sign <- anyToken
-  (BString str) <- qstring
+  (bs,BString str) <- qstring
   let sgn = if sign==T then (\x -> x-2^(length str)) else (id)
-  return (BInteger $ sgn $ bsToInt str)
+  return (sign:bs,BInteger $ sgn $ bsToInt str)
 
 -- Rationals
 prational :: BitSeries -> (BitSeries,DataType)
@@ -89,10 +99,12 @@ prational s = (prog,(p++p2,BRational i1 i2))
         (prog,(p2,BInteger i2))=pinteger p1
         i1=if i2 == 0 then 0 else i1a
 
+qrational :: Parsec BitSeries u DataType
 qrational = do
-  (BInteger a) <- qinteger
-  (BInteger b) <- qinteger
-  return $ BRational a b
+  (bs,BInteger a) <- qinteger
+  (bt,BInteger b) <- qinteger
+  let a' = if b == 0 then 0 else a
+  return $ (bs++bt,BRational a' b)
 
 -- Namespaces
 panmsp :: BitSeries -> (BitSeries,(BitSeries,ANmsp))
@@ -103,6 +115,19 @@ panmsp p
         cn=hasOpcode p "CN"
         cno=opcodes M.! "CN"
         (prog, (pstr,BString str))=pstring (fst cn)
+
+qanmsp :: Parsec BitSeries u (BitSeries,ANmsp)
+qanmsp = do
+  let cn = do {
+    cn <- mopc "CN";
+    (bs,BString str) <- qstring;
+    return $ (cn++bs,str);
+  }
+  pts <- many cn
+  let bs = foldr ((++).fst) [] pts
+  let str = foldr ((:).snd) [] pts
+  end <- mopc "EN"
+  return (bs++end,str)
 
 prnmsp :: BitSeries -> (BitSeries,(BitSeries,RNmsp))
 prnmsp p
@@ -116,6 +141,23 @@ prnmsp p
         pn=hasOpcode p "PN"
         pno=opcodes M.! "PN"
 
+qrnmsp :: Parsec BitSeries u (BitSeries,RNmsp)
+qrnmsp = do
+  let cn = do {
+    cn <- try $ mopc "CN";
+    (bs,BString str) <- qstring;
+    return (cn++bs,Child str);
+  }
+  let pn = do {
+    pn <- try $ mopc "PN";
+    return (pn,Parent);
+  }
+  pts <- many (pn <|> cn)
+  end <- mopc "EN"
+  let bs = foldr ((++).fst) [] pts
+  let pt = foldr ((:).snd) [] pts
+  return (bs++end,pt)
+
 pnmsp :: BitSeries -> (BitSeries, DataType)
 pnmsp p
   | snd abs = let (a,(q,b))=panmsp (fst abs) in (a,(an++q,BNmspId $ Left b))
@@ -124,3 +166,15 @@ pnmsp p
         an=opcodes M.! "AN"
         rel=hasOpcode p "RN"
         rn=opcodes M.! "RN"
+
+qnmsp :: Parsec BitSeries u DataType
+qnmsp = do
+  let an = do {
+    (bs,an) <- try $ qanmsp;
+    return (bs,BNmspId $ Left an);
+  }
+  let rn = do {
+    (bs,rn) <- try $ qrnmsp;
+    return (bs,BNmspId $ Right rn);
+  }
+  an <|> rn
