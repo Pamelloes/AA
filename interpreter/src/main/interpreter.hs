@@ -27,9 +27,10 @@ import BitSeries
 import Data.Bits
 import qualified Data.ByteString.Lazy as B
 import Data.Word
-import Evaluate
+--import Evaluate
 import Options.Applicative
 import Statement
+import Text.Parsec.Prim
 
 data Cmdline = Cmdline
   { file :: String
@@ -54,11 +55,10 @@ run :: Cmdline -> IO ()
 run c = do
   p <- B.readFile $ file c
   let prog = (B.foldr (\b ac -> (up b)++ac) [] p)++(repeat Terminate)
-  let istate = ([],defaultNamespace prog)
-  let mnst = loadStmt prog
-  --print (snd mnst) -- We can't print the first part because it's infinite...
-  (fstate,res) <- evaluate (snd $ snd mnst) istate
-  print (snd res)
+  --let istate = ([],defaultNamespace prog)
+  let mnst = parse loadStmt "" prog
+  print (fmap snd mnst) -- We can't print the first part because it's infinite...
+  --(fstate,res) <- evaluate (snd $ snd mnst) istate
 
 main :: IO ()
 main = execParser opts >>= run
