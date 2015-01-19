@@ -36,54 +36,40 @@ import TestUtil
 -- Opcode Tests
 opError = ErrorCall "hasOpcode: Reached program end"
 
-testEmpty = TestCase $ assertException opError (hasOpcode [] "ES")
+testEmpty = ptestf "Fail empty string." (mopc "ES") []
 
-testL1 = TestCase $ assertEqual
-  "Should recognize opcode of length 1." ([],True) (hasOpcode (opcodes M.! "ES")
-  "ES")
-testL1' = ptest "Should recognize opcode of length 1." (o "ES") (mopc "ES") 
+testL1 = ptest "Should recognize opcode of length 1." (o "ES") (mopc "ES") 
   (o "ES")
 
-testL2 = TestCase $ assertEqual
-  "Should recognize opcode of length 2." ([],True) (hasOpcode (opcodes M.! "LI")
-  "LI")
+testL2 = ptest "Should recognize opcode of length 2." (o "LI") (mopc "LI")
+  (o "LI")
 
-testL4 = TestCase $ assertEqual
-  "Should recognize opcode of length 4." ([],True) (hasOpcode (opcodes M.! "OU")
-  "OU")
+testL4 = ptest "Should recognize opcode of length 4." (o "OU") (mopc "OU")
+  (o "OU")
 
-testL5 = TestCase $ assertEqual
-  "Should recognize opcode of length 5." ([],True) (hasOpcode (opcodes M.! "BX")
-  "BX")
+testL5 = ptest "Should recognize opcode of length 5." (o "BX") (mopc "BX")
+  (o "BX")
 
-testL7 = TestCase $ assertEqual
-  "Should recognize opcode of length 7." ([],True) (hasOpcode (opcodes M.! "TS")
-  "TS")
+testL7 = ptest "Should recognize opcode of length 7." (o "TS") (mopc "TS")
+  (o "TS")
 
 testPos = TestList [testL1, testL2, testL4, testL5, testL7]
-testPos' = TestList [testL1']--, testL2, testL4, testL5, testL7]
 
-testN1 = TestCase $ assertEqual
-  "Should not recognize opcode of length 1." (pr,False) (hasOpcode pr "EN")
-  where pr=[T,F]
+testN1 = ptestf "Should not recognize opcode of length 1." (mopc "EN") [T,F]
 
-testN2 = TestCase $ assertEqual
-  "Should not recognize opcode of length 2." (pr,False) (hasOpcode pr "ERN")
-  where pr=[F,T,F,T]
+testN2 = ptestf "Should not recognize opcode of length 2." (mopc "ERN")
+  [F,T,F,T]
 
-testN4 = TestCase $ assertEqual
-  "Should not recognize opcode of length 4." (pr,False) (hasOpcode pr "BN")
-  where pr=[F,F,F,T,T,T]
+testN4 = ptestf "Should not recognize opcode of length 4." (mopc "BN")
+  [F,F,F,T,T,T]
 
-testN5 = TestCase $ assertEqual
-  "Should not recognize opcode of length 5." (pr,False) (hasOpcode pr "BO")
-  where pr=[F,F,T,T,F,F]
+testN5 = ptestf "Should not recognize opcode of length 5." (mopc "BO")
+  [F,F,T,T,F,F]
 
-testN7 = TestCase $ assertEqual
-  "Should not recognize opcode of length 7." (pr,False) (hasOpcode pr "TX")
-  where pr=[T,F,T,T,T,T,T,F]
+testN7 = ptestf "Should not recognize opcode of length 7." (mopc "TX")
+  [T,F,T,T,T,T,T,F]
 
 testNeg = TestList [testN1, testN2, testN4, testN5, testN7]
 
-mainList = TestList [testEmpty, testPos, testPos', testNeg] 
+mainList = TestList [testEmpty, testPos, testNeg] 
 main = runTestTT $ TestList [B.mainList, mainList]

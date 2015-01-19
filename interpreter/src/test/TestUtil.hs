@@ -41,3 +41,8 @@ etest s a b = TestLabel s $ TestCase $ assertEqual "" a b
 
 ptest :: (Show a, Eq a) => String -> a -> Parsec BitSeries () a -> BitSeries -> Test
 ptest s a p b = etest s (Right a) $ parse p "" b
+
+ptestf :: (Show a, Eq a) => String -> Parsec BitSeries () a -> BitSeries -> Test
+ptestf s p b = TestLabel s $ TestCase $ case (parse p "" b) of
+  Left  _ -> return ()
+  Right a -> assertFailure $ "Expected error but got: "++show a
