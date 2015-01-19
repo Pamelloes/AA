@@ -31,6 +31,7 @@ import Data.List.Split
 import qualified Data.Map as M
 import Data.Ratio
 import Opcodes
+import Text.Parsec.Prim
 
 nmspcmp :: ANmsp -> ANmsp -> Ordering
 nmspcmp []     []     = EQ
@@ -54,7 +55,9 @@ cmpdt a@(_,BNmspId _)   b@(_,BNmspId _)   s = nmspcmp av bv
 cmpdt (a,BStatement)    (b,BStatement)    _ = compare a b
 
 -- String Utilities
-lstring = undefined --snd . snd . pstring
+lstring a = case (fmap snd $ parse pstring "" a) of
+  Left  e -> error $ show e
+  Right v -> v
 
 cstring :: DataType -> DataType
 cstring a@(_,BString _) = a
@@ -69,7 +72,9 @@ bsToDT :: BitSeries -> DataType
 bsToDT s = (bsToString s++repeat Terminate, BString s)
 
 -- Integer Utilities
-linteger = undefined --snd . snd . pinteger
+linteger a = case (fmap snd $ parse pinteger "" a) of
+  Left  e -> error $ show e
+  Right v -> v
 
 cinteger :: DataType -> DataType
 cinteger a@(_,BInteger _) = a
@@ -91,7 +96,9 @@ intToDT :: Integer -> DataType
 intToDT i = (intToBS i++repeat Terminate,BInteger i)
 
 -- Rational Utilities
-lrational = undefined --snd . snd . prational
+lrational a = case (fmap snd $ parse prational "" a) of
+  Left  e -> error $ show e
+  Right v -> v
 
 crational :: DataType -> DataType
 crational a@(_,BRational _ _) = a
@@ -108,7 +115,9 @@ rtlToDT' :: Rational -> DataType
 rtlToDT' a = rtlToDT (numerator a) (denominator a)
 
 -- Namespace Utilities
-lnmsp = undefined --snd . snd . pnmsp
+lnmsp a = case (fmap snd $ parse pnmsp "" a) of
+  Left  e -> error $ show e
+  Right v -> v
 
 cnmsp :: DataType -> DataType
 cnmsp a@(_,BNmspId _) = a

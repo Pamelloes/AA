@@ -36,6 +36,7 @@ import DataType
 import DataType.Util
 import Opcodes
 import Statement
+import qualified Text.Parsec.Prim as P
 
 type State = (ANmsp,Namespaces)
 
@@ -168,7 +169,11 @@ evaluate (Free (ET a b))      s = do
       (t,u) <- evaluate a s;
       return ((fst t,M.insert (nid i) u (snd t)),i+1)
     }) (return (s2,1)) b
-  let (_,(_,f)) = loadStmt $ fst $ nmspValue (fst s3) av (snd s3)
+  let v = fst $ nmspValue (fst s3) av (snd s3)
+  let f = case (P.parse loadStmt "" v) of {
+    Left  e -> error $ show e;
+    Right v -> snd v;
+  }
   ((_,nm),d) <- evaluate f (n,snd s3)
   return $ ((fst s,nm),d)
 evaluate (Free (SQ a b))      s = do
