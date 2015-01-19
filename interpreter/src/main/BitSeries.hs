@@ -93,9 +93,9 @@ instance Bits BitSeries where
   popCount = foldr (\a i -> if a==T then i+1 else i) 0
   
 -- Parsec parsers
-btoken :: Bit -> Parsec BitSeries u Bit
-btoken x = token (show) (const $ newPos "BitSeries" (-1) (-1)) 
+btoken :: (Monad m) => Bit -> ParsecT BitSeries u m Bit
+btoken x = tokenPrim (show) (\c x xs -> newPos "BitSeries" (-1) (-1)) 
                  (\y -> if x==y then Just y else Nothing)
 
-btokens :: BitSeries -> Parsec BitSeries u BitSeries
+btokens :: (Monad m) => BitSeries -> ParsecT BitSeries u m BitSeries
 btokens x = mapM btoken x
