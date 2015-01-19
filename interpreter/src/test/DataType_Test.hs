@@ -108,59 +108,38 @@ intTests = TestLabel "Integer" $
 -- Rational Tests
 rationalError = ErrorCall "lrational: Reached program end"
 
-testREmptyP = TestLabel "Test Empty Program" $
-  TestCase $ assertException rationalError (prational [])
-testRIncomplete1 = TestLabel "Test Incomplete Program 1" $
-  TestCase $ assertException strError (prational [F])
-testRIncomplete2 = TestLabel "Test Incomplete Program 2" $
-  TestCase $ assertException strError (prational p)
-  where p=[F]++(opcodes M.! "CS")
-testRUnfinished = TestLabel "Test Unfinished Program" $
-  TestCase $ assertException intError (prational p)
-  where p = [F]++(opcodes M.! "CS")++(replicate 4 F)++(opcodes M.! "ES")
+testREmptyP = ptestf "Test Empty Program" qrational []
+testRIncomplete1 = ptestf "Test Incomplete Program 1" qrational [F]
+testRIncomplete2 = ptestf "Test Incomplete Program 2" qrational ([F]++(o "CS"))
+testRUnfinished = ptestf "Test Unfinished Program" qrational
+  ([F]++(o "CS")++[F,F,F,F]++(o "ES"))
 
-testREDiv0 = TestLabel "Test Empty Division By 0" $
-  TestCase $ assertEqual "" ([],(p,BRational 0 0)) (prational p)
-  where p = [F]++(opcodes M.! "ES")++[F]++(opcodes M.! "ES")
-testRDiv0 = TestLabel "Test Division By 0" $
-  TestCase $ assertEqual "" ([],(p,BRational 0 0)) (prational p)
-  where p = [F]++(opcodes M.! "CS")++([T,T,T,T])++(opcodes M.! "ES")
-          ++[F]++(opcodes M.! "ES")
-testREmpty1 = TestLabel "Test Empty 0" $
-  TestCase $ assertEqual "" ([],(p,BRational 0 (-1))) (prational p)
-  where p = [F]++(opcodes M.! "ES")++[T]++(opcodes M.! "ES")
-testREmpty2 = TestLabel "Test Empty 1" $
-  TestCase $ assertEqual "" ([],(p,BRational (-1) (-1))) (prational p)
-  where p = [T]++(opcodes M.! "ES")++[T]++(opcodes M.! "ES")
+testREDiv0 = ptest "Test Empty Division By 0" (p,BRational 0 0) qrational p
+  where p=[F]++(o "ES")++[F]++(o "ES")
+testRDiv0 = ptest "Test Division By 0" (p,BRational 0 0) qrational p
+  where p=[F]++(o "CS")++[T,T,T,T]++(o "ES")++[F]++(o "ES")
+testREmpty1 = ptest "Test Empty 0" (p,BRational 0 (-1)) qrational p
+  where p=[F]++(o "ES")++[T]++(o "ES")
+testREmpty2 = ptest "Test Empty 1" (p,BRational (-1) (-1)) qrational p
+  where p=[T]++(o "ES")++[T]++(o "ES")
 
-testRL44 = TestLabel "Test Rational Length 4/4" $
-  TestCase $ assertEqual "" ([],(p,BRational 6 1)) (prational p)
-  where p = [F]++(opcodes M.! "CS")++([F,T,T,F])
-          ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
-          ++([F,F,F,T])++(opcodes M.! "ES")
-testRL84 = TestLabel "Test Rational Length 8/4" $
-  TestCase $ assertEqual "" ([],(p,BRational 50 3)) (prational p)
-  where p = [F]++(opcodes M.! "CS")++([F,F,T,F])
-          ++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
-          ++[F]++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
-testRL48 = TestLabel "Test Rational Length 4/8" $
-  TestCase $ assertEqual "" ([],(p,BRational 7 106)) (prational p)
-  where p = [F]++(opcodes M.! "CS")++([F,T,T,T])
-          ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
-          ++([T,F,T,F])++(opcodes M.! "CS")++([F,T,T,F])
-          ++(opcodes M.! "ES")
-testRL88 = TestLabel "Test Rational Length 8/8" $
-  TestCase $ assertEqual "" ([],(p,BRational 249 16)) (prational p)
-  where p = [F]++(opcodes M.! "CS")++([T,F,F,T])
-          ++(opcodes M.! "CS")++([T,T,T,T])++(opcodes M.! "ES")
-          ++[F]++(opcodes M.! "CS")++([F,F,F,F])++(opcodes M.! "CS")
-          ++([F,F,F,T])++(opcodes M.! "ES")
-testRExtra = TestLabel "Test Program Deletion" $
-  TestCase $ assertEqual "" (p2,(p1,BRational (-3) (1))) (prational (p1++p2))
-  where p1 = [T]++(opcodes M.! "CS")++[T,T,F,T]
-          ++(opcodes M.! "ES")++[F]++(opcodes M.! "CS")
-          ++[F,F,F,T]++(opcodes M.! "ES")
-        p2 = replicate 100 T
+testRL44 = ptest "Test Rational Length 4/4" (p,BRational 6 1) qrational p
+  where p=[F]++(o "CS")++[F,T,T,F]++(o "ES")++[F]++(o "CS")++[F,F,F,T]++(o "ES")
+testRL84 = ptest "Test Rational Length 8/4" (p,BRational 50 3) qrational p
+  where p= [F]++(o "CS")++[F,F,T,F]++(o "CS")++[F,F,T,T]++(o "ES")++[F]
+         ++(o "CS")++[F,F,T,T]++(o "ES")
+testRL48 = ptest "Test Rational Length 4/8" (p,BRational 7 106) qrational p
+  where p= [F]++(o "CS")++[F,T,T,T]++(o "ES")++[F]++(o "CS")++[T,F,T,F]
+         ++(o "CS")++[F,T,T,F]++(o "ES")
+testRL88 = ptest "Test Rational Length 8/8" (p,BRational 249 16) qrational p
+  where p= [F]++(o "CS")++[T,F,F,T]++(o "CS")++[T,T,T,T]++(o "ES")++[F]
+         ++(o "CS")++[F,F,F,F]++(o "CS")++[F,F,F,T]++(o "ES")
+testRExtra = ptest "Test Program Deletion" (p2,BRational (-3) (1))
+  (qrational>>qrational) (p1++p2)
+  where p1= [F]++(o "CS")++[T,F,F,F]++(o "ES")++[F]++(o "CS")++[F,F,F,T]
+          ++(o "ES")
+        p2= [T]++(o "CS")++[T,T,F,T]++(o "ES")++[F]++(o "CS")++[F,F,F,T]
+          ++(o "ES")
 
 rationalTests = TestLabel "Rational" $
   TestList [ testREmptyP, testRIncomplete1, testRIncomplete2, testRUnfinished
