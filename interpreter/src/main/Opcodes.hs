@@ -31,16 +31,6 @@ import Text.Parsec.Prim
 
 type Opcode = String
 
--- If BitSeries starts with Opcode, result BitSeries has the opcode removed.
-hasOpcode :: BitSeries -> Opcode -> (BitSeries,Bool)
-hasOpcode s k 
-  | length (take l s) == l = if m then (r,True) else (s,False)
-  | otherwise = error "hasOpcode: Reached program end"
-  where p = opcodes M.! k
-        m = isPrefixOf p s
-        l = length p
-        r = drop l s
-
 mopc :: Opcode -> Parsec BitSeries u BitSeries
 mopc o = btokens (opcodes M.! o)
 

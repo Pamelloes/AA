@@ -54,7 +54,7 @@ cmpdt a@(_,BNmspId _)   b@(_,BNmspId _)   s = nmspcmp av bv
 cmpdt (a,BStatement)    (b,BStatement)    _ = compare a b
 
 -- String Utilities
-lstring = snd . snd . pstring
+lstring = undefined --snd . snd . pstring
 
 cstring :: DataType -> DataType
 cstring a@(_,BString _) = a
@@ -69,7 +69,7 @@ bsToDT :: BitSeries -> DataType
 bsToDT s = (bsToString s++repeat Terminate, BString s)
 
 -- Integer Utilities
-linteger = snd . snd . pinteger
+linteger = undefined --snd . snd . pinteger
 
 cinteger :: DataType -> DataType
 cinteger a@(_,BInteger _) = a
@@ -91,7 +91,7 @@ intToDT :: Integer -> DataType
 intToDT i = (intToBS i++repeat Terminate,BInteger i)
 
 -- Rational Utilities
-lrational = snd . snd . prational
+lrational = undefined --snd . snd . prational
 
 crational :: DataType -> DataType
 crational a@(_,BRational _ _) = a
@@ -108,7 +108,7 @@ rtlToDT' :: Rational -> DataType
 rtlToDT' a = rtlToDT (numerator a) (denominator a)
 
 -- Namespace Utilities
-lnmsp = snd . snd . pnmsp
+lnmsp = undefined --snd . snd . pnmsp
 
 cnmsp :: DataType -> DataType
 cnmsp a@(_,BNmspId _) = a
