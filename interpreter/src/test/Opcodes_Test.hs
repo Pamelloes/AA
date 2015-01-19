@@ -25,12 +25,9 @@ module Opcodes_Test where
 
 import BitSeries
 import qualified BitSeries_Test as B
-import Control.DeepSeq
 import Control.Exception
-import qualified Data.Map as M
 import Opcodes
 import Test.HUnit
-import TestException
 import TestUtil
 
 -- Opcode Tests

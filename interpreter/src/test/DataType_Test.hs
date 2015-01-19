@@ -34,6 +34,7 @@ import qualified Opcodes_Test as P
 import DataType
 import Test.HUnit
 import TestException
+import TestUtil
 
 instance NFData RNmspS
 instance Eq RNmspS where
@@ -56,32 +57,20 @@ tD (b,p) = (B.tT b,p)
 -- String Tests
 strError = ErrorCall "lstring: Reached program end"
 
-testEmptyP = TestLabel "Test Empty Program"  $
-  TestCase $ assertException strError (pstring [])
-testIncomplete = TestLabel "Test Incomplete" $
-  TestCase $ assertException strError (pstring p)
-  where p=(opcodes M.! "CS") ++ (replicate 3 T)
-testUnfinished = TestLabel "Test Unfinished" $
-  TestCase $ assertException strError (pstring p)
-  where p=(opcodes M.! "CS") ++ (replicate 4 T)
+testEmptyP = ptestf "Test Empty Program" qstring []
+testIncomplete = ptestf "Test Incomplete" qstring $ (o "CS")++[T,T,T]
+testUnfinished = ptestf "Test Unfinished" qstring $ (o "CS")++[T,T,T,T]
 
-testEmpty = TestLabel "Test Empty String" $
-  TestCase $ assertEqual "" ([],(p,BString [])) (pstring p)
-  where p=opcodes M.! "ES"
-testL4 = TestLabel "Test String Length 4" $
-  TestCase $ assertEqual "" ([],(p,BString str)) (pstring p)
-  where str=[F,T,T,F]
-        p=(opcodes M.! "CS") ++ str ++ (opcodes M.! "ES")
-testL8 = TestLabel "Test String Length 8" $
-  TestCase $ assertEqual "" ([],(p,BString $ s1++s2)) (pstring p)
-  where s1=replicate 4 F
-        s2=[F,T,F,T]
-        p=(opcodes M.! "CS")++s1++(opcodes M.! "CS")++s2++(opcodes M.! "ES")
-testExtra = TestLabel "Test Program Deletion" $
-  TestCase $ assertEqual "" (p2,(p1,BString str)) $ pstring (p1++p2)
-  where str=replicate 4 T
-        p1=(opcodes M.! "CS")++str++(opcodes M.! "ES")
-        p2=replicate 23 F
+testEmpty = ptest "Test Empty String" (o "ES",BString []) qstring (o "ES")
+testL4 = ptest "Test String Length 4" (p,BString [F,T,T,F]) qstring p
+  where p=(o "CS")++[F,T,T,F]++(o "ES")
+testL8 = ptest "Test String Length 8" (p,BString s) qstring p
+  where s=[F,F,F,F, F,T,F,T]
+        p=(o "CS")++[F,F,F,F]++(o "CS")++[F,T,F,T]++(o "ES")
+testExtra = ptest "Test Program Deletion" (p2,BString [T,T,T,T])
+  (qstring>>qstring) (p1++p2)
+  where p1=(o "CS")++[F,F,F,F]++(o "ES")
+        p2=(o "CS")++[T,T,T,T]++(o "ES")
 
 strTests = TestLabel "String" $
   TestList[ testEmptyP, testIncomplete, testUnfinished, testEmpty, testL4, testL8
