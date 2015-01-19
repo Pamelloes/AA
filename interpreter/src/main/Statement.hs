@@ -178,7 +178,7 @@ loadTS = do
   let rs = do {
     rs <- try $ mopc "RS";
     ((b,BStatement),f) <- loadStmt;
-    return $ ((rs++b++b,BStatement),Free (RS f));
+    return $ ((rs++b,BStatement),Free (RS f));
   }
   let sq = do {
     sq <- try $ mopc "SQ";
@@ -203,7 +203,7 @@ loadTS = do
     et <- try $ mopc "ET";
     ((b1,BStatement),f1) <- loadStmt;
     (b2,BInteger i) <- pinteger;
-    ps <- sequence (genericReplicate i loadStmt);
+    ps <- sequence (genericReplicate (abs i) loadStmt);
     let {b3 = foldr ((++).fst.fst) [] ps};
     return $ ((et++b1++b2++b3,BStatement),Free (ET f1 $ fmap (snd) ps));
   }
@@ -280,7 +280,7 @@ loadMS :: Parsec BitSeries u DStmt
 loadMS = do
   let mtch :: (Opcode,Bool) -> Parsec BitSeries u DStmt
       mtch (o,mi) = do {
-        op <- mopc o;
+        op <- try $ mopc o;
         ((b1,BStatement),f1) <- loadStmt;
         if mi then do {
           ((b2,BStatement),f2) <- loadStmt;
