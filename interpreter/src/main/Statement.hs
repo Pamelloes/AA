@@ -28,9 +28,12 @@ module Statement where
 
 import BitSeries
 import qualified Data.Map as M
-import Control.Applicative
+import Data.List
+import qualified Control.Applicative as A
+import Control.Monad
 import DataType
 import Opcodes
+import Text.Parsec.Prim
 
 ----------------------------------
 --  START OF Free Monad EXCERPT --
@@ -76,12 +79,12 @@ data Free f n = Free (f (Free f n)) | Pure n
 instance (Functor f) => Functor (Free f) where
  fmap f = go where
    go (Pure a)  = Pure (f a)
-   go (Free fa) = Free (go <$> fa)
-instance (Functor f) => Applicative (Free f) where
+   go (Free fa) = Free (go A.<$> fa)
+instance (Functor f) => A.Applicative (Free f) where
   pure = Pure
   Pure a <*> Pure b = Pure $ a b
   Pure a <*> Free b = Free $ fmap (fmap a) b
-  Free a <*> b = Free $ fmap (<*> b) a
+  Free a <*> b = Free $ fmap (A.<*> b) a
 instance (Functor f) => Monad (Free f) where
   return = Pure
   (Free x) >>= f = Free (fmap (>>= f) x)
@@ -128,6 +131,22 @@ type DStmt = (DataType,Free Stmt DataType)
 dpre :: BitSeries -> (BitSeries,DStmt) -> (BitSeries,DStmt)
 dpre a (b,((c,BStatement),t)) = (b,((a++c,BStatement),t))
 
+loadLS :: Parsec BitSeries u DStmt
+loadLS = do
+  let mkf :: Opcode -> Parsec BitSeries u DataType -> Parsec BitSeries u DStmt
+      mkf o p = do {
+        op <- try $ mopc o;
+        (bs,p) <- p;
+        return$((op++bs,BStatement),Pure (bs++repeat Terminate,p));
+      }
+  let lt = mkf "LT" pstring
+  let li = mkf "LI" pinteger
+  let lr = mkf "LR" prational
+  let ln = mkf "LN" pnmsp
+  let lm = mkf "LM" (fmap fst loadStmt)
+  lt <|> li <|> lr <|> ln <|> lm
+
+{-
 loadLS :: BitSeries -> (BitSeries,DStmt)
 loadLS s 
   | snd lt = pr "LT" $ pstring (fst lt)
@@ -146,7 +165,51 @@ loadLS s
                 d'=(fst d++repeat Terminate,snd d)
                 dt=(p,BStatement)
                 ds=(dt,Pure d')
+-}
 
+loadTS :: Parsec BitSeries u DStmt
+loadTS = do
+  let as = do {
+    as <- try $ mopc "AS";
+    ((b1,BStatement),f1) <- loadStmt;
+    ((b2,BStatement),f2) <- loadStmt;
+    return $ ((as++b1++b2,BStatement),Free (AS f1 f2));
+  }
+  let rs = do {
+    rs <- try $ mopc "RS";
+    ((b,BStatement),f) <- loadStmt;
+    return $ ((rs++b++b,BStatement),Free (RS f));
+  }
+  let sq = do {
+    sq <- try $ mopc "SQ";
+    ((b1,BStatement),f1) <- loadStmt;
+    ((b2,BStatement),f2) <- loadStmt;
+    return $ ((sq++b1++b2,BStatement),Free (SQ f1 f2));
+  }
+  let iff = do {
+    iff <- try $ mopc "IF";
+    ((b1,BStatement),f1) <- loadStmt;
+    ((b2,BStatement),f2) <- loadStmt;
+    ((b3,BStatement),f3) <- loadStmt;
+    return $ ((iff++b1++b2++b3,BStatement),Free (IF f1 f2 f3));
+  }
+  let dw = do {
+    dw <- try $ mopc "DW";
+    ((b1,BStatement),f1) <- loadStmt;
+    ((b2,BStatement),f2) <- loadStmt;
+    return $ ((dw++b1++b2,BStatement),Free (DW f1 f2));
+  }
+  let et = do {
+    et <- try $ mopc "ET";
+    ((b1,BStatement),f1) <- loadStmt;
+    (b2,BInteger i) <- pinteger;
+    ps <- sequence (genericReplicate i loadStmt);
+    let {b3 = foldr ((++).fst.fst) [] ps};
+    return $ ((et++b1++b2++b3,BStatement),Free (ET f1 $ fmap (snd) ps));
+  }
+  as <|> rs <|> sq <|> iff <|> dw <|> et
+
+{-
 loadTS :: BitSeries -> (BitSeries, DStmt)
 loadTS s
   | snd as = let s1 = loadStmt $ fst as in
@@ -188,6 +251,7 @@ loadTS s
         dwo = opcodes M.! "DW"
         et = hasOpcode s "ET"
         eto = opcodes M.! "ET"
+-}
 
 abomap =
   [ ("OP" ,True )
@@ -212,6 +276,21 @@ abomap =
   , ("TH" ,True )
   , ("TR" ,True )
   ]
+loadMS :: Parsec BitSeries u DStmt
+loadMS = do
+  let mtch :: (Opcode,Bool) -> Parsec BitSeries u DStmt
+      mtch (o,mi) = do {
+        op <- mopc o;
+        ((b1,BStatement),f1) <- loadStmt;
+        if mi then do {
+          ((b2,BStatement),f2) <- loadStmt;
+          return ((op++b1++b2,BStatement),Free (MSB o f1 f2));
+        } else return ((op++b1,BStatement),Free (MSA o f1));
+      }
+  let ops = fmap (mtch) abomap
+  foldr1 (<|>) ops
+
+{-
 loadMS :: BitSeries -> (BitSeries, DStmt)
 loadMS bs
   | b = (fst s2,((os++s1b++s2b,BStatement),Free (MSB o s1s s2s)))
@@ -228,7 +307,23 @@ loadMS bs
         opc _ [] = error "No matched opcode!"
         opc bt (o:os) = if snd res then (fst res,fst o,snd o) else opc bt os
           where res = hasOpcode bt (fst o)
+-}
 
+loadFS :: Parsec BitSeries u DStmt
+loadFS = do
+  let ts = do {
+    ts <- try $ mopc "TS";
+    ((b,BStatement),f) <- loadTS;
+    return ((ts++b,BStatement),f);
+  }
+  let ms = do {
+    ms <- try $ mopc "MS";
+    ((b,BStatement),f) <- loadMS;
+    return ((ms++b,BStatement),f);
+  }
+  ts <|> ms
+
+{-
 loadFS :: BitSeries -> (BitSeries, DStmt)
 loadFS s
   | snd ts = dpre tso $ loadTS $ fst ts
@@ -237,10 +332,38 @@ loadFS s
         tso = opcodes M.! "TS"
         ms = hasOpcode s "MS"
         mso = opcodes M.! "MS"
+-}
 
+loadIO :: Parsec BitSeries u DStmt
+loadIO = do
+  (dt,f) <- loadStmt
+  return (dt,Free (IOS f))
+{-
 loadIO :: BitSeries -> (BitSeries, DStmt)
 loadIO b = let (e,(d,s))=loadStmt b in (e,(d,Free (IOS s)))
+-}
 
+loadStmt :: Parsec BitSeries u DStmt
+loadStmt = do
+  let ls = do {
+    ls <- try $ mopc "LS";
+    ((b,BStatement),f) <- loadLS;
+    return ((ls++b,BStatement),f);
+  }
+  let fs = do {
+    fs <- try $ mopc "FS";
+    ((b,BStatement),f) <- loadFS;
+    return ((fs++b,BStatement),f);
+  }
+  let io = do {
+    io <- try $ mopc "IO";
+    ((b,BStatement),f) <- loadIO;
+    return ((io++b,BStatement),f);
+  }
+  ls <|> fs <|> io
+
+
+{-
 loadStmt :: BitSeries -> (BitSeries, DStmt)
 loadStmt s
   | snd ls = dpre lso $ loadLS $ fst ls
@@ -252,3 +375,4 @@ loadStmt s
         fso = opcodes M.! "FS"
         io = hasOpcode s "IO"
         ioo = opcodes M.! "IO"
+-}
