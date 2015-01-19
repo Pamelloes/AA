@@ -79,41 +79,27 @@ strTests = TestLabel "String" $
 -- Integer Tests
 intError = ErrorCall "linteger: Reached program end"
 
-testIEmptyP = TestLabel "Test Empty Program" $
-  TestCase $ assertException intError (pinteger [])
-testIIncomplete1 = TestLabel "Test Incomplete Program 1" $
-  TestCase $ assertException strError (pinteger [F])
-testIIncomplete2 = TestLabel "Test Incomplete Program 2" $
-  TestCase $ assertException strError (pinteger p)
-  where p=[F]++(opcodes M.! "CS")
-testIUnfinished = TestLabel "Test Unfinished Program" $
-  TestCase $ assertException strError (pinteger p)
-  where p = [F]++(opcodes M.! "CS")++(replicate 4 F)
+testIEmptyP = ptestf "Test Empty Program" qinteger []
+testIIncomplete1 = ptestf "Test Incomplete Program 1" qinteger [F]
+testIIncomplete2 = ptestf "Test Incomplete Program 2" qinteger ([F]++(o "CS"))
+testIUnfinished = ptestf "Test Unfinished Program" qinteger
+  ([F]++(o "CS")++[F,F,F,F])
 
-testIEmpty1 = TestLabel "Test Positive Empty Integer" $
-  TestCase $ assertEqual "" ([],(p,BInteger 0)) (pinteger p)
-  where p = [F]++(opcodes M.! "ES")
-testIEmpty2 = TestLabel "Test Negative Empty Integer" $
-  TestCase $ assertEqual "" ([],(p,BInteger (-1))) (pinteger p)
-  where p = [T]++(opcodes M.! "ES")
+testIEmpty1 = ptest "Test Positive Empty Integer" (p,BInteger 0) qinteger p
+  where p=[F]++(o "ES")
+testIEmpty2 = ptest "Test Negative Empty Integer" (p,BInteger (-1)) qinteger p
+  where p=[T]++(o "ES")
 
-testIL4 = TestLabel "Test Integer Length 4" $
-  TestCase $ assertEqual "" ([],(p,BInteger 10)) (pinteger p)
-  where p = [F]++(opcodes M.! "CS")++([T,F,T,F])
-          ++(opcodes M.! "ES")
-testIL8 = TestLabel "Test Integer Length 8" $
-  TestCase $ assertEqual "" ([],(p,BInteger 49)) (pinteger p)
-  where p = [F]++(opcodes M.! "CS")++([F,F,F,T])
-          ++(opcodes M.! "CS")++([F,F,T,T])++(opcodes M.! "ES")
-testINeg = TestLabel "Test Negative Integer" $
-  TestCase $ assertEqual "" ([],(p,BInteger (-76))) (pinteger p)
-  where p = [T]++(opcodes M.! "CS")++([F,T,F,F])
-          ++(opcodes M.! "CS")++([T,F,T,T])++(opcodes M.! "ES")
-testIExtra = TestLabel "Test Program Deletion" $
-  TestCase $ assertEqual "" (p2,(p1,BInteger (-3))) (pinteger (p1++p2))
-  where p1 = [T]++(opcodes M.! "CS")++[T,T,F,T]
-          ++(opcodes M.! "ES")
-        p2 = replicate 100 T
+testIL4 = ptest "Test Integer Length 4" (p,BInteger 10) qinteger p
+  where p=[F]++(o "CS")++[T,F,T,F]++(o "ES")
+testIL8 = ptest "Test Integer Length 8" (p,BInteger 49) qinteger p
+  where p=[F]++(o "CS")++[F,F,F,T] ++(o "CS")++[F,F,T,T]++(o "ES")
+testINeg = ptest "Test Negative Integer" (p,BInteger (-76)) qinteger p
+  where p=[T]++(o "CS")++[F,T,F,F]++(o "CS")++[T,F,T,T]++(o "ES")
+testIExtra = ptest "Test Program Deletion" (p2,BInteger (-3))
+  (qinteger>>qinteger) (p1++p2)
+  where p1=[F]++(o "CS")++[F,T,F,F]++(o "ES")
+        p2=[T]++(o "CS")++[T,T,F,T]++(o "ES")
 
 intTests = TestLabel "Integer" $
   TestList [ testIEmptyP, testIIncomplete1, testIIncomplete2, testIUnfinished
