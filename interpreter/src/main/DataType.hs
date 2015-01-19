@@ -153,7 +153,7 @@ qrnmsp = do
     return (pn,Parent);
   }
   pts <- many (pn <|> cn)
-  end <- mopc "EN"
+  end <- mopc "ERN"
   let bs = foldr ((++).fst) [] pts
   let pt = foldr ((:).snd) [] pts
   return (bs++end,pt)
@@ -170,11 +170,13 @@ pnmsp p
 qnmsp :: Parsec BitSeries u DataType
 qnmsp = do
   let an = do {
-    (bs,an) <- try $ qanmsp;
-    return (bs,BNmspId $ Left an);
+    an <- try $ mopc "AN";
+    (bs,ns) <- qanmsp;
+    return (an++bs,BNmspId $ Left ns);
   }
   let rn = do {
-    (bs,rn) <- try $ qrnmsp;
-    return (bs,BNmspId $ Right rn);
+    rn <- try $ mopc "RN";
+    (bs,ns) <- try $ qrnmsp;
+    return (rn++bs,BNmspId $ Right ns);
   }
   an <|> rn
