@@ -188,6 +188,31 @@ evaluate (Free (DW a b))      s = do
   let dw s = do {
     (s2,v) <- evaluate a s; 
     (s3,c) <- evaluate b s2;
+    -- Perhaps add in some checks here to prevent pointless infinite loops:
+    -- if a loop operation and conditional check result in a state identical
+    -- to the initial state, and neither the operation nor the conditional
+    -- contain I/O, then the loop can be considered pointless because it will
+    -- never break and never have side effects. Thus, we can safely exit the
+    -- loop and continue with the program without missing any critical
+    -- calculations.
+    -- 
+    -- A pointless loop in pseudo code: while (true) { 7 }
+    -- A pointful loop in pseudo code: while (true) { i = i+1 }
+    -- A pointless loop: while (true) { i = i+1; i = i-1 }
+    -- A pointful loop: while (true) { print "spam." }
+    --
+    -- Because the first loop has neither a side effect nor an I/O call, we can
+    -- conclude that though the loop will never terminate, it will always
+    -- evaluate to 7. Therefore, we can assign the statement as a whole a value
+    -- of 7. The second statement can never be completed because each iteration
+    -- will evaluate to a different value. The third statement appears to change
+    -- the program state, but the changes cancel each other out resulting in a
+    -- consistant state. Thus, the third statement can be evaluated to "i".
+    -- The final statement does not change the program state and will always 
+    -- evaluate to the same value. However, the loop must continue indefinitely
+    -- because the I/O call means that while terminating the loop may not result
+    -- in any inconsistencies within the AA program, it will result in
+    -- inconsistencies between the program and the outside world.
     if dtToBool c then dw s3 else return (s3,v)
   }
   dw s
