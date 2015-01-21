@@ -31,7 +31,7 @@ import Text.Parsec.Prim
 
 type Opcode = String
 
-mopc :: Opcode -> Parsec BitSeries u BitSeries
+mopc :: (Monad m) => Opcode -> ParsecT BitSeries u m BitSeries
 mopc o = btokens (opcodes M.! o)
 
 opcodes=M.fromList
