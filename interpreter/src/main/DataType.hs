@@ -31,7 +31,6 @@ module DataType where
 import BitSeries
 import Control.Arrow
 import Control.Monad
-import Control.Monad.Writer.Lazy
 import qualified Data.Data as D
 import qualified Data.Map as M
 import Data.Typeable
@@ -44,9 +43,9 @@ data RNmspS = Child BitSeries | Parent deriving (Show,D.Data,Typeable)
 type RNmsp = [RNmspS]
 type ANmsp = [BitSeries]
 -- Global Types
-data Primitive = BString BitSeries | BInteger Integer 
-               | BRational Integer Integer | BNmspId (Either ANmsp RNmsp) 
-               | BStatement deriving (Show,D.Data,Typeable)
+data Primitive = BString BitSeries | BInteger Integer | BRational Integer Integer
+               | BNmspId (Either ANmsp RNmsp) | BStatement 
+               deriving (Show,D.Data,Typeable)
 type DataType = (BitSeries,Primitive) 
 
 -- Strings
