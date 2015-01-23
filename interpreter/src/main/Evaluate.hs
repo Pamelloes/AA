@@ -42,7 +42,7 @@ import Statement
 import Text.Parsec.Combinator
 import qualified Text.Parsec.Prim as P
 
-type State = (ANmsp,(Namespaces,(DataType -> IO DataType)))
+type State m = (ANmsp,(Namespaces,(DataType -> m DataType)))
 
 -- Namespace definitions
 type Namespaces = M.Map ANmsp DataType
@@ -53,13 +53,13 @@ defaultNamespace p = M.fromList [([],(p,BStatement))]
 nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
 nmspValue a b =  M.findWithDefault (opcodes M.! "ES",BString []) (gnmsp a b)
 
-nmspValue' :: State -> DataType -> (State,DataType)
+nmspValue' :: Monad m=> State m -> DataType -> (State m,DataType)
 nmspValue' a b = (a,nmspValue (fst a) b (fst $ snd a))
 
 nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
 nmspValueSet a b = M.insert $ gnmsp a b
 
-nmspValueSet' :: State -> DataType -> DataType -> (State,DataType)
+nmspValueSet' :: Monad m=> State m -> DataType -> DataType ->(State m ,DataType)
 nmspValueSet' a b c = (s a,c)
   where s = second . first . const $ nmspValueSet (fst a) b c (fst $ snd a)
 
@@ -156,7 +156,7 @@ normDT a b = (ensureMin m a, ensureMin m b)
 normMDT :: Primitive -> DataType -> DataType -> (DataType,DataType)
 normMDT a b = normDT (ensureMin' a b)
 
-evaluateMSB :: Free Stmt DataType -> State -> IO (State,DataType)
+evaluateMSB :: Monad m=> Free Stmt DataType -> State m -> m (State m,DataType)
 evaluateMSB (Free (MSB p a b)) s = do
   (s2,av) <- evaluate a s
   (s3,bv) <- evaluate b s2
@@ -239,7 +239,7 @@ simpleOP a b = evaluate a b
 
 
 -- Evaluate definitions
-evaluate :: Free Stmt DataType -> State -> IO (State,DataType)
+evaluate :: Monad m=> Free Stmt DataType -> State m -> m (State m,DataType)
 evaluate (Pure a)             s = return (s,a)
 evaluate (Free (AS a b))      s = do
   (s2,av) <- evaluate a s
