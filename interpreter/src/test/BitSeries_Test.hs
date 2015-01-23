@@ -27,8 +27,6 @@ import BitSeries
 import Control.DeepSeq
 import Test.HUnit
 
-instance NFData Bit
-
 -- Bit Tests
 testBEq = TestLabel "Test bit equality" $
   TestList [ TestCase $ assertEqual "" T T

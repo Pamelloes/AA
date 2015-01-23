@@ -24,6 +24,7 @@ THE SOFTWARE.
 -- to accomodate lists that end with a repeating false value.
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE PatternSynonyms #-}
 module BitSeries where
 
 import Data.Bits
@@ -34,6 +35,7 @@ import Text.Parsec.Prim
 
 -- A Bit can be either T (True) or F (False). Terminate is used in infinite
 -- lists to indicate the end of non-repeating data.
+{-
 data Bit = T | F {-| Terminate-} deriving (Show,Data,Typeable)
 instance Eq Bit where
   T == T = True
@@ -45,6 +47,10 @@ instance Ord Bit where
   T `compare` a = if a == F then GT else EQ
   a `compare` T = if a == F then LT else EQ
   _ `compare` _ = EQ
+-}
+type Bit = Bool
+pattern T = True
+pattern F = False
 
 type BitSeries=[Bit]
 {-
