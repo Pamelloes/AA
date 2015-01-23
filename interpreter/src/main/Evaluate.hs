@@ -100,15 +100,31 @@ nfilter = an <|> rn
   where an = (P.try$mopc "AN")>>(False:) <$> anfilter
         rn = (P.try$mopc "RN")>>(False:) <$> rnfilter
 
-filter' :: [Bool] -> [a] -> [a]
-filter' (True:bs) (a:as) = a:filter' bs as
-filter' (False:bs) (a:as) = filter' bs as
-filter' _ a = a
+prflt = [ undefined, nfilter, sfilter, ifilter, rfilter ]
+fpattern :: DataType -> [Bool]
+fpattern (_,BStatement) = repeat True
+fpattern d = case (P.parse (prflt!!prior' d) "" (fst d)) of
+  Left  e -> error $ show e
+  Right r -> r++repeat True
 
-unfilter :: [Bool] -> [a] -> [a] -> [a]                                       
-unfilter (True:bs) (x:xs) (r:rs) = r:unfilter bs xs rs
-unfilter (False:bs) (x:xs) r = x:unfilter bs xs r
-unfilter _ a _ = a
+filter' :: DataType -> ([Bool],BitSeries)
+filter' d = (p,f p $ fst d)
+  where p = fpattern d
+        f :: [Bool] -> BitSeries -> BitSeries
+        f _          []     = []
+        f (True :bs) (c:cs) = c:(f bs cs)
+        f (False:bs) (c:cs) = f bs cs
+        f _          c      = c
+
+unfilter :: DataType -> BitSeries -> DataType
+unfilter d b = (prcnv!!prior' d) (f p (fst d) b,BStatement)
+  where p = fpattern d
+        f :: [Bool] -> BitSeries -> BitSeries -> BitSeries
+        f _          []     _      = []
+        f _          c      []     = c
+        f (True :bs) (c:cs) (d:ds) = d:(f bs cs ds)
+        f (False:bs) (c:cs) (d:ds) = c:(f bs cs ds)
+        f _          c      _      = c
 
 -- Operations
 prlst = [ D.toConstr $ BStatement, D.toConstr $ BNmspId $ Left []
