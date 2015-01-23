@@ -25,6 +25,9 @@ module Main where
 
 import BitSeries
 import Data.Bits
+import Data.Char
+import DataType
+import DataType.Util
 import qualified Data.ByteString.Lazy as B
 import Data.Word
 import Evaluate
@@ -32,6 +35,20 @@ import Options.Applicative
 import Statement
 import Text.Parsec.Prim
 
+-- Stopgap I/O handler
+handleIO :: DataType -> IO DataType
+handleIO a@(_,BString s) = lg a s
+  where lg :: DataType -> BitSeries -> IO DataType
+        lg a [] = do
+          putChar '\n'
+          return a
+        lg d s = do
+          let (a,b) = splitAt 8 s
+          putChar $ chr (fromIntegral $ bsToInt a)
+          lg d b
+handleIO d = handleIO (cstring d)
+
+-- Command Line Processing
 data Cmdline = Cmdline
   { file :: String
   }
@@ -50,12 +67,11 @@ up w = [h,g,f,e,d,c,b,a]
         g=z$w.&.0x40
         h=z$w.&.0x80
 
-
 run :: Cmdline -> IO ()
 run c = do
   p <- B.readFile $ file c
   let prog = B.foldr (\b ac -> (up b)++ac) [] p
-  let istate = ([],defaultNamespace prog)
+  let istate = ([],(defaultNamespace prog,handleIO))
   let mnst = snd $ parseST loadStmt prog
   --print (fmap snd mnst) -- We can't print the first part because it's infinite...
   (fstate,res) <- evaluate mnst istate

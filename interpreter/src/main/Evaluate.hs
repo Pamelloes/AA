@@ -42,7 +42,7 @@ import Statement
 import Text.Parsec.Combinator
 import qualified Text.Parsec.Prim as P
 
-type State = (ANmsp,Namespaces)
+type State = (ANmsp,(Namespaces,(DataType -> IO DataType)))
 
 -- Namespace definitions
 type Namespaces = M.Map ANmsp DataType
@@ -54,14 +54,14 @@ nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
 nmspValue a b =  M.findWithDefault (opcodes M.! "ES",BString []) (gnmsp a b)
 
 nmspValue' :: State -> DataType -> (State,DataType)
-nmspValue' a b = (a,nmspValue (fst a) b (snd a))
+nmspValue' a b = (a,nmspValue (fst a) b (fst $ snd a))
 
 nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
 nmspValueSet a b = M.insert $ gnmsp a b
 
 nmspValueSet' :: State -> DataType -> DataType -> (State,DataType)
 nmspValueSet' a b c = (s a,c)
-  where s = second . const $ nmspValueSet (fst a) b c (snd a)
+  where s = second . first . const $ nmspValueSet (fst a) b c (fst $ snd a)
 
 -- Utilities
 parseST :: P.Parsec BitSeries () DStmt -> BitSeries -> DStmt
@@ -237,18 +237,6 @@ evaluateMSB (Free (MSB p a b)) s = do
   return (s3,v)
 simpleOP a b = evaluate a b
 
--- Stopgap I/O handler
-handleIO :: DataType -> IO DataType
-handleIO a@(_,BString s) = lg a s
-  where lg :: DataType -> BitSeries -> IO DataType
-        lg a [] = do
-          putChar '\n'
-          return a
-        lg d s = do
-          let (a,b) = splitAt 8 s
-          putChar $ chr (fromIntegral $ bsToInt a)
-          lg d b
-handleIO d = handleIO (cstring d)
 
 -- Evaluate definitions
 evaluate :: Free Stmt DataType -> State -> IO (State,DataType)
@@ -267,9 +255,9 @@ evaluate (Free (ET a b))      s = do
   (s3,_) <- foldl (\v a -> do {
       (s,i)<-v;
       (t,u) <- evaluate a s;
-      return ((fst t,M.insert (nid i) u (snd t)),i+1)
+      return ((fst t,(M.insert (nid i) u (fst$snd t),snd$snd t)),i+1)
     }) (return (s2,1)) b
-  let v = fst $ nmspValue (fst s3) av (snd s3)
+  let v = fst $ nmspValue (fst s3) av (fst$snd s3)
   let f = snd $ parseST loadStmt v
   ((_,nm),d) <- evaluate f (n,snd s3)
   return $ ((fst s,nm),d)
@@ -310,12 +298,12 @@ evaluate (Free (DW a b))      s = do
     -- because the I/O call means that while terminating the loop may not result
     -- in any inconsistencies within the AA program, it will result in
     -- inconsistencies between the program and the outside world.
-    if dtToBool c then dw s3 else return (s3,v)
+    if dtToBool c then return (s3,v) else dw s3
   }
   dw s
 evaluate (Free (IOS a))       s = do
   (s2,av) <- evaluate a s
-  r <- handleIO av
+  r <- (snd$snd s) av
   return $ (s2,r)
 evaluate (Free (MSA p a))     s = do
   (s2,av) <- evaluate a s
