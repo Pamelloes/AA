@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
 -- This module evaluates a program's AST in accordance with Sections VI and VII
--- of the Advanced Assembly 0.5.1 specification.
+-- of the Advanced Assembly 0.5.2 specification.
 module Evaluate where
 
 import BitSeries

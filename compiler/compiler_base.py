@@ -1,7 +1,7 @@
 import argparse
 import os
 
-version="Advanced Assembly 0.5.1 Compiler"
+version="Advanced Assembly 0.5.2 Compiler"
 
 bts=""
 def write_bits(out,bit):

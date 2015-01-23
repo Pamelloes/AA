@@ -1,5 +1,5 @@
 ================================================================
-==   ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.5.1   ==
+==   ADVANCED ASSEMBLY LANGUAGE SPECIFICATION VERSION 0.5.2   ==
 ================================================================
 
 ----
@@ -300,6 +300,7 @@ Appendix B. Conceptual Opcodes
 ----
 Appendix C. Change Log
 
+0.5.2
 0.5.1
 - Moved the number of parameters in an executable statement from the statement's definition to the statement evaluating the statement.
 0.5

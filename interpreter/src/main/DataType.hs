@@ -22,7 +22,7 @@ THE SOFTWARE.
 -}
 -- This module defines the data types and provides functions for loading
 -- Strings, Integers, Rationals, and Namespaces in accordance with Sections IV
--- and V of the Advanced Assembly 0.5.1 language specification. The Statement
+-- and V of the Advanced Assembly 0.5.2 language specification. The Statement
 -- module contains functions for loading Statements. The DataType.Util module
 -- contains additional functions which may be useful when processing DataTypes.
 {-# LANGUAGE DeriveDataTypeable #-}

@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                aainterpreter
-version:             0.1.0.0
+version:             0.5.2
 synopsis:            An interpreter for Advanced Assembly.
 description:         The Advanced Assembly Interpreter is the default (and, as of now, only) interpreter for the programming language Advanced Assembly. This implementation is programmed in Haskell.
 license:             MIT

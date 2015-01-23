@@ -41,7 +41,7 @@ nmspcmp (a:as) (b:bs) = if c == EQ then nmspcmp as bs else c
   where c = compare a b
 
 -- Compares two DataTypes in accordance with Section VI.B.2 of the Advanced
--- Assembly 0.5.1 Specification
+-- Assembly 0.5.2 Specification
 cmpdt :: DataType -> DataType -> ANmsp -> Ordering
 cmpdt (_,BString a)     (_,BString b)     _ = compare a b
 cmpdt (_,BInteger a)    (_,BInteger b)    _ = compare a b
@@ -141,7 +141,7 @@ cstmt = second (const BStatement)
 
 -- Boolean Utilities
 -- Convert DataType to and from Bool in accordance with Section IV of the 
--- Advanced Assembly 0.5.1 Specification
+-- Advanced Assembly 0.5.2 Specification
 dtToBool :: DataType -> Bool
 dtToBool (_,BString []) = False
 dtToBool (_,BInteger 0) = False

@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
 -- This module generates a program's AST in accordance with Section VI of the
--- Advanced Assembly 0.5.1 specification.
+-- Advanced Assembly 0.5.2 specification.
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Statement where

@@ -20,7 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This is the interpreter for Advanced Assembly version 0.5.1
+-- This is the interpreter for Advanced Assembly version 0.5.2
 module Main where
 
 import BitSeries
@@ -82,5 +82,5 @@ main = execParser opts >>= run
   where opts = info (helper <*> cmdline)
           ( fullDesc 
          <> progDesc "Run the program stored in file"
-         <> header "Advanced Assembly 0.5.1 Interpreter"
+         <> header "Advanced Assembly 0.5.2 Interpreter"
           )
