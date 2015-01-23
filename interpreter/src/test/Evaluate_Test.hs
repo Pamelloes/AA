@@ -46,10 +46,6 @@ maid x = ([],BNmspId $ Left x)
 mrid :: RNmsp -> DataType
 mrid x = ([],BNmspId $ Right x)
 
-tT :: BitSeries -> BitSeries
-tT (Terminate:as)=[Terminate]
-tT (a:as)=a:(tT as)
-
 testMaid = TestLabel "Verify maid" $
   TestCase $ assertEqual "" ([],BNmspId$Left p) (maid p)
   where p=[[F,T,F,T],[T,T,T,T],[F,F,F,F]]
@@ -73,15 +69,15 @@ testANmspValue = TestLabel "Test absolute value retrieval" $
 
 testRNmspValue = TestLabel "Test relative value retrieval" $
   TestCase $ assertEqual "" (p,BStatement) (nmspValue [[T,T,T,T]] (mrid [Parent]) $ defaultNamespace p)
-  where p=[F]++(opcodes M.! "ES")++[T,F,F,F,T,F,T,T,F,Terminate]
+  where p=[F]++(opcodes M.! "ES")++[T,F,F,F,T,F,T,T,F]
 
 testANmspDefValue = TestLabel "Test absolute default value retrieval" $
-  TestCase $ assertEqual "" ([Terminate],BString []) (tT a,b)
+  TestCase $ assertEqual "" ([F],BString []) (a,b)
   where p=[F]++(opcodes M.! "ES")++replicate 5 T
         (a,b)=(nmspValue [] (maid [[F,F,F,F]]) $ defaultNamespace p)
 
 testRNmspDefValue = TestLabel "Test relative default value retrieval" $
-  TestCase $ assertEqual "" ([Terminate],BString []) (tT a,b)
+  TestCase $ assertEqual "" ([F],BString []) (a,b)
   where p=[F]++(opcodes M.! "ES")++replicate 5 F
         (a,b)=(nmspValue [[T,F,T,F]] (mrid [Parent,Child [F,F,F,F]]) $ defaultNamespace p)
   
@@ -104,23 +100,23 @@ testANmspValue2 = TestLabel "Test absolute value retrieval 2" $
   TestCase $ assertEqual "" v
   (nmspValue [] (maid k) $ nmspValueSet [] (maid k) v $ defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++replicate 5 T
-        k=[[F,T,F,T],[T,F,T,F],replicate 4 Terminate]
+        k=[[F,T,F,T],[T,F,T,F],replicate 4 F]
         v=([F,F,T,T,F,F,T,T,T],BStatement)
 
 testRNmspValue2 = TestLabel "Test relative value retrieval 2" $
   TestCase $ assertEqual "" v
   (nmspValue [] (maid k) $ nmspValueSet k2 (mrid k3) v $ defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++replicate 5 T
-        k=[[F,T,F,T],[T,F,T,F],replicate 4 Terminate]
+        k=[[F,T,F,T],[T,F,T,F],replicate 4 F]
         k2=[[F,T,F,T],[T,T,T,T],[T,T,T,T]]
-        k3=[Parent,Parent,Child [T,F,T,F],Child $ replicate 4 Terminate]
+        k3=[Parent,Parent,Child [T,F,T,F],Child $ replicate 4 F]
         v=([T,F,T,F,F,T,F],BStatement)
 
 testFTEq = TestLabel "Test False/Terminate equivalence" $
   TestCase $ assertEqual "" v
   (nmspValue [] (maid k) $ nmspValueSet [] (maid k2) v $ defaultNamespace p)
   where p=[F]++(opcodes M.! "ES")++replicate 5 T
-        k=[[F,T,F,T],[T,F,T,F],replicate 4 Terminate]
+        k=[[F,T,F,T],[T,F,T,F],replicate 4 F]
         k2=[[F,T,F,T],[T,F,T,F],replicate 4 F]
         v=([F,F,T,T,F,F,T,T,T],BStatement)
 

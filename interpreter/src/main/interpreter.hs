@@ -54,15 +54,12 @@ up w = [h,g,f,e,d,c,b,a]
 run :: Cmdline -> IO ()
 run c = do
   p <- B.readFile $ file c
-  let prog = (B.foldr (\b ac -> (up b)++ac) [] p)++(repeat Terminate)
+  let prog = B.foldr (\b ac -> (up b)++ac) [] p
   let istate = ([],defaultNamespace prog)
-  let mnst = case (parse loadStmt "" prog) of {
-    Left  e -> error $ show e;
-    Right v -> v;
-  }
+  let mnst = snd $ parseST loadStmt prog
   --print (fmap snd mnst) -- We can't print the first part because it's infinite...
-  (fstate,res) <- evaluate (snd mnst) istate
-  print (snd res)
+  (fstate,res) <- evaluate mnst istate
+  print res
 
 main :: IO ()
 main = execParser opts >>= run

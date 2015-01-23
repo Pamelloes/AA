@@ -54,10 +54,14 @@ cmpdt a@(_,BNmspId _)   b@(_,BNmspId _)   s = nmspcmp av bv
         bv = gnmsp s b
 cmpdt (a,BStatement)    (b,BStatement)    _ = compare a b
 
+parseDT :: Parsec BitSeries () DataType -> BitSeries -> DataType
+parseDT p b = e $ runP p () "" (b++repeat F)
+  where e :: (Show a) => Either a DataType -> DataType
+        e (Left a) = error $ show a
+        e (Right (bs, p)) = (b,p)
+
 -- String Utilities
-lstring a = case (fmap snd $ parse pstring "" a) of
-  Left  e -> error $ show e
-  Right v -> v
+lstring = snd . parseDT pstring
 
 cstring :: DataType -> DataType
 cstring a@(_,BString _) = a
@@ -69,12 +73,10 @@ bsToString a = foldr (\c a -> (o "CS")++l c++a) (o "ES") $ chunksOf 4 a
         o t = opcodes M.! t
 
 bsToDT :: BitSeries -> DataType
-bsToDT s = (bsToString s++repeat Terminate, BString s)
+bsToDT s = (bsToString s, BString s)
 
 -- Integer Utilities
-linteger a = case (fmap snd $ parse pinteger "" a) of
-  Left  e -> error $ show e
-  Right v -> v
+linteger = snd . parseDT pinteger
 
 cinteger :: DataType -> DataType
 cinteger a@(_,BInteger _) = a
@@ -93,12 +95,10 @@ intToBS i = [s]++bsToString (intToBin i)
   where s=if i<0 then T else F
 
 intToDT :: Integer -> DataType
-intToDT i = (intToBS i++repeat Terminate,BInteger i)
+intToDT i = (intToBS i,BInteger i)
 
 -- Rational Utilities
-lrational a = case (fmap snd $ parse prational "" a) of
-  Left  e -> error $ show e
-  Right v -> v
+lrational = snd . parseDT prational
 
 crational :: DataType -> DataType
 crational a@(_,BRational _ _) = a
@@ -110,14 +110,12 @@ rtlToBS' :: Rational -> BitSeries
 rtlToBS' a = rtlToBS (numerator a) (denominator a)
 
 rtlToDT :: Integer -> Integer-> DataType
-rtlToDT a b = (rtlToBS a b++repeat Terminate,BRational a b)
+rtlToDT a b = (rtlToBS a b,BRational a b)
 rtlToDT' :: Rational -> DataType
 rtlToDT' a = rtlToDT (numerator a) (denominator a)
 
 -- Namespace Utilities
-lnmsp a = case (fmap snd $ parse pnmsp "" a) of
-  Left  e -> error $ show e
-  Right v -> v
+lnmsp = snd . parseDT pnmsp
 
 cnmsp :: DataType -> DataType
 cnmsp a@(_,BNmspId _) = a
@@ -142,8 +140,8 @@ cstmt :: DataType -> DataType
 cstmt = second (const BStatement)
 
 -- Boolean Utilities
--- Convert DataType to and from Bool in accordance with Section IV of the Advanced
--- Assembly 0.5.1 Specification
+-- Convert DataType to and from Bool in accordance with Section IV of the 
+-- Advanced Assembly 0.5.1 Specification
 dtToBool :: DataType -> Bool
 dtToBool (_,BString []) = False
 dtToBool (_,BInteger 0) = False
@@ -163,14 +161,14 @@ boolToDT (BInteger _)    True  = intToDT 1
 boolToDT (BRational _ _) False = rtlToDT 0 1
 boolToDT (BRational _ _) True  = rtlToDT (-1) (-1)
 boolToDT (BNmspId _)     False = (p,BNmspId $ Left [])
-  where p = (o "AN")++(o "EN")++repeat Terminate
+  where p = (o "AN")++(o "EN")
         o t = opcodes M.! t
 boolToDT (BNmspId _)     True  = (p,BNmspId $ Left [[]])
-  where p = (o "AN")++(o "CN")++(o "ES")++(o "EN")++repeat Terminate
+  where p = (o "AN")++(o "CN")++(o "ES")++(o "EN")
         o t = opcodes M.! t
 boolToDT (BStatement)    False = (p,BStatement)
-  where p = (o "LS")++(o "LT")++(o "ES")++repeat Terminate
+  where p = (o "LS")++(o "LT")++(o "ES")
         o t = opcodes M.! t
 boolToDT (BStatement)    True  = (p,BStatement)
-  where p = (o "LS")++(o "LT")++(o "CS")++[F,F,F,F]++(o "ES")++repeat Terminate
+  where p = (o "LS")++(o "LT")++(o "CS")++[F,F,F,F]++(o "ES")
         o t = opcodes M.! t

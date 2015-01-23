@@ -31,12 +31,14 @@ import qualified Data.Map as M
 import Data.Ratio
 import DataType
 import qualified DataType_Test as D
-import DataType_Test (tD)
+--import DataType_Test (tD)
 import DataType.Util
 import Opcodes
 import qualified Opcodes_Test as P
 import Test.HUnit
 import TestException
+
+tD = id
 
 -- String Tests
 testLstring = TestLabel "Test lstring" $
@@ -68,7 +70,7 @@ testBtDT = TestLabel "Test converting BitSeries to BString DataType" $
   TestCase $ assertEqual "" (p',BString s) (tD $ bsToDT s)
   where s=[F,F,T,T]++[F,F,F,T]
         p=(o "CS")++[F,F,T,T]++(o "CS")++[F,F,F,T]++(o "ES")
-        p'=p++[Terminate]
+        p'=p++[{-Terminate-}]
         o t = opcodes M.! t
 
 strTests = TestLabel "String" $
@@ -114,7 +116,7 @@ testItDT = TestLabel "Test converting integer to BInteger DataType" $
   where i=256
         p= [F]++(o "CS")++[F,F,F,F]++(o "CS")++[F,F,F,F]++(o "CS")
          ++[F,F,F,T]++(o "ES")
-        p'=p++[Terminate]
+        p'=p++[{-Terminate-}]
         o t = opcodes M.! t
 
 intTests = TestLabel "Integer" $
@@ -153,7 +155,7 @@ testIItDT = TestLabel "Test converting two-integer rational into DataType" $
   where a=22
         b=(-1)
         p=[F]++(o "CS")++[F,T,T,F]++(o "CS")++[F,F,F,T]++(o "ES")++[T]++(o "ES")
-        p'=p++[Terminate]
+        p'=p++[{-Terminate-}]
         o t = opcodes M.! t
 testRtDT = TestLabel "Test converting rational into DataType" $
   TestCase $ assertEqual "" (p',BRational a b) (tD $ rtlToDT' c)
@@ -161,7 +163,7 @@ testRtDT = TestLabel "Test converting rational into DataType" $
         b=9
         c=a%b
         p=[F]++(o "CS")++[T,T,F,T]++(o "ES")++[F]++(o "CS")++[T,F,F,T]++(o "ES")
-        p'=p++[Terminate]
+        p'=p++[{-Terminate-}]
         o t = opcodes M.! t
 
 rationalTests = TestLabel "Rational" $
@@ -198,10 +200,10 @@ nmspTests = TestLabel "Namespace" $
 -- Statement Tests
 testCt1 = TestLabel "Test cstmt 1" $
   TestCase $ assertEqual "" (p,BStatement) (cstmt (p,BString [T,T,T,F,T]))
-  where p=replicate 55 T++[F,T,F,Terminate]
+  where p=replicate 55 T++[F,T,F]
 testCt2 = TestLabel "Test cstmt 2" $
   TestCase $ assertEqual "" (p,BStatement) (cstmt (p,BStatement))
-  where p=replicate 23 F++[T,F,T,Terminate]
+  where p=replicate 23 F++[T,F,T]
 
 stmtTests = TestLabel "Statement" $
   TestList [ testCt1, testCt2 ]
@@ -214,7 +216,7 @@ testCmpS2 = TestLabel "Test comparing strings 2" $
                                        (bsToDT [F,F,T,T]) []
 testCmpS3 = TestLabel "Test comparing strings 3" $
   TestCase $ assertEqual "" EQ $ cmpdt (bsToDT [F,T,T,T,F]) 
-                                       (bsToDT [F,T,T,T,Terminate]) []
+                                       (bsToDT [F,T,T,T,F]) []
 
 testCmpI1 = TestLabel "Test comparing integers 1" $
   TestCase $ assertEqual "" LT $ cmpdt (intToDT 22) (intToDT 9000) []
@@ -260,8 +262,8 @@ testCmpT2 = TestLabel "Test comparing statements 2" $
         s2=([T,T,T,T,F],BStatement)
 testCmpT3 = TestLabel "Test comparing statements 3" $
   TestCase $ assertEqual "" EQ $ cmpdt s1 s2 []
-  where s1=(replicate 22 F++[T,Terminate],BStatement)
-        s2=(replicate 22 Terminate++[T,F],BStatement)
+  where s1=(replicate 22 F++[T,F],BStatement)
+        s2=(replicate 22 F++[T,F],BStatement)
 
 cmpTests = TestLabel "Comparisons" $
   TestList [ testCmpS1, testCmpS2, testCmpS3, testCmpI1, testCmpI2, testCmpI3

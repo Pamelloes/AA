@@ -136,8 +136,8 @@ loadLS = do
   let mkf :: Opcode -> Parsec BitSeries u DataType -> Parsec BitSeries u DStmt
       mkf o p = do {
         op <- try $ mopc o;
-        (bs,p) <- p;
-        return$((op++bs,BStatement),Pure (bs++repeat Terminate,p));
+        dt <- p;
+        return$((op++fst dt,BStatement),Pure dt);
       }
   let lt = mkf "LT" pstring
   let li = mkf "LI" pinteger

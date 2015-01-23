@@ -25,17 +25,21 @@ THE SOFTWARE.
 module Evaluate where
 
 import BitSeries
+import Control.Applicative
 import Control.Arrow
+import Control.Monad
 import Data.Char
 import qualified Data.Data as D
 import Data.Fixed
 import Data.List
 import qualified Data.Map as M
+import Data.Monoid
 import Data.Ratio
 import DataType
 import DataType.Util
 import Opcodes
 import Statement
+import Text.Parsec.Combinator
 import qualified Text.Parsec.Prim as P
 
 type State = (ANmsp,Namespaces)
@@ -47,7 +51,7 @@ defaultNamespace :: BitSeries -> Namespaces
 defaultNamespace p = M.fromList [([],(p,BStatement))]
 
 nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
-nmspValue a b =  M.findWithDefault (repeat Terminate,BString []) (gnmsp a b)
+nmspValue a b =  M.findWithDefault (opcodes M.! "ES",BString []) (gnmsp a b)
 
 nmspValue' :: State -> DataType -> (State,DataType)
 nmspValue' a b = (a,nmspValue (fst a) b (snd a))
@@ -58,6 +62,53 @@ nmspValueSet a b = M.insert $ gnmsp a b
 nmspValueSet' :: State -> DataType -> DataType -> (State,DataType)
 nmspValueSet' a b c = (s a,c)
   where s = second . const $ nmspValueSet (fst a) b c (snd a)
+
+-- Utilities
+parseST :: P.Parsec BitSeries () DStmt -> BitSeries -> DStmt
+parseST p b = case (P.runP p () "" (b++repeat F)) of
+  Left e                    -> error $ show e
+  Right ((bs,BStatement),s) -> ((b,BStatement),s)
+
+sfilter :: Monad m => P.ParsecT BitSeries u m [Bool]
+sfilter = do
+  let cs = mopc "CS">>replicateM 4 anyToken>>return [False,True,True,True,True]
+  bs <- P.many cs
+  mopc "ES"
+  return $ mconcat bs++[False]
+
+ifilter :: Monad m => P.ParsecT BitSeries u m [Bool]
+ifilter = (True:) <$> sfilter
+
+rfilter :: Monad m => P.ParsecT BitSeries u m [Bool]
+rfilter = (++) <$> ifilter <*> ifilter
+
+anfilter :: Monad m => P.ParsecT BitSeries u m [Bool]
+anfilter = do
+  let cn = mopc "CN">>(False:) <$> sfilter
+  cn <- P.many cn
+  mopc "EN"
+  return $ mconcat cn++[False]
+rnfilter :: Monad m => P.ParsecT BitSeries u m [Bool]
+rnfilter = do
+  let cn = (P.try$mopc "CN")>>(False:) <$> sfilter
+  let pn = (P.try$mopc "PN")>>return [False]
+  cn <- P.many $ cn <|> pn
+  mopc "ERN"
+  return $ mconcat cn++[False]
+nfilter :: Monad m => P.ParsecT BitSeries u m [Bool]
+nfilter = an <|> rn
+  where an = (P.try$mopc "AN")>>(False:) <$> anfilter
+        rn = (P.try$mopc "RN")>>(False:) <$> rnfilter
+
+filter' :: [Bool] -> [a] -> [a]
+filter' (True:bs) (a:as) = a:filter' bs as
+filter' (False:bs) (a:as) = filter' bs as
+filter' _ a = a
+
+unfilter :: [Bool] -> [a] -> [a] -> [a]                                       
+unfilter (True:bs) (x:xs) (r:rs) = r:unfilter bs xs rs
+unfilter (False:bs) (x:xs) r = x:unfilter bs xs r
+unfilter _ a _ = a
 
 -- Operations
 prlst = [ D.toConstr $ BStatement, D.toConstr $ BNmspId $ Left []
@@ -170,10 +221,7 @@ evaluate (Free (ET a b))      s = do
       return ((fst t,M.insert (nid i) u (snd t)),i+1)
     }) (return (s2,1)) b
   let v = fst $ nmspValue (fst s3) av (snd s3)
-  let f = case (P.parse loadStmt "" v) of {
-    Left  e -> error $ show e;
-    Right v -> snd v;
-  }
+  let f = snd $ parseST loadStmt v
   ((_,nm),d) <- evaluate f (n,snd s3)
   return $ ((fst s,nm),d)
 evaluate (Free (SQ a b))      s = do

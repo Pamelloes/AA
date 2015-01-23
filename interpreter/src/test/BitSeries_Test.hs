@@ -33,19 +33,20 @@ instance NFData Bit
 testBEq = TestLabel "Test bit equality" $
   TestList [ TestCase $ assertEqual "" T T
            , TestCase $ assertEqual "" F F
-           , TestCase $ assertEqual "" Terminate Terminate
-           , TestCase $ assertEqual "" Terminate F
+           -- , TestCase $ assertEqual "" Terminate Terminate
+           -- , TestCase $ assertEqual "" Terminate F
            , TestCase $ assertBool "" (F/=T)
-           , TestCase $ assertBool "" (Terminate/=T)
+           --, TestCase $ assertBool "" (Terminate/=T)
            ]
 testBComp = TestLabel "Test bit comparisons" $
   TestList [ TestCase $ assertBool "" (F<T)
-           , TestCase $ assertBool "" (Terminate<T)
+           --, TestCase $ assertBool "" (Terminate<T)
            , TestCase $ assertBool "" (T>F)
-           , TestCase $ assertBool "" (T>Terminate)
+           --, TestCase $ assertBool "" (T>Terminate)
            ]
 
 -- BitSeries Terminate Truncator
+{-
 tT :: BitSeries -> BitSeries
 tT [] = []
 tT (Terminate:as)=[Terminate]
@@ -54,7 +55,8 @@ tT (a:as)=a:(tT as)
 testTt = TestLabel "Verify tT" $
   TestCase $ assertEqual "" [T,T,F,F,Terminate] (tT $ [T,T,F,F,Terminate,F,T,F]
   ++ (repeat Terminate))
+-}
 
 mainList = TestLabel "Bits" $
-  TestList [ testBEq, testBComp, testTt ]
+  TestList [ testBEq, testBComp ]
 main = runTestTT mainList

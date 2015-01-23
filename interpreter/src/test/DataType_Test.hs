@@ -51,8 +51,10 @@ instance Eq Primitive where
   (BStatement)==(BStatement)=True
 
 -- DataType Terminate Truncator
+{-
 tD :: DataType -> DataType
 tD (b,p) = (B.tT b,p)
+-}
 
 -- String Tests
 strError = ErrorCall "lstring: Reached program end"
