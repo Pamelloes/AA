@@ -107,10 +107,9 @@ fpattern d = case (P.parse (prflt!!prior' d) "" (fst d)) of
   Left  e -> error $ show e
   Right r -> r++repeat True
 
-filter' :: DataType -> ([Bool],BitSeries)
-filter' d = (p,f p $ fst d)
-  where p = fpattern d
-        f :: [Bool] -> BitSeries -> BitSeries
+filter' :: DataType -> BitSeries
+filter' d = f (fpattern d) (fst d)
+  where f :: [Bool] -> BitSeries -> BitSeries
         f _          []     = []
         f (True :bs) (c:cs) = c:(f bs cs)
         f (False:bs) (c:cs) = f bs cs
@@ -125,6 +124,12 @@ unfilter d b = (prcnv!!prior' d) (f p (fst d) b,BStatement)
         f (True :bs) (c:cs) (d:ds) = d:(f bs cs ds)
         f (False:bs) (c:cs) (d:ds) = c:(f bs cs ds)
         f _          c      _      = c
+
+applyBitwise :: (BitSeries -> BitSeries) -> DataType -> DataType
+applyBitwise f dt = unfilter dt $ f $ filter' dt
+
+applyBitwise2::(BitSeries->BitSeries->BitSeries)->DataType->DataType->DataType
+applyBitwise2 f da db = unfilter da $ f (filter' da) (filter' db ++ repeat F)
 
 -- Operations
 prlst = [ D.toConstr $ BStatement, D.toConstr $ BNmspId $ Left []
@@ -201,6 +206,34 @@ evaluateMSB (Free (MSB p a b)) s = do
           "BGE" -> boolToDT (snd av') $ (c==GT)||(c==EQ)
             where (av',bv')=normDT av bv
                   c=(cmpdt av' bv' $ fst s3)
+          "TO" -> applyBitwise2 (zipWith (||)) av' bv'
+            where (av',bv')=normDT av bv
+          "TX" -> applyBitwise2 (zipWith (/=)) av' bv'
+            where (av',bv')=normDT av bv
+          "TA" -> applyBitwise2 (zipWith (&&)) av' bv'
+            where (av',bv')=normDT av bv
+          "TH" -> applyBitwise (shift j) av
+            where (BInteger j) = linteger $ fst bv
+                  shift :: Integer -> BitSeries -> BitSeries
+                  shift i b
+                    | i >= genericLength b = gr i F
+                    | i == 0               = b
+                    | i >  0               = gd i b ++ gr i F
+                    | i <  0               = gr i F ++ gd i b
+                    where gr = genericReplicate
+                          gd = genericDrop
+          "TR" -> applyBitwise (rotate j) av
+            where (BInteger j) = linteger $ fst bv
+                  rotate :: Integer -> BitSeries -> BitSeries
+                  rotate h b
+                    | i >= genericLength b = genericReplicate i F
+                    | i == 0               = b
+                    | i >  0               = gd i b ++ gt i b
+                    | i <  0               = gt i b ++ gd i b
+                    where i = h `rem` genericLength b
+                          gd = genericDrop
+                          gt = genericTake
+
   return (s3,v)
 simpleOP a b = evaluate a b
 
@@ -288,5 +321,6 @@ evaluate (Free (MSA p a))     s = do
   (s2,av) <- evaluate a s
   let v=case p of
           "BN" -> boolToDT (snd av) . not . dtToBool $ av
+          "TN" -> applyBitwise (fmap not) av
   return (s2,v)
 evaluate a@(Free (MSB _ _ _)) s = evaluateMSB a s
