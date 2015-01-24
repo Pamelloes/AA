@@ -22,23 +22,22 @@ THE SOFTWARE.
 -}
 -- This module evaluates a program's AST in accordance with Sections VI and VII
 -- of the Advanced Assembly 0.5.2 specification.
-module Evaluate where
+module Language.AA.Evaluate where
 
-import BitSeries
 import Control.Applicative
 import Control.Arrow
 import Control.Monad
-import Data.Char
 import qualified Data.Data as D
+import qualified Data.Map as M
 import Data.Fixed
 import Data.List
-import qualified Data.Map as M
 import Data.Monoid
 import Data.Ratio
-import DataType
-import DataType.Util
-import Opcodes
-import Statement
+import Language.AA.BitSeries
+import Language.AA.DataType
+import Language.AA.DataType.Util
+import Language.AA.Opcodes
+import Language.AA.Statement
 import Text.Parsec.Combinator
 import qualified Text.Parsec.Prim as P
 

@@ -23,28 +23,29 @@ THE SOFTWARE.
 -- This is the interpreter for Advanced Assembly version 0.5.2
 module Main where
 
-import BitSeries
+import Control.Monad.Writer
 import Data.Bits
 import Data.Char
-import DataType
-import DataType.Util
 import qualified Data.ByteString.Lazy as B
 import Data.Word
-import Evaluate
+import Language.AA.BitSeries
+import Language.AA.DataType
+import Language.AA.DataType.Util
+import Language.AA.Evaluate
+import Language.AA.Statement
 import Options.Applicative
-import Statement
 import Text.Parsec.Prim
 
 -- Stopgap I/O handler
-handleIO :: DataType -> IO DataType
-handleIO a@(_,BString s) = lg a s
-  where lg :: DataType -> BitSeries -> IO DataType
+handleIO :: DataType -> WriterT (Sum Int) IO DataType
+handleIO a@(_,BString s) = censor (+1) $ lg a s
+  where lg :: DataType -> BitSeries -> WriterT (Sum Int) IO DataType
         lg a [] = do
-          putChar '\n'
+          lift $ putChar '\n'
           return a
         lg d s = do
           let (a,b) = splitAt 8 s
-          putChar $ chr (fromIntegral $ bsToInt a)
+          lift $ putChar $ chr (fromIntegral $ bsToInt a)
           lg d b
 handleIO d = handleIO (cstring d)
 
@@ -74,8 +75,9 @@ run c = do
   let istate = ([],(defaultNamespace prog,handleIO))
   let mnst = snd $ parseST loadStmt prog
   --print (fmap snd mnst) -- We can't print the first part because it's infinite...
-  (fstate,res) <- evaluate mnst istate
+  ((fstate,res), i) <- runWriterT $ evaluate mnst istate
   print res
+  print i
 
 main :: IO ()
 main = execParser opts >>= run

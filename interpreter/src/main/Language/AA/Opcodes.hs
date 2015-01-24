@@ -22,11 +22,10 @@ THE SOFTWARE.
 -}
 -- This module defines the Opcodes and associated functionality in accordance
 -- with Appendix A of the Advanced Assembly 0.5.2 specification.
-module Opcodes where
+module Language.AA.Opcodes where
 
-import BitSeries
-import Data.List
 import qualified Data.Map as M
+import Language.AA.BitSeries
 import Text.Parsec.Prim
 
 type Opcode = String

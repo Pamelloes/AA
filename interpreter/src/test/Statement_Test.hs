@@ -23,17 +23,15 @@ THE SOFTWARE.
 -- This module provides tests for the Statement module
 module Statement_Test where
 
-import BitSeries
 import qualified BitSeries_Test as B
-import Control.Exception
 import qualified Data.Map as M
-import DataType
 import qualified DataType_Test as D
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.DataType
+import Language.AA.Opcodes
+import Language.AA.Statement
 import qualified Opcodes_Test as O
-import Statement
 import Test.HUnit
-import TestException
 import TestUtil
 import Text.Parsec.Prim
 
@@ -49,16 +47,8 @@ instance (Eq a) => Eq (Stmt a) where
   (IOS a)==(IOS b)=(a==b)
   _==_=False
 
--- DStmt and (BitSeries,DStmt) Terminate Truncators
-{-
-tDS :: DStmt -> DStmt
-tDS (d,f) = (D.tD d,fmap D.tD f)
-tBD :: (BitSeries,DStmt) -> (BitSeries,DStmt)
-tBD (b,d) = (B.tT b,tDS d)
--}
-
 ptest' :: String -> DStmt -> Parsec BitSeries () DStmt -> BitSeries -> Test
-ptest' s a p b = etest s (Right a) $ {-fmap (tDS)-} (parse p "" b)
+ptest' s a p b = etest s (Right a) $ (parse p "" b)
 
 -- Literal Statement Tests
 testLsS = ptest' "Test loading literal string" 

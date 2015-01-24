@@ -23,8 +23,7 @@ THE SOFTWARE.
 -- This module contains tests for the BitSeries module.
 module BitSeries_Test where
 
-import BitSeries
-import Control.DeepSeq
+import Language.AA.BitSeries
 import Test.HUnit
 
 -- Bit Tests

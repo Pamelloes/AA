@@ -9,7 +9,7 @@ license:             MIT
 license-file:        LICENSE
 author:              Joshua Brot
 maintainer:          joshuabrot@gmail.com
-copyright:           Copyright: (c) 2014 Joshua Brot
+copyright:           Copyright: (c) 2014-2015 Joshua Brot
 category:            Language
 build-type:          Simple
 -- extra-source-files:  

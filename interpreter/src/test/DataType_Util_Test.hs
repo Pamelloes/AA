@@ -23,20 +23,16 @@ THE SOFTWARE.
 -- This module contains tests for the DataType.Util module
 module DataType_Util_Test where
 
-import BitSeries
 import qualified BitSeries_Test as B
-import Control.DeepSeq
-import Control.Exception
 import qualified Data.Map as M
 import Data.Ratio
-import DataType
 import qualified DataType_Test as D
---import DataType_Test (tD)
-import DataType.Util
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.DataType
+import Language.AA.DataType.Util
+import Language.AA.Opcodes
 import qualified Opcodes_Test as P
 import Test.HUnit
-import TestException
 
 tD = id
 

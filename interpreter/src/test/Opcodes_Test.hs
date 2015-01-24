@@ -23,16 +23,13 @@ THE SOFTWARE.
 -- This module contains tests for the Opcodes module.
 module Opcodes_Test where
 
-import BitSeries
 import qualified BitSeries_Test as B
-import Control.Exception
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.Opcodes
 import Test.HUnit
 import TestUtil
 
 -- Opcode Tests
-opError = ErrorCall "hasOpcode: Reached program end"
-
 testEmpty = ptestf "Fail empty string." (mopc "ES") []
 
 testL1 = ptest "Should recognize opcode of length 1." (o "ES") (mopc "ES") 

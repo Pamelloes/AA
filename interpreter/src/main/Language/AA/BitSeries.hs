@@ -20,23 +20,25 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
--- This module provides the assertException function for unit tests.
-module TestException where
+-- This module defines a Bit and BitSeries. A special Bit implementation is used
+-- to accomodate lists that end with a repeating false value.
+{-# LANGUAGE PatternSynonyms #-}
+module Language.AA.BitSeries where
 
-import Control.DeepSeq
-import Control.Exception
-import Control.Monad 
-import Test.HUnit
+import Text.Parsec.Pos
+import Text.Parsec.Prim
 
--- To use properly, "a" should be in the form "evaluate $ <statement>"
-assertException :: (Exception e, Eq e, NFData a) => e -> a -> IO ()
-assertException ex action = 
-  handle fail $ do
-    handleJust isWanted (const $ return ()) $ do
-      action `deepseq` return ()
-      failure
-  where isWanted = guard . (== ex)
-        failure = assertFailure $ "Expected exception: " ++ show ex
-        fail :: SomeException -> IO ()
-        fail e = assertFailure $ "Got exception: " ++ show e
-          ++ "\nExpected exception: " ++ show ex
+-- Synonym definitions.
+type Bit = Bool
+pattern T = True
+pattern F = False
+
+type BitSeries=[Bit]
+
+-- Parsec parsers
+btoken :: (Monad m) => Bit -> ParsecT BitSeries u m Bit
+btoken x = tokenPrim (show) (\c x xs -> newPos "BitSeries" (-1) (-1)) 
+                 (\y -> if x==y then Just y else Nothing)
+
+btokens :: (Monad m) => BitSeries -> ParsecT BitSeries u m BitSeries
+btokens x = mapM btoken x

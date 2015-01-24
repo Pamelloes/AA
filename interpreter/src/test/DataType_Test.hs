@@ -24,16 +24,14 @@ THE SOFTWARE.
 -- Rational sections.
 module DataType_Test where
 
-import BitSeries
 import qualified BitSeries_Test as B
 import Control.DeepSeq
-import Control.Exception
 import qualified Data.Map as M
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.DataType
+import Language.AA.Opcodes
 import qualified Opcodes_Test as P
-import DataType
 import Test.HUnit
-import TestException
 import TestUtil
 
 instance NFData RNmspS
@@ -50,15 +48,7 @@ instance Eq Primitive where
   (BNmspId a)==(BNmspId b)=a==b
   (BStatement)==(BStatement)=True
 
--- DataType Terminate Truncator
-{-
-tD :: DataType -> DataType
-tD (b,p) = (B.tT b,p)
--}
-
 -- String Tests
-strError = ErrorCall "lstring: Reached program end"
-
 testEmptyP = ptestf "Test Empty Program" pstring []
 testIncomplete = ptestf "Test Incomplete" pstring $ (o "CS")++[T,T,T]
 testUnfinished = ptestf "Test Unfinished" pstring $ (o "CS")++[T,T,T,T]
@@ -79,8 +69,6 @@ strTests = TestLabel "String" $
           , testExtra ]
 
 -- Integer Tests
-intError = ErrorCall "linteger: Reached program end"
-
 testIEmptyP = ptestf "Test Empty Program" pinteger []
 testIIncomplete1 = ptestf "Test Incomplete Program 1" pinteger [F]
 testIIncomplete2 = ptestf "Test Incomplete Program 2" pinteger ([F]++(o "CS"))
@@ -108,8 +96,6 @@ intTests = TestLabel "Integer" $
            , testIEmpty1, testIEmpty2, testIL4, testIL8, testINeg, testIExtra ]
 
 -- Rational Tests
-rationalError = ErrorCall "lrational: Reached program end"
-
 testREmptyP = ptestf "Test Empty Program" prational []
 testRIncomplete1 = ptestf "Test Incomplete Program 1" prational [F]
 testRIncomplete2 = ptestf "Test Incomplete Program 2" prational ([F]++(o "CS"))

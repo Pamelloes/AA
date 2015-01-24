@@ -26,15 +26,15 @@ THE SOFTWARE.
 -- module contains functions for loading Statements. The DataType.Util module
 -- contains additional functions which may be useful when processing DataTypes.
 {-# LANGUAGE DeriveDataTypeable #-}
-module DataType where
+module Language.AA.DataType where
 
-import BitSeries
 import Control.Arrow
 import Control.Monad
 import qualified Data.Data as D
 import qualified Data.Map as M
 import Data.Typeable
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.Opcodes
 import Text.Parsec.Combinator
 import Text.Parsec.Prim
 

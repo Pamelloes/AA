@@ -21,16 +21,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 -}
 -- This module provides various utility functions for dealing with DataTypes.
-module DataType.Util where
+module Language.AA.DataType.Util where
 
-import BitSeries
 import Control.Arrow
-import DataType
 import Data.List
 import Data.List.Split
 import qualified Data.Map as M
 import Data.Ratio
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.DataType
+import Language.AA.Opcodes
 import Text.Parsec.Prim
 
 nmspcmp :: ANmsp -> ANmsp -> Ordering

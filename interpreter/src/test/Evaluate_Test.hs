@@ -23,21 +23,19 @@ THE SOFTWARE.
 -- This module provides tests for the Evaluate module
 module Evaluate_Test where
 
-import BitSeries
 import qualified BitSeries_Test as B
-import Control.Exception
 import qualified Data.Map as M
-import DataType
 import qualified DataType_Test as D
-import DataType.Util
 import qualified DataType_Util_Test as DU
-import Evaluate
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.DataType
+import Language.AA.DataType.Util
+import Language.AA.Evaluate
+import Language.AA.Opcodes
+import Language.AA.Statement
 import qualified Opcodes_Test as O
-import Statement
 import qualified Statement_Test as S
 import Test.HUnit
-import TestException
 
 -- Utilities
 maid :: ANmsp -> DataType

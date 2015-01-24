@@ -23,9 +23,9 @@ THE SOFTWARE.
 -- This module contains functions used to generate test cases.
 module TestUtil where
 
-import BitSeries
 import qualified Data.Map as M
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.Opcodes
 import Test.HUnit
 import Text.Parsec.Error
 import Text.Parsec.Prim

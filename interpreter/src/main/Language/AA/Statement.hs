@@ -24,15 +24,15 @@ THE SOFTWARE.
 -- Advanced Assembly 0.5.2 specification.
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-module Statement where
+module Language.AA.Statement where
 
-import BitSeries
 import qualified Data.Map as M
 import Data.List
 import qualified Control.Applicative as A
 import Control.Monad
-import DataType
-import Opcodes
+import Language.AA.BitSeries
+import Language.AA.DataType
+import Language.AA.Opcodes
 import Text.Parsec.Prim
 
 ----------------------------------
