@@ -25,7 +25,6 @@ THE SOFTWARE.
 module DataType_Test where
 
 import qualified BitSeries_Test as B
-import Control.DeepSeq
 import qualified Data.Map as M
 import Language.AA.BitSeries
 import Language.AA.DataType
@@ -34,13 +33,11 @@ import qualified Opcodes_Test as P
 import Test.HUnit
 import TestUtil
 
-instance NFData RNmspS
 instance Eq RNmspS where
   (Child a)==(Child b)=a==b
   Parent==Parent=True
   _==_=False
 
-instance NFData Primitive
 instance Eq Primitive where
   (BString a)==(BString b)=a==b
   (BInteger a)==(BInteger b)=a==b

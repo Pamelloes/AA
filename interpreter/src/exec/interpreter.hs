@@ -28,13 +28,8 @@ import Data.Bits
 import Data.Char
 import qualified Data.ByteString.Lazy as B
 import Data.Word
-import Language.AA.BitSeries
-import Language.AA.DataType
-import Language.AA.DataType.Util
-import Language.AA.Evaluate
-import Language.AA.Statement
+import Language.AA.AdvancedAssembly
 import Options.Applicative
-import Text.Parsec.Prim
 
 -- Stopgap I/O handler
 handleIO :: DataType -> WriterT (Sum Int) IO DataType
@@ -58,7 +53,7 @@ cmdline = Cmdline <$> strArgument (metavar "file")
 
 up :: Word8 -> [Bit]
 up w = [h,g,f,e,d,c,b,a]
-  where z x=if x== 0 then F else T
+  where z a = a /= 0
         a=z$w.&.0x1
         b=z$w.&.0x2
         c=z$w.&.0x4
@@ -72,10 +67,8 @@ run :: Cmdline -> IO ()
 run c = do
   p <- B.readFile $ file c
   let prog = B.foldr (\b ac -> (up b)++ac) [] p
-  let istate = ([],(defaultNamespace prog,handleIO))
-  let mnst = snd $ parseST loadStmt prog
   --print (fmap snd mnst) -- We can't print the first part because it's infinite...
-  ((fstate,res), i) <- runWriterT $ evaluate mnst istate
+  ((fstate,res), i) <- runWriterT $ runProgram handleIO prog
   print res
   print i
 
