@@ -298,7 +298,7 @@ evaluate (Free (DW a b))      s = do
     -- because the I/O call means that while terminating the loop may not result
     -- in any inconsistencies within the AA program, it will result in
     -- inconsistencies between the program and the outside world.
-    if dtToBool c then return (s3,v) else dw s3
+    if dtToBool c then dw s3 else return (s3,v)
   }
   dw s
 evaluate (Free (IOS a))       s = do
