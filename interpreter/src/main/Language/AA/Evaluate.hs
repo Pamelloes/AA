@@ -43,7 +43,7 @@ import qualified Text.Parsec.Prim as P
 
 type StateP m = (ANmsp,(Namespaces,(DataType -> m DataType)))
 newtype State m = S {gs :: (ANmsp,(Namespaces,(DataType -> m DataType,
-                                                         State m -> State m))) }
+                                               State m -> Maybe (State m)))) }
 
 -- Namespace definitions
 type Namespaces = M.Map ANmsp DataType
@@ -104,7 +104,7 @@ nfilter = an <|> rn
 prflt = [ undefined, nfilter, sfilter, ifilter, rfilter ]
 fpattern :: DataType -> [Bool]
 fpattern (_,BStatement) = repeat True
-fpattern d = case (P.parse (prflt!!prior' d) "" (fst d)) of
+fpattern d = case (P.parse (prflt!!prior' d) "" (fst d++repeat F)) of
   Left  e -> error $ show e
   Right r -> r++repeat True
 
@@ -183,7 +183,7 @@ evaluateMSB (Free (MSB p a b)) s = do
           "OE" -> case (ensureMin' (BInteger 0) av,cinteger bv) of
             ((_,BInteger t),(_,BInteger u)) -> intToDT (t^(abs$u))
             ((_,BRational t u),(_,BInteger v)) -> if u==0 then 
-              rtlToDT 0 0 else rtlToDT' ((t%u)^^v)
+              rtlToDT 0 0 else rtlToDT' ((t%u)^^(abs$v))
           "OU" -> case (normMDT (BInteger 0) av bv) of
             ((_,BInteger t),(_,BInteger u)) -> if u==0 then
               rtlToDT 0 0 else intToDT $ abs (t`rem`u)
@@ -227,6 +227,7 @@ evaluateMSB (Free (MSB p a b)) s = do
             where (BInteger j) = linteger $ fst bv
                   rotate :: Integer -> BitSeries -> BitSeries
                   rotate h b
+                    | genericLength b == 0 = b
                     | i >= genericLength b = genericReplicate i F
                     | i == 0               = b
                     | i >  0               = gd i b ++ gt i b
@@ -315,6 +316,9 @@ evaluate a@(Free (MSB _ _ _)) s = evaluateMSB a s
 
 -- Intermediary function called between every step.
 evaluate' :: Monad m => Free Stmt DataType -> State m -> m (State m,DataType)
-evaluate' f s = evaluate f s'
+evaluate' f s = case s' of
+  (Just t) -> evaluate f t
+  Nothing  -> return $ (sn,(repeat F,BString []))
   where S (a,(b,(c,f'))) = s
         s' = f' s
+        sn = S (a,(b,(c,const Nothing)))

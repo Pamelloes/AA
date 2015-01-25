@@ -29,7 +29,8 @@ module Language.AA.AdvancedAssembly (
     module Language.AA.DataType.Util,
     module Language.AA.Statement,
     module Language.AA.Evaluate,
-    runProgram
+    runProgram,
+    runProgram'
   ) where
 
 import Control.Monad
@@ -41,6 +42,10 @@ import Language.AA.Statement
 import Language.AA.Evaluate
 
 runProgram :: (Monad m) => (DataType -> m DataType) -> BitSeries -> m DataType
-runProgram i p = liftM (snd) (evaluate f s)
+runProgram i p = liftM (snd) $ runProgram' (Just . id) i p
+
+runProgram' :: (Monad m) => (State m -> Maybe (State m)) 
+             -> (DataType -> m DataType) -> BitSeries -> m (State m, DataType)
+runProgram' j i p = evaluate f s
   where f = snd $ parseST loadStmt p
-        s = S ([],(defaultNamespace p,(i,id)))
+        s = S ([],(defaultNamespace p,(i,j)))
