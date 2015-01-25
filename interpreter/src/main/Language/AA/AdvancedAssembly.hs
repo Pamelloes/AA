@@ -43,4 +43,4 @@ import Language.AA.Evaluate
 runProgram :: (Monad m) => (DataType -> m DataType) -> BitSeries -> m DataType
 runProgram i p = liftM (snd) (evaluate f s)
   where f = snd $ parseST loadStmt p
-        s = ([],(defaultNamespace p,i))
+        s = S ([],(defaultNamespace p,(i,id)))

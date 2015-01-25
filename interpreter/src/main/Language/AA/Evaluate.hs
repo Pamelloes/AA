@@ -41,7 +41,9 @@ import Language.AA.Statement
 import Text.Parsec.Combinator
 import qualified Text.Parsec.Prim as P
 
-type State m = (ANmsp,(Namespaces,(DataType -> m DataType)))
+type StateP m = (ANmsp,(Namespaces,(DataType -> m DataType)))
+newtype State m = S {gs :: (ANmsp,(Namespaces,(DataType -> m DataType,
+                                                         State m -> State m))) }
 
 -- Namespace definitions
 type Namespaces = M.Map ANmsp DataType
@@ -53,14 +55,14 @@ nmspValue :: ANmsp -> DataType -> Namespaces -> DataType
 nmspValue a b =  M.findWithDefault (opcodes M.! "ES",BString []) (gnmsp a b)
 
 nmspValue' :: Monad m=> State m -> DataType -> (State m,DataType)
-nmspValue' a b = (a,nmspValue (fst a) b (fst $ snd a))
+nmspValue' a b = (a,nmspValue (fst $ gs a) b (fst $ snd $ gs a))
 
 nmspValueSet :: ANmsp -> DataType -> DataType -> Namespaces -> Namespaces
 nmspValueSet a b = M.insert $ gnmsp a b
 
 nmspValueSet' :: Monad m=> State m -> DataType -> DataType ->(State m ,DataType)
-nmspValueSet' a b c = (s a,c)
-  where s = second . first . const $ nmspValueSet (fst a) b c (fst $ snd a)
+nmspValueSet' a b c = (S$s$gs a,c)
+  where s = second . first . const $ nmspValueSet (fst$gs a) b c (fst$snd$gs a)
 
 -- Utilities
 parseST :: P.Parsec BitSeries () DStmt -> BitSeries -> DStmt
@@ -155,10 +157,10 @@ normDT a b = (ensureMin m a, ensureMin m b)
 normMDT :: Primitive -> DataType -> DataType -> (DataType,DataType)
 normMDT a b = normDT (ensureMin' a b)
 
-evaluateMSB :: Monad m=> Free Stmt DataType -> State m -> m (State m,DataType)
+evaluateMSB :: Monad m => Free Stmt DataType -> State m -> m (State m,DataType)
 evaluateMSB (Free (MSB p a b)) s = do
-  (s2,av) <- evaluate a s
-  (s3,bv) <- evaluate b s2
+  (s2,av) <- evaluate' a s
+  (s3,bv) <- evaluate' b s2
   let v=case p of
           "OP" -> case (normMDT (BString []) av bv) of
             ((_,BString t),(_,BString u)) -> bsToDT (t++u)
@@ -193,18 +195,18 @@ evaluateMSB (Free (MSB p a b)) s = do
             where (av',bv')=normDT av bv
           "BA" -> boolToDT (snd av') $ (dtToBool av') && (dtToBool bv')
             where (av',bv')=normDT av bv
-          "BE" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==EQ
+          "BE" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst $ gs s3)==EQ
             where (av',bv')=normDT av bv
-          "BL" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==LT
+          "BL" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst $ gs s3)==LT
             where (av',bv')=normDT av bv
           "BLE" -> boolToDT (snd av') $ (c==LT)||(c==EQ)
             where (av',bv')=normDT av bv
-                  c=(cmpdt av' bv' $ fst s3)
-          "BG" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst s3)==GT
+                  c=(cmpdt av' bv' $ fst $ gs s3)
+          "BG" -> boolToDT (snd av') $ (cmpdt av' bv' $ fst $ gs s3)==GT
             where (av',bv')=normDT av bv
           "BGE" -> boolToDT (snd av') $ (c==GT)||(c==EQ)
             where (av',bv')=normDT av bv
-                  c=(cmpdt av' bv' $ fst s3)
+                  c=(cmpdt av' bv' $ fst $ gs s3)
           "TO" -> applyBitwise2 (zipWith (||)) av' bv'
             where (av',bv')=normDT av bv
           "TX" -> applyBitwise2 (zipWith (/=)) av' bv'
@@ -234,44 +236,43 @@ evaluateMSB (Free (MSB p a b)) s = do
                           gt = genericTake
 
   return (s3,v)
-simpleOP a b = evaluate a b
 
 
 -- Evaluate definitions
 evaluate :: Monad m=> Free Stmt DataType -> State m -> m (State m,DataType)
 evaluate (Pure a)             s = return (s,a)
 evaluate (Free (AS a b))      s = do
-  (s2,av) <- evaluate a s
-  (s3,bv) <- evaluate b s2
+  (s2,av) <- evaluate' a s
+  (s3,bv) <- evaluate' b s2
   return $ nmspValueSet' s3 av bv
 evaluate (Free (RS a))        s = do
-  (s2,av) <- evaluate a s
+  (s2,av) <- evaluate' a s
   return $ nmspValue' s2 av
 evaluate (Free (ET a b))      s = do
-  (s2,av) <- evaluate a s
-  let n = gnmsp (fst s2) av
+  (s2,av) <- evaluate' a s
+  let n = gnmsp (fst $ gs s2) av
   let nid i = n++[intToBS i]
   (s3,_) <- foldl (\v a -> do {
       (s,i)<-v;
-      (t,u) <- evaluate a s;
-      return ((fst t,(M.insert (nid i) u (fst$snd t),snd$snd t)),i+1)
+      (t,u) <- evaluate' a s;
+      return (S (fst$gs t,(M.insert (nid i) u (fst$snd$gs t),snd$snd$gs t)),i+1)
     }) (return (s2,1)) b
-  let v = fst $ nmspValue (fst s3) av (fst$snd s3)
+  let v = fst $ nmspValue (fst$gs s3) av (fst$snd$gs s3)
   let f = snd $ parseST loadStmt v
-  ((_,nm),d) <- evaluate f (n,snd s3)
-  return $ ((fst s,nm),d)
+  (S (_,nm),d) <- evaluate' f $ S (n,snd$gs s3)
+  return $ (S (fst$gs s,nm),d)
 evaluate (Free (SQ a b))      s = do
-  (s2,_) <- evaluate a s
-  evaluate b s2
+  (s2,_) <- evaluate' a s
+  evaluate' b s2
 evaluate (Free (IF a b c))    s = do
-  (s2,av) <- evaluate a s
+  (s2,av) <- evaluate' a s
   if dtToBool av
-    then evaluate b s2
-    else evaluate c s2
+    then evaluate' b s2
+    else evaluate' c s2
 evaluate (Free (DW a b))      s = do
   let dw s = do {
-    (s2,v) <- evaluate a s; 
-    (s3,c) <- evaluate b s2;
+    (s2,v) <- evaluate' a s; 
+    (s3,c) <- evaluate' b s2;
     -- Perhaps add in some checks here to prevent pointless infinite loops:
     -- if a loop operation and conditional check result in a state identical
     -- to the initial state, and neither the operation nor the conditional
@@ -301,13 +302,19 @@ evaluate (Free (DW a b))      s = do
   }
   dw s
 evaluate (Free (IOS a))       s = do
-  (s2,av) <- evaluate a s
-  r <- (snd$snd s) av
+  (s2,av) <- evaluate' a s
+  r <- (fst$snd$snd$gs s) av
   return $ (s2,r)
 evaluate (Free (MSA p a))     s = do
-  (s2,av) <- evaluate a s
+  (s2,av) <- evaluate' a s
   let v=case p of
           "BN" -> boolToDT (snd av) . not . dtToBool $ av
           "TN" -> applyBitwise (fmap not) av
   return (s2,v)
 evaluate a@(Free (MSB _ _ _)) s = evaluateMSB a s
+
+-- Intermediary function called between every step.
+evaluate' :: Monad m => Free Stmt DataType -> State m -> m (State m,DataType)
+evaluate' f s = evaluate f s'
+  where S (a,(b,(c,f'))) = s
+        s' = f' s
