@@ -28,9 +28,10 @@ import Control.Applicative
 import Control.Arrow
 import Control.Monad
 import qualified Data.Data as D
-import qualified Data.Map as M
 import Data.Fixed
 import Data.List
+import qualified Data.Map as M
+import Data.Maybe
 import Data.Monoid
 import Data.Ratio
 import Language.AA.BitSeries
@@ -42,8 +43,10 @@ import Text.Parsec.Combinator
 import qualified Text.Parsec.Prim as P
 
 type StateP m = (ANmsp,(Namespaces,(DataType -> m DataType)))
-newtype State m = S {gs :: (ANmsp,(Namespaces,(DataType -> m DataType,
-                                               State m -> Maybe (State m)))) }
+newtype State m = S {gs :: (ANmsp,
+                            (Namespaces,
+                             (DataType -> m DataType,
+                              State m -> m (State m)))) }
 
 -- Namespace definitions
 type Namespaces = M.Map ANmsp DataType
@@ -111,10 +114,7 @@ fpattern d = case (P.parse (prflt!!prior' d) "" (fst d++repeat F)) of
 filter' :: DataType -> BitSeries
 filter' d = f (fpattern d) (fst d)
   where f :: [Bool] -> BitSeries -> BitSeries
-        f _          []     = []
-        f (True :bs) (c:cs) = c:(f bs cs)
-        f (False:bs) (c:cs) = f bs cs
-        f _          c      = c
+        f a b = catMaybes $ zipWith (\b v->if b then Just v else Nothing) a b
 
 unfilter :: DataType -> BitSeries -> DataType
 unfilter d b = (prcnv!!prior' d) (f p (fst d) b,BStatement)
@@ -127,6 +127,7 @@ unfilter d b = (prcnv!!prior' d) (f p (fst d) b,BStatement)
         f _          c      _      = c
 
 applyBitwise :: (BitSeries -> BitSeries) -> DataType -> DataType
+applyBitwise f (a,BStatement) = (f a,BStatement)
 applyBitwise f dt = unfilter dt $ f $ filter' dt
 
 applyBitwise2::(BitSeries->BitSeries->BitSeries)->DataType->DataType->DataType
@@ -217,24 +218,26 @@ evaluateMSB (Free (MSB p a b)) s = do
             where (BInteger j) = linteger $ fst bv
                   shift :: Integer -> BitSeries -> BitSeries
                   shift i b
-                    | i >= genericLength b = gr i F
-                    | i == 0               = b
-                    | i >  0               = gd i b ++ gr i F
-                    | i <  0               = gr i F ++ gd i b
-                    where gr = genericReplicate
-                          gd = genericDrop
+                    | d == [] = map (const F) b
+                    | i == 0  = b
+                    | i >  0  = d ++ r
+                    | i <  0  = r ++ d
+                    where j = abs i
+                          r = replicate (fromIntegral j) F
+                          d = drop (fromIntegral j) b
           "TR" -> applyBitwise (rotate j) av
             where (BInteger j) = linteger $ fst bv
                   rotate :: Integer -> BitSeries -> BitSeries
                   rotate h b
-                    | genericLength b == 0 = b
-                    | i >= genericLength b = genericReplicate i F
-                    | i == 0               = b
-                    | i >  0               = gd i b ++ gt i b
-                    | i <  0               = gt i b ++ gd i b
-                    where i = h `rem` genericLength b
-                          gd = genericDrop
-                          gt = genericTake
+                    | gl b == 0 = b
+                    | i == 0    = b
+                    | i >  0    = gd i b ++ gt i b
+                    | i <  0    = gt i b ++ gd i b
+                    where i = h `rem` gl b
+                          gr = \a b -> replicate (fromIntegral a) b
+                          gd = \a b -> drop (fromIntegral a) b
+                          gt = \a b -> take (fromIntegral a) b
+                          gl = fromIntegral . length
 
   return (s3,v)
 
@@ -316,9 +319,7 @@ evaluate a@(Free (MSB _ _ _)) s = evaluateMSB a s
 
 -- Intermediary function called between every step.
 evaluate' :: Monad m => Free Stmt DataType -> State m -> m (State m,DataType)
-evaluate' f s = case s' of
-  (Just t) -> evaluate f t
-  Nothing  -> return $ (sn,(repeat F,BString []))
-  where S (a,(b,(c,f'))) = s
-        s' = f' s
-        sn = S (a,(b,(c,const Nothing)))
+evaluate' f s = do
+  let S (a,(b,(c,f'))) = s
+  s' <- f' s
+  evaluate f s'

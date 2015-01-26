@@ -42,9 +42,9 @@ import Language.AA.Statement
 import Language.AA.Evaluate
 
 runProgram :: (Monad m) => (DataType -> m DataType) -> BitSeries -> m DataType
-runProgram i p = liftM (snd) $ runProgram' (Just . id) i p
+runProgram i p = liftM (snd) $ runProgram' (return . id) i p
 
-runProgram' :: (Monad m) => (State m -> Maybe (State m)) 
+runProgram' :: (Monad m) => (State m -> m (State m))
              -> (DataType -> m DataType) -> BitSeries -> m (State m, DataType)
 runProgram' j i p = evaluate f s
   where f = snd $ parseST loadStmt p
